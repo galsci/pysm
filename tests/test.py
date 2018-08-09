@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-sys.path.append('/home/ben/Projects/PySM/pysmv3')
+sys.path.append('/home/ben/Projects/PySM/PySM_public')
 import pysm
 import unittest
 import numpy as np
@@ -8,10 +8,25 @@ import healpy as hp
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
-    nside = 256
+    nside = 16
     bpass = [
         (np.linspace(140., 170., 10), np.ones(10))
     ]
+    freqs = np.linspace(1, 500, 100.)
+
+    sky = pysm.Sky(nside, preset_strings=['d6'])
+    sky.correlation_length = 1.
+    sky_d1 = pysm.Sky(nside, preset_strings=['d1'])
+    #hp.mollview(sky.get_emission(150.)[0, 0], title="model d4", norm='log')
+    #plt.show()
+
+    signal = sky.get_emission(freqs)
+    signal_d1 = sky_d1.get_emission(freqs)
+    fig, ax = plt.subplots(1, 1)
+    print(signal.shape)
+    ax.loglog(freqs, signal[:, 1, 0])
+    ax.set_yscale('linear')
+    plt.show()
 
     # get either individual model, or sky with group of components
     mbb = pysm.preset_models('d1', nside)

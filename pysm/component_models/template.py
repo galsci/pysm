@@ -95,6 +95,7 @@ class Model(object):
                        verbose=False))
         return np.array(out)
 
+
 def apply_normalization(freqs, weights):
     """ Function to apply a normalization constraing to a set of weights.
     This imposes the requirement that the integral of the weights over the
@@ -114,3 +115,58 @@ def apply_normalization(freqs, weights):
         of equal length.
     """
     return freqs, weights / np.trapz(weights, freqs)
+
+
+def check_freq_input(freqs):
+    """ Function to check that the input to `Model.get_emission` is a
+    np.ndarray.
+
+    This function will convet input integers or arrays to a single element
+    numpy array.
+
+    Parameters
+    ----------
+    freqs: int, float, list, ndarray
+
+    Returns
+    -------
+    ndarray
+        Frequencies in numpy array form.
+    """
+    if isinstance(freqs, np.ndarray):
+        freqs = freqs
+    elif isinstance(freqs, list):
+        freqs = np.array(freqs)
+    else:
+        try:
+            freqs = np.array([freqs])
+        except:
+            print("""Could not make freqs into an ndarray, check
+            input.""")
+            raise
+    if isinstance(freqs, units.Quantity):
+        if freqs.isscalar:
+            return freqs[None]
+        return freqs
+    return freqs * units.GHz
+
+
+def read_map(path, nside):
+    """ Wrapper of `healpy.read_map` for PySM data.
+
+    Parameters
+    ----------
+    path: object `pathlib.Path`, or str
+        Path of HEALPix map to be read.
+    nsidE: int
+        Resolution at which to return map. Map is read in at whatever resolution
+        it is stored, and `healpy.ud_grade` is applied.
+
+    Returns
+    -------
+    ndarray
+        Numpy array containing HEALPix map in RING ordering.
+    """
+    # read map. Add `str()` operator in case dealing with `Path` object.
+    inmap = hp.read_map(str(path), field=0, verbose=False)
+    return hp.ud_grade(inmap, nside_out=nside)

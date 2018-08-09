@@ -6,7 +6,6 @@ Objects:
     Sky
 """
 import numpy as np
-from .presets import preset_models
 from .component_models import Model
 
 class Sky(Model):
@@ -22,11 +21,15 @@ class Sky(Model):
     """
     def __init__(self, nside=None, component_objects=None, preset_strings=None,
                  mpi_comm=None):
+        Model.__init__(self, mpi_comm=mpi_comm)
         if component_objects is not None:
             self.components = component_objects
         # otherwise instantiate the sky object from list of predefined models,
         # identified by their strings. These are defined in `pysm.presets`.
         if preset_strings is not None:
+            # as `pysm.presets` contains an import of `pysm.Sky`, importing here
+            # limits the circular nature of these imports.
+            from .presets import preset_models
             try:
                 assert(isinstance(preset_strings, list))
             except AssertionError:
