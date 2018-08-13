@@ -13,7 +13,8 @@ class ModifiedBlackBody(Model):
         Arrays containing the intensity or polarization reference
         templates at frequency `freq_ref_I` or `freq_ref_P`.
     """
-    def __init__(self, map_I=None, map_Q=None, map_U=None, freq_ref_I=None,
+    def __init__(self, map_I=None, map_Q=None, map_U=None, unit_I=None,
+                 unit_Q=None, unit_U=None, freq_ref_I=None,
                  freq_ref_P=None, map_mbb_index=None, map_mbb_temperature=None,
                  nside=None, mpi_comm=None):
         """ This function initializes the modified black body model.
@@ -38,6 +39,8 @@ class ModifiedBlackBody(Model):
         nside: int
             Resolution parameter at which this model is to be calculated.
         """
+        try:
+            assert(isinstance(freq_ref_I))
         Model.__init__(self, mpi_comm)
         # do model setup
         self.I_ref = read_map(map_I, nside)[None, :] * units.uK
@@ -50,6 +53,38 @@ class ModifiedBlackBody(Model):
                                         nside)[None, :] * units.K
         self.nside = nside
 
+        @property
+        def freq_ref_I(self):
+            return self.__freq_ref_I
+    
+        @temp.setter
+        def freq_ref_I(self, value):
+            if value < 0:
+                raise InputParameterError
+            try:
+                assert(isinstance(value, units.Quantity))
+            except AssertionError:
+                raise InputParameterError(
+                    r"""Must be instance of `astropy.units.Quantity`, with 
+                    Hz equivalency.""")
+            self.__freq_ref_I = value
+
+        @property
+        def freq_ref_P(self):
+            return self.__freq_ref_P
+    
+        @temp.setter
+        def freq_ref_P(self, value):
+            if value < 0:
+                raise InputParameterError
+            try:
+                assert(isinstance(value, units.Quantity))
+            except AssertionError:
+                raise InputParameterError(
+                    r"""Must be instance of `astropy.units.Quantity`, with 
+                    Hz equivalency.""")
+            self.__freq_ref_P = value
+        
     def get_emission(self, freqs):
         """ This function evaluates the component model at a either
         a single frequency, an array of frequencies, or over a bandpass.
