@@ -39,8 +39,6 @@ class ModifiedBlackBody(Model):
         nside: int
             Resolution parameter at which this model is to be calculated.
         """
-        try:
-            assert(isinstance(freq_ref_I))
         Model.__init__(self, mpi_comm)
         # do model setup
         self.I_ref = read_map(map_I, nside)[None, :] * units.uK
