@@ -55,7 +55,7 @@ class ModifiedBlackBody(Model):
         def freq_ref_I(self):
             return self.__freq_ref_I
     
-        @temp.setter
+        @freq_ref_I.setter
         def freq_ref_I(self, value):
             if value < 0:
                 raise InputParameterError
@@ -71,7 +71,7 @@ class ModifiedBlackBody(Model):
         def freq_ref_P(self):
             return self.__freq_ref_P
     
-        @temp.setter
+        @freq_ref_P.setter
         def freq_ref_P(self, value):
             if value < 0:
                 raise InputParameterError
