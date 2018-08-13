@@ -49,7 +49,6 @@ class ModifiedBlackBody(Model):
         self.mbb_temperature = read_map(map_mbb_temperature,
                                         nside)[None, :] * units.K
         self.nside = nside
-        return
 
     def get_emission(self, freqs):
         """ This function evaluates the component model at a either
@@ -88,7 +87,7 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
                  freq_ref_P=None, map_mbb_index=None, map_mbb_temperature=None,
                  nside=None, mpi_comm=None, correlation_length=None):
         """ See parent class for other documentation.
-
+        
         Parameters
         ----------
         correlation_length: float
@@ -101,7 +100,6 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
                                    freq_ref_P, map_mbb_index,
                                    map_mbb_temperature, nside, mpi_comm)
         self.correlation_length = correlation_length
-        return
 
     def get_emission(self, freqs):
         """ Function to calculate the emission of a decorrelated modified black

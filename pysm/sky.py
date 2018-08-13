@@ -13,7 +13,7 @@ class Sky(Model):
     component models. It acts like a single `pysm.Model` object, in that it
     is sub-classed from the `pysm.Model` template, and therefore has the same
     functionality.
-
+    
     Attributes
     ----------
     components: list(pysm.Model object)
