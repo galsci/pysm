@@ -83,7 +83,9 @@ class ModifiedBlackBody(Model):
                     Hz equivalency.""")
             self.__freq_ref_P = value
         
-    def get_emission(self, freqs):
+
+    @units.quantity_input
+    def get_emission(self, freqs: units.GHz) -> units.K:
         """ This function evaluates the component model at a either
         a single frequency, an array of frequencies, or over a bandpass.
 
@@ -114,6 +116,7 @@ class ModifiedBlackBody(Model):
                                        P_scal * self.U_ref))
             outputs.append(iqu_freq)
         return np.array(outputs)
+
 
 class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
     def __init__(self, map_I=None, map_Q=None, map_U=None, freq_ref_I=None,
@@ -156,17 +159,19 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
         # apply the decorrelation to the mbb_emission
         return decorr[..., None] * super().get_emission(freqs)
 
-
-def frequency_decorr_model(freqs, correlation_length):
+@units.quantity_input(freqs=units.GHz,
+                      correlation_length=units.dimensionless_unscaled)
+def frequency_decorr_model(freqs, correlation_length) -> units.dimensionless_unscaled:
     """ Function to calculate the frequency decorrelation method of
     Vansyngel+17.
     """
     log_dep = np.log(freqs[:, None] / freqs[None, :])
     return np.exp(- 0.5 * (log_dep / correlation_length) ** 2)
 
-
+@units.quantity_input(freq_constrained=units.GHz, freqs_constrained=units.GHz,
+                      correlation_length=units.dimensionless_unscaled)
 def get_decorrelation_matrix(freq_constrained, freqs_unconstrained,
-                             correlation_length):
+                             correlation_length) -> units.dimensionless_unscaled:
     """ Function to calculate the correlation matrix between observed
     frequencies. This model is based on the proposed model for decorrelation
     of Vanyngel+17. The proposed frequency covariance matrix in this paper
@@ -237,8 +242,8 @@ def invert_safe(matrix):
     winv = 1. / w
     return np.dot(v, np.dot(np.diag(winv), np.transpose(v)))
 
-
-def blackbody_ratio(freq_to, freq_from, temp):
+@units.quantity_input(freq_to=units.GHz, freq_from=units.GHz, temp=units.K)
+def blackbody_ratio(freq_to, freq_from, temp) -> units.dimensionless_unscaled:
     """ Function to calculate the flux ratio between two frequencies for a
     blackbody at a given temperature.
 
