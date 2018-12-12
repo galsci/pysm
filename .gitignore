@@ -1,110 +1,60 @@
-debug
-
-# Byte-compiled / optimized / DLL files
-__pycache__/
+# Compiled files
 *.py[cod]
-*$py.class
-
-# fits files
-*.fits
-
-# C extensions
+*.a
+*.o
 *.so
+__pycache__
 
-# Local backups
-**/*~
+# Ignore .c files by default to avoid including generated code. If you want to
+# add a non-generated .c extension, use `git add -f filename.c`.
+*.c
 
-# Distribution / packaging
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
+# Other generated files
+*/version.py
+*/cython_version.py
+htmlcov
 .coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*,cover
-.hypothesis/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
-
-# Jupyter Notebook
+MANIFEST
 .ipynb_checkpoints
 
-# pyenv
-.python-version
+# Sphinx
+docs/api
+docs/_build
 
-# celery beat schedule file
-celerybeat-schedule
+# Eclipse editor project files
+.project
+.pydevproject
+.settings
 
-# SageMath parsed files
-*.sage.py
+# Pycharm editor project files
+.idea
 
-# dotenv
-.env
+# Floobits project files
+.floo
+.flooignore
 
-# virtualenv
-.venv
-venv/
-ENV/
+# Packages/installer info
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+distribute-*.tar.gz
 
-# Spyder project settings
-.spyderproject
-.spyproject
+# Other
+.cache
+.tox
+.*.sw[op]
+*~
+.project
+.pydevproject
+.settings
 
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# vim
-*.swp
-*.swo
+# Mac OSX
+.DS_Store
