@@ -7,10 +7,13 @@ this template, ensuring that the new subclass has the required
 Objects:
     Model
 """
+import os.path
 import numpy as np
 import healpy as hp
 import astropy.units as units
 from astropy.io import fits
+from astropy.utils import data
+data.conf.dataurl = "https://healpy.github.io/pysm-data/"
 
 class Model(object):
     """ This is the template object for PySM objects."""
@@ -171,9 +174,10 @@ def read_map(path, nside, field=0):
         Numpy array containing HEALPix map in RING ordering.
     """
     # read map. Add `str()` operator in case dealing with `Path` object.
-    hdu = fits.open(str(path))
+    filename = data.get_pkg_data_filename(path)
+    hdu = fits.open(filename)
     unit_string = extract_hdu_unit(path)
-    inmap = hp.read_map(str(path), field=field, verbose=False)
+    inmap = hp.read_map(filename, field=field, verbose=False)
     return units.Quantity(hp.ud_grade(inmap, nside_out=nside), unit_string)
 
 
