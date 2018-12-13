@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/healpy/pysm.svg?branch=master)](https://travis-ci.org/healpy/pysm)
+
 # Models
 
   - Base class `Model`, subclasses `DustModel` etc. Customization
