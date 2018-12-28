@@ -1,8 +1,3 @@
-""" This submodule provides unit tests for the units
-module.
-"""
-import sys
-sys.path.append('/home/ben/Projects/PySM/PySM_public')
 from pathlib import Path
 import unittest
 import numpy as np

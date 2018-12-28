@@ -1,6 +1,4 @@
-import sys
 from pathlib import Path
-sys.path.append('/home/ben/Projects/PySM/PySM_public')
 import pysm
 import unittest
 import numpy as np

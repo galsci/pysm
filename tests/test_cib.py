@@ -1,5 +1,3 @@
-import sys
-sys.path.append('/home/ben/Projects/PySM/PySM_public')
 import unittest
 import numpy as np
 import healpy as hp
