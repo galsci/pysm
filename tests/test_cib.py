@@ -36,7 +36,6 @@ class TestInterpolatedCIB(unittest.TestCase):
         self.info_file_path().unlink()
         # remove temporary directory
         self.temp_dir.rmdir()
-        
         return
 
     def test_emission(self):
@@ -44,7 +43,7 @@ class TestInterpolatedCIB(unittest.TestCase):
                               info_file=self.info_file_path(),
                               nside=self.nside)
         test_interp = cib.get_emission(self.freqs_test)
-        np.assert_almost_equal(test_interp, self.test_samples)
+        np.testing.assert_almost_equal(test_interp, self.test_samples, decimal=2)
         return
 
     def save_maps(self):
@@ -54,15 +53,13 @@ class TestInterpolatedCIB(unittest.TestCase):
         return None
 
     def save_info_file(self):
-        path = self.info_file_path()
-        np.savetxt(path, self.freqs_sample.T)
+        np.savetxt(self.info_file_path(), self.freqs_sample.T)
         return None
     
     def info_file_path(self):
         return self.temp_dir / 'info_file.txt'
         
     def temp_cib_map_name(self, i):
-        print(i)
         return self.temp_dir / 'cib_map_{:04d}.fits'.format(i)
 
 def linear_sed(amp_maps, freqs, freq_0):

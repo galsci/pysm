@@ -151,7 +151,7 @@ def check_freq_input(freqs):
     return freqs * units.GHz
 
 
-def read_map(path, nside):
+def read_map(path, nside, field=0):
     """ Wrapper of `healpy.read_map` for PySM data.
 
     Parameters
@@ -168,5 +168,5 @@ def read_map(path, nside):
         Numpy array containing HEALPix map in RING ordering.
     """
     # read map. Add `str()` operator in case dealing with `Path` object.
-    inmap = hp.read_map(str(path), field=0, verbose=False)
+    inmap = hp.read_map(str(path), field=field, verbose=False)
     return hp.ud_grade(inmap, nside_out=nside)
