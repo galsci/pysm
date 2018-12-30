@@ -49,7 +49,7 @@ class TestInterpolatedCIB(unittest.TestCase):
     def save_maps(self):
         for i, _ in enumerate(self.freqs_sample):
             fpath = str(self.temp_cib_map_name(i))
-            hp.write_map(fpath, self.samples[i], overwrite=True)
+            hp.write_map(fpath, self.samples[i], column_units='uK_RJ', overwrite=True)
         return None
 
     def save_info_file(self):

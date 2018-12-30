@@ -56,7 +56,7 @@ class TestUnits(unittest.TestCase):
         reverse2 = cmb_from_rj.to(units.K_RJ, **equiv)
         self.assertEqual(1., self.T_CMB / reverse1)
         self.assertEqual(1., self.T_RJ / reverse2)        
-        
+
     def test_fits_unit_funcitonality(self):
         """ Test that the units can be written to the fits header. Check that
         they can be read in again and assigned to the data in that fits file

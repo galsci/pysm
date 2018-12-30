@@ -25,3 +25,4 @@ if not _ASTROPY_SETUP_:
 from .component_models import *
 from .sky import Sky
 from .presets import preset_models
+from . import units
