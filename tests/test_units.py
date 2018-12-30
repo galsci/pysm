@@ -15,10 +15,13 @@ class TestUnits(unittest.TestCase):
         self.temp_dir.mkdir(parents=True, exist_ok=True)
         self.temp_fits_file_RJ = self.temp_dir / 'test_RJ.fits'
         self.temp_fits_file_CMB = self.temp_dir / 'test_CMB.fits'
+        self.temp_fits_file_dimless = self.temp_dir / 'test_dimless.fits'
+        self.temp_fits_file_no_unit_hdr = self.temp_dir / 'test_no_hdr.fits'
         nside = 256
         npix = hp.nside2npix(nside)
         self.test_map_RJ = np.random.randn(npix) * units.K_RJ
         self.test_map_CMB = np.random.randn(npix) * units.K_CMB
+        self.test_map_dimless = units.Quantity(np.random.randn(npix), '')
 
     def tearDown(self):
         try:
@@ -27,6 +30,14 @@ class TestUnits(unittest.TestCase):
             pass
         try:
             self.temp_fits_file_CMB.unlink()
+        except FileNotFoundError:
+            pass
+        try:
+            self.temp_fits_file_dimless.unlink()
+        except FileNotFoundError:
+            pass
+        try:
+            self.temp_fits_file_no_unit_hdr.unlink()
         except FileNotFoundError:
             pass
         self.temp_dir.rmdir()
@@ -66,11 +77,20 @@ class TestUnits(unittest.TestCase):
                      column_units=self.test_map_RJ.unit.to_string('generic'))
         hp.write_map(str(self.temp_fits_file_CMB), self.test_map_CMB.value,
                      column_units=self.test_map_CMB.unit.to_string('generic'))
+        hp.write_map(str(self.temp_fits_file_dimless), self.test_map_dimless.value,
+                     column_units=self.test_map_dimless.unit.to_string('generic'))
+        hp.write_map(str(self.temp_fits_file_no_unit_hdr), self.test_map_dimless.value)
+
         cmb_in = read_map(str(self.temp_fits_file_CMB), 256)
         rj_in = read_map(str(self.temp_fits_file_RJ), 256)
+        dimless_in = read_map(str(self.temp_fits_file_dimless), 256)
+        no_unit_hdr = read_map(str(self.temp_fits_file_no_unit_hdr), 256)
         self.assertTrue(cmb_in.unit == units.K_CMB)
         self.assertTrue(rj_in.unit == units.K_RJ)
+        self.assertTrue(dimless_in.unit == units.dimensionless_unscaled)
+        self.assertTrue(no_unit_hdr.unit == units.dimensionless_unscaled)
         return
+
 
 if __name__ == '__main__':
     unittest.main()

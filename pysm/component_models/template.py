@@ -172,7 +172,6 @@ def read_map(path, nside, field=0):
     """
     # read map. Add `str()` operator in case dealing with `Path` object.
     hdu = fits.open(str(path))
-    print(hdu[1].header['TUNIT1'])
     unit_string = extract_hdu_unit(path)
     inmap = hp.read_map(str(path), field=field, verbose=False)
     return units.Quantity(hp.ud_grade(inmap, nside_out=nside), unit_string)
@@ -190,4 +189,9 @@ def extract_hdu_unit(path):
         String specifying the unit of the fits data.
     """
     hdul = fits.open(path)
-    return hdul[1].header['TUNIT1']
+    try:
+        unit = hdul[1].header['TUNIT1']
+    except KeyError:
+        # in the case that TUNIT1 does not exist, assume unitless quantity.
+        unit = ''
+    return unit
