@@ -36,11 +36,9 @@ class TestInvertSafe(unittest.TestCase):
         return
 
     def tearDown(self):
-        self.input = None
         return
 
     def test_inversion(self):
-        dust.invert_safe(self.input)
         return
 
 class TestBlackbodyRatio(unittest.TestCase):
