@@ -58,15 +58,16 @@ class TestUnits(unittest.TestCase):
         Here we calculate the RHS of this equation and compare it to the
         ratio of T_RJ and the result of its transformation to T_CMB.
         """
-        equiv = {'equivalencies': units.RJ_CMB_equiv(self.freqs)}
+        equiv = {'equivalencies': units.cmb_equivalencies(self.freqs)}
         rj_from_cmb = self.T_CMB.to(units.K_RJ, **equiv)
         cmb_from_rj = self.T_RJ.to(units.K_CMB, **equiv)
 
         # check that the reverse transformation gives overall transformation of unity.
         reverse1 = rj_from_cmb.to(units.K_CMB, **equiv)
         reverse2 = cmb_from_rj.to(units.K_RJ, **equiv)
-        self.assertEqual(1., self.T_CMB / reverse1)
-        self.assertEqual(1., self.T_RJ / reverse2)        
+
+        np.testing.assert_almost_equal(1., self.T_CMB / reverse1, decimal=6)
+        np.testing.assert_almost_equal(1., self.T_RJ / reverse2, decimal=6)        
 
     def test_fits_unit_funcitonality(self):
         """ Test that the units can be written to the fits header. Check that

@@ -14,44 +14,40 @@ import astropy.constants as const
 # only recognize the prefixes add by hand in `add_enabled_units`.
 # Would be good to find away of automatically adding all SI prefixes
 # to be recognized by astropy.
-def_unit(r'K_CMB', represents=K, namespace=globals(), prefixes=True,
+def_unit(r'K_CMB',
+         namespace=globals(),
+         prefixes=True,
          doc='Kelvin CMB: Thermodynamic temperature units.',
-         format={'generic': r'K_CMB'}) 
-add_enabled_units([uK_CMB, mK_CMB, K_CMB, kK_CMB, MK_CMB])
-def_unit(r'K_RJ', represents=K, namespace=globals(), prefixes=True,
-        doc='Kelvin Rayleigh-Jeans:  brightness temperature.',
-         format={'generic': r'K_RJ'})
-add_enabled_units([uK_RJ, mK_RJ, K_RJ, kK_RJ, MK_RJ])
+         format={
+             'generic': r'K_CMB',
+             'latex': 'K_{{CMB}}'},
+         
+) 
 
-@quantity_input(freqs=Hz)
-def RJ_CMB_equiv(freqs):
-    """ This function defines an equivalency between
-    thermodynamic units and brightness units. This is
-    function may be passed to the `Quantity.to` method
-    in order to convert between equivalent units.
+def_unit(r'K_RJ',
+         namespace=globals(),
+         prefixes=True,
+         doc='Kelvin Rayleigh-Jeans:  brightness temperature.',
+         format={
+             'generic': r'K_RJ',
+             'latex': 'K_{{RJ}}'
+         },
+)
 
-    Parameters
-    ----------
-    freqs: Quantity.GHz
-
-    Returns
-    -------
-    tuple
-        Returns tuple accepted by astrpy equivalencies.
-    """
-    cmb_mono = 2.7225 * K
-    prefactor = 2. * freqs ** 2. * const.k_B / const.c ** 2
-    prefactor *= 1. / planck_bb_der(cmb_mono, freqs)
+@quantity_input(equivalencies=spectral())
+def cmb_equivalencies(spec):
+    nu = spec.to(GHz, equivalencies=spectral())
+    [(_, _, Jy_to_CMB, CMB_to_Jy)] = thermodynamic_temperature(nu)
+    [(_, _, Jy_to_RJ, RJ_to_Jy)] = brightness_temperature(nu)
     def RJ_to_CMB(T_RJ):
-        return prefactor * T_RJ
+        return Jy_to_CMB(RJ_to_Jy(T_RJ))
     def CMB_to_RJ(T_CMB):
-        return T_CMB / prefactor
-    return [(K_RJ, K_CMB, RJ_to_CMB, CMB_to_RJ)]
+        return Jy_to_RJ(CMB_to_Jy(T_CMB))
+    return [
+        (K_RJ, K_CMB, RJ_to_CMB, CMB_to_RJ), 
+        (Jy / sr, K_RJ, Jy_to_RJ, RJ_to_Jy), 
+        (Jy / sr, K_CMB, Jy_to_CMB, CMB_to_Jy),
+    ]
 
-@quantity_input(temp=K, freqs=Hz)
-def planck_bb_der(temp, freqs):
-    """ Function to calculate the first derivative of the Planck
-    function for a given temperature.
-    """
-    ex = const.h * freqs / const.k_B / temp
-    return ex * np.exp(ex) / np.expm1(ex) * blackbody_nu(freqs, temp) / temp
+add_enabled_units([uK_RJ, mK_RJ, K_RJ, kK_RJ, MK_RJ])
+add_enabled_units([uK_CMB, mK_CMB, K_CMB, kK_CMB, MK_CMB])
