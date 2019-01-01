@@ -1,8 +1,11 @@
-""" This submodule contains the code used for the units
-system in PySM. We use the `astropy.units` module for
-the infrastructure of unit conversion. We add a unit,
-thermodynamic temperature, which is not in the standard
-set of units included with the package.
+""" Submodule containing definitions of units used in PySM
+that are not already contained within `astropy.units`. These are
+
+- K_RJ: Rayleigh-Jeans temperature
+- K_CMB: thermodynamic temperature
+
+We use the factory functions of `astropy.units` to define units
+that will work with the rest of astropy. 
 """
 from astropy.units import *
 
@@ -33,7 +36,26 @@ def_unit(r'K_RJ',
 
 @quantity_input(equivalencies=spectral())
 def cmb_equivalencies(spec):
+    """ Function defining the conversion between RJ, thermodynamic,
+    and flux units.
+
+    Parameters
+    ----------
+    spec: `astropy.Quantity`
+        Spectral quantity that may be converted to frequency. Frequency at which 
+        the conversion is to be calculated.
+
+    Returns
+    -------
+    list(tuple(unit_from, unit_to, forward, backward))
+        Returns a list of unit equivalencies, which are tuples containing the
+        units from and to which the conversion is applied, and the forward
+        and backward transformations.
+    """
     nu = spec.to(GHz, equivalencies=spectral())
+    # use the equivalencies for thermodynamic and RJ units already
+    # contained within astropy for conversion between spectral radiance
+    # and temperature.
     [(_, _, Jy_to_CMB, CMB_to_Jy)] = thermodynamic_temperature(nu)
     [(_, _, Jy_to_RJ, RJ_to_Jy)] = brightness_temperature(nu)
     def RJ_to_CMB(T_RJ):
