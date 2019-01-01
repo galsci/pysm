@@ -35,7 +35,7 @@ def_unit(r'K_RJ',
 )
 
 @quantity_input(equivalencies=spectral())
-def cmb_equivalencies(spec):
+def cmb_equivalencies(spec: GHz):
     """ Function defining the conversion between RJ, thermodynamic,
     and flux units.
 
