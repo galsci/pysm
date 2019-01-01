@@ -4,10 +4,7 @@ the infrastructure of unit conversion. We add a unit,
 thermodynamic temperature, which is not in the standard
 set of units included with the package.
 """
-import numpy as np
 from astropy.units import *
-from astropy.modeling.blackbody import blackbody_nu
-import astropy.constants as const
 
 # Define new thermodynamic and Rayleigh-Jeans units. This
 # is a little unsatisfying, as astropy.units.Quantity will
