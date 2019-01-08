@@ -13,11 +13,11 @@ import astropy.units as units
 from astropy.io import fits
 
 class Model(object):
-    """ This is the template object for PySM objects.
-    """
+    """ This is the template object for PySM objects."""
+
     def __init__(self, mpi_comm=None):
         """
-        Parameters:
+        Parameters
         ----------
         mpi_comm: object
             MPI communicator object (optional, default=None).
