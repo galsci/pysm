@@ -4,7 +4,9 @@ import healpy as hp
 from pathlib import Path
 from pysm.component_models.extragalactic.cib import InterpolatedCIB
 
+
 class TestInterpolatedCIB(unittest.TestCase):
+
     def setUp(self):
         """ Create some fake data that corresponds to a linear SED, which
         the linear interpolation should capture perfectly. Calculate the
@@ -23,7 +25,7 @@ class TestInterpolatedCIB(unittest.TestCase):
         self.samples = linear_sed(ref_amp_map, self.freqs_sample, freq_0)
         self.test_samples = linear_sed(ref_amp_map, self.freqs_test, freq_0)
         # save some of this data to a temporary directory.
-        self.temp_dir = Path(__file__).absolute().parent / 'temp_dir'
+        self.temp_dir = Path(__file__).absolute().parent / "temp_dir"
         self.temp_dir.mkdir(parents=True, exist_ok=True)
         self.save_info_file()
         self.save_maps()
@@ -39,9 +41,9 @@ class TestInterpolatedCIB(unittest.TestCase):
         return
 
     def test_emission(self):
-        cib = InterpolatedCIB(map_dir=self.temp_dir,
-                              info_file=self.info_file_path(),
-                              nside=self.nside)
+        cib = InterpolatedCIB(
+            map_dir=self.temp_dir, info_file=self.info_file_path(), nside=self.nside
+        )
         test_interp = cib.get_emission(self.freqs_test)
         np.testing.assert_almost_equal(test_interp, self.test_samples, decimal=2)
         return
@@ -49,18 +51,19 @@ class TestInterpolatedCIB(unittest.TestCase):
     def save_maps(self):
         for i, _ in enumerate(self.freqs_sample):
             fpath = str(self.temp_cib_map_name(i))
-            hp.write_map(fpath, self.samples[i], column_units='uK_RJ', overwrite=True)
+            hp.write_map(fpath, self.samples[i], column_units="uK_RJ", overwrite=True)
         return None
 
     def save_info_file(self):
         np.savetxt(self.info_file_path(), self.freqs_sample.T)
         return None
-    
+
     def info_file_path(self):
-        return self.temp_dir / 'info_file.txt'
-        
+        return self.temp_dir / "info_file.txt"
+
     def temp_cib_map_name(self, i):
-        return self.temp_dir / 'cib_map_{:04d}.fits'.format(i)
+        return self.temp_dir / "cib_map_{:04d}.fits".format(i)
+
 
 def linear_sed(amp_maps, freqs, freq_0):
     """ Function to make mock CIB maps using a linear SED. This is not 
@@ -83,5 +86,6 @@ def linear_sed(amp_maps, freqs, freq_0):
     """
     return amp_maps[None, :] * (freqs / freq_0)[:, None, None]
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

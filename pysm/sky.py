@@ -8,6 +8,7 @@ Objects:
 import numpy as np
 from .component_models import Model
 
+
 class Sky(Model):
     """ This class is a convenience object that wraps together a group of
     component models. It acts like a single `pysm.Model` object, in that it
@@ -19,8 +20,10 @@ class Sky(Model):
     components: list(pysm.Model object)
         List of `pysm.Model` objects.
     """
-    def __init__(self, nside=None, component_objects=None, preset_strings=None,
-                 mpi_comm=None):
+
+    def __init__(
+        self, nside=None, component_objects=None, preset_strings=None, mpi_comm=None
+    ):
         Model.__init__(self, mpi_comm=mpi_comm)
         if component_objects is not None:
             self.components = component_objects
@@ -30,14 +33,18 @@ class Sky(Model):
             # as `pysm.presets` contains an import of `pysm.Sky`, importing here
             # limits the circular nature of these imports.
             from .presets import preset_models
+
             try:
-                assert(isinstance(preset_strings, list))
+                assert isinstance(preset_strings, list)
             except AssertionError:
-                print("""pysm.Sky may take list of model strings when instantiated,
-                check input.""")
+                print(
+                    """pysm.Sky may take list of model strings when instantiated,
+                check input."""
+                )
                 raise
-            self.components = [preset_models(string, nside)
-                               for string in preset_strings]
+            self.components = [
+                preset_models(string, nside) for string in preset_strings
+            ]
         return
 
     def get_emission(self, nu):
