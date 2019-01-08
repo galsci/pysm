@@ -89,8 +89,9 @@ matrix:
         - os: linux
           env: ASTROPY_VERSION=development
                EVENT_TYPE='pull_request push cron'
-        - os: linux
-          env: ASTROPY_VERSION=lts
+        # astropy lts is not supported, we need at least 3.1
+        #- os: linux
+        #env: ASTROPY_VERSION=lts
 
         # Try all python versions and Numpy versions. Since we can assume that
         # the Numpy developers have taken care of testing Numpy with different
