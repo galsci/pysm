@@ -1,0 +1,1 @@
+from .cib import InterpolatedCIB

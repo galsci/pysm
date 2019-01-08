@@ -10,13 +10,14 @@ Objects:
 import numpy as np
 import healpy as hp
 import astropy.units as units
+from astropy.io import fits
 
 class Model(object):
-    """ This is the template object for PySM objects.
-    """
+    """ This is the template object for PySM objects."""
+
     def __init__(self, mpi_comm=None):
         """
-        Parameters:
+        Parameters
         ----------
         mpi_comm: object
             MPI communicator object (optional, default=None).
@@ -151,22 +152,46 @@ def check_freq_input(freqs):
     return freqs * units.GHz
 
 
-def read_map(path, nside):
-    """ Wrapper of `healpy.read_map` for PySM data.
-
+def read_map(path, nside, field=0):
+    """ Wrapper of `healpy.read_map` for PySM data. This function also extracts
+    the units from the fits HDU and applies them to the data array to form an
+    `astropy.units.Quantity` object.
+    This function requires that the fits file contains a TUNIT key for each
+    populated field.
     Parameters
     ----------
     path: object `pathlib.Path`, or str
         Path of HEALPix map to be read.
-    nsidE: int
+    nside: int
         Resolution at which to return map. Map is read in at whatever resolution
         it is stored, and `healpy.ud_grade` is applied.
-
     Returns
     -------
     ndarray
         Numpy array containing HEALPix map in RING ordering.
     """
     # read map. Add `str()` operator in case dealing with `Path` object.
-    inmap = hp.read_map(str(path), field=0, verbose=False)
-    return hp.ud_grade(inmap, nside_out=nside)
+    hdu = fits.open(str(path))
+    unit_string = extract_hdu_unit(path)
+    inmap = hp.read_map(str(path), field=field, verbose=False)
+    return units.Quantity(hp.ud_grade(inmap, nside_out=nside), unit_string)
+
+
+def extract_hdu_unit(path):
+    """ Function to extract unit from an hdu.
+    Parameters
+    ----------
+    path: Path object
+        Path to the fits file.
+    Returns
+    -------
+    string
+        String specifying the unit of the fits data.
+    """
+    hdul = fits.open(path)
+    try:
+        unit = hdul[1].header['TUNIT1']
+    except KeyError:
+        # in the case that TUNIT1 does not exist, assume unitless quantity.
+        unit = ''
+    return unit
