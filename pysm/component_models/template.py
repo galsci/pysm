@@ -174,9 +174,11 @@ def read_map(path, nside, field=0):
         Numpy array containing HEALPix map in RING ordering.
     """
     # read map. Add `str()` operator in case dealing with `Path` object.
-    filename = data.get_pkg_data_filename(path)
-    hdu = fits.open(filename)
-    unit_string = extract_hdu_unit(path)
+    if os.path.exists(path):
+        filename = str(path)
+    else:
+        filename = data.get_pkg_data_filename(path)
+    unit_string = extract_hdu_unit(filename)
     inmap = hp.read_map(filename, field=field, verbose=False)
     return units.Quantity(hp.ud_grade(inmap, nside_out=nside), unit_string)
 
