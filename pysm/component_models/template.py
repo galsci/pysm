@@ -175,7 +175,7 @@ def read_map(path, nside, field=0):
         Numpy array containing HEALPix map in RING ordering.
     """
     # read map. Add `str()` operator in case dealing with `Path` object.
-    if os.path.exists(path):
+    if os.path.exists(str(path)):  # Python 3.5 requires turning a Path object to str
         filename = str(path)
     else:
         filename = data.get_pkg_data_filename(path)
