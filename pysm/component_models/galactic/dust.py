@@ -1,6 +1,6 @@
 import numpy as np
 from astropy.modeling.blackbody import blackbody_nu
-import astropy.units as units
+from ... import units
 from pathlib import Path
 from ..template import Model, check_freq_input, read_map
 
@@ -44,8 +44,8 @@ class ModifiedBlackBody(Model):
         self.I_ref = read_map(map_I, nside)[None, :] * units.uK
         self.Q_ref = read_map(map_Q, nside)[None, :] * units.uK
         self.U_ref = read_map(map_U, nside)[None, :] * units.uK
-        self.freq_ref_I = freq_ref_I * units.GHz
-        self.freq_ref_P = freq_ref_P * units.GHz
+        self.freq_ref_I = float(freq_ref_I) * units.GHz
+        self.freq_ref_P = float(freq_ref_P) * units.GHz
         self.mbb_index = read_map(map_mbb_index, nside)[None, :]
         self.mbb_temperature = read_map(map_mbb_temperature,
                                         nside)[None, :] * units.K
@@ -85,7 +85,7 @@ class ModifiedBlackBody(Model):
         
 
     @units.quantity_input
-    def get_emission(self, freqs: units.GHz) -> units.K:
+    def get_emission(self, freqs: units.GHz) -> units.uK_RJ:
         """ This function evaluates the component model at a either
         a single frequency, an array of frequencies, or over a bandpass.
 
@@ -115,7 +115,7 @@ class ModifiedBlackBody(Model):
                                        P_scal * self.Q_ref,
                                        P_scal * self.U_ref))
             outputs.append(iqu_freq)
-        return np.array(outputs)
+        return np.array(outputs) * units.uK_RJ
 
 
 class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
