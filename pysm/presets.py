@@ -35,7 +35,7 @@ def preset_models(model_string, nside):
     -----
     The full list of available models in this function is:
     """
-    config = PRESET_MODELS[model_string]
+    config = PRESET_MODELS[model_string].copy()
     try:
         class_name = config.pop("class")
     except KeyError:  # multiple components
