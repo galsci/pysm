@@ -37,8 +37,8 @@ env:
         
         # List runtime dependencies for the package that are available as conda
         # packages here.
-        - CONDA_DEPENDENCIES='healpy'
-        - CONDA_DEPENDENCIES_DOC='healpy sphinx-astropy'
+        - CONDA_DEPENDENCIES='configobj healpy'
+        - CONDA_DEPENDENCIES_DOC='configobj healpy sphinx-astropy'
         
         # List other runtime dependencies for the package that are available as
         # pip packages here.

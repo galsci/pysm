@@ -2,3 +2,4 @@ healpy
 astropy>=3.1
 scipy
 numpy
+configobj
