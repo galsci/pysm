@@ -36,7 +36,17 @@ def preset_models(model_string, nside):
     The full list of available models in this function is:
     """
     config = PRESET_MODELS[model_string]
-    class_name = config.pop("class")
-    component_class = globals()[class_name]
-    return component_class(**config, nside=nside)
+    try:
+        class_name = config.pop("class")
+    except KeyError:  # multiple components
+        components = []
+        for each_config in config.itervalues():
+            class_name = each_config.pop("class")
+            component_class = globals()[class_name]
+            components.append(component_class(**each_config, nside=nside))
+        output_component = Sky(component_objects=components, nside=nside)
+    else:
+        component_class = globals()[class_name]
+        output_component = component_class(**config, nside=nside)
+    return output_component
 
