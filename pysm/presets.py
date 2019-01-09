@@ -10,10 +10,11 @@ from pathlib import Path
 from .component_models import ModifiedBlackBody, DecorrelatedModifiedBlackBody, SynchrotronPowerLaw
 from .sky import Sky
 from configobj import ConfigObj
+from .constants import DATAURL
 from astropy.utils import data
-data.conf.dataurl = "https://healpy.github.io/pysm-data/"
 
-PRESET_MODELS = ConfigObj(data.get_pkg_data_filename("data/presets.cfg"))
+with data.conf.set_temp("dataurl", DATAURL):
+    PRESET_MODELS = ConfigObj(data.get_pkg_data_filename("data/presets.cfg"))
 
 def preset_models(model_string, nside):
     """ Function to take a given model string, and nside, and construct

@@ -14,7 +14,7 @@ import healpy as hp
 import astropy.units as units
 from astropy.io import fits
 from astropy.utils import data
-data.conf.dataurl = "https://healpy.github.io/pysm-data/"
+from ..constants import DATAURL
 
 class Model(object):
     """ This is the template object for PySM objects."""
@@ -178,7 +178,8 @@ def read_map(path, nside, field=0):
     if os.path.exists(str(path)):  # Python 3.5 requires turning a Path object to str
         filename = str(path)
     else:
-        filename = data.get_pkg_data_filename(path)
+        with data.conf.set_temp("dataurl", DATAURL), data.conf.set_temp("remote_timeout", 30):
+            filename = data.get_pkg_data_filename(path)
     unit_string = extract_hdu_unit(filename)
     inmap = hp.read_map(filename, field=field, verbose=False)
     return units.Quantity(hp.ud_grade(inmap, nside_out=nside), unit_string)

@@ -2,12 +2,6 @@ import unittest
 import numpy as np
 import pysm
 
-# FIXME find a way to define astropy.utils.data configuration package-wide
-from astropy.utils import data
-
-data.conf.dataurl = "https://healpy.github.io/pysm-data/"
-data.conf.remote_timeout = 30
-
 import pytest
 
 
