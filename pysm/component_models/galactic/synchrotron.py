@@ -57,8 +57,8 @@ class SynchrotronPowerLaw(Model):
         freqs = check_freq_input(freqs)
         outputs = []
         for freq in freqs:
-            I_scal = (freq / self.freq_ref_I) ** self.mbb_index
-            P_scal = (freq / self.freq_ref_P) ** self.mbb_index
+            I_scal = (freq / self.freq_ref_I) ** self.pl_index
+            P_scal = (freq / self.freq_ref_P) ** self.pl_index
             iqu_freq = np.concatenate((I_scal * self.I_ref,
                                        P_scal * self.Q_ref,
                                        P_scal * self.U_ref))
