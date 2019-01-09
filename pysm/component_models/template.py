@@ -7,6 +7,7 @@ this template, ensuring that the new subclass has the required
 Objects:
     Model
 """
+import warnings
 import os.path
 import numpy as np
 import healpy as hp
@@ -200,4 +201,5 @@ def extract_hdu_unit(path):
     except KeyError:
         # in the case that TUNIT1 does not exist, assume unitless quantity.
         unit = ''
+        warnings.warn("No physical unit associated with file " + str(path))
     return unit
