@@ -157,21 +157,23 @@ def check_freq_input(freqs):
 
 
 def read_map(path, nside, field=0):
-    """ Wrapper of `healpy.read_map` for PySM data. This function also extracts
+    """Wrapper of `healpy.read_map` for PySM data. This function also extracts
     the units from the fits HDU and applies them to the data array to form an
     `astropy.units.Quantity` object.
     This function requires that the fits file contains a TUNIT key for each
     populated field.
+
     Parameters
     ----------
-    path: object `pathlib.Path`, or str
+    path : object `pathlib.Path`, or str
         Path of HEALPix map to be read.
-    nside: int
+    nside : int
         Resolution at which to return map. Map is read in at whatever resolution
         it is stored, and `healpy.ud_grade` is applied.
+
     Returns
     -------
-    ndarray
+    map : ndarray
         Numpy array containing HEALPix map in RING ordering.
     """
     # read map. Add `str()` operator in case dealing with `Path` object.
