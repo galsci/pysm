@@ -1,116 +1,56 @@
-import unittest
+import pytest
 import numpy as np
+import pysm
 import pysm.component_models.galactic.dust as dust
 import astropy.units as units
 from astropy.units import UnitsError
 
 
-class TestModifiedBlackBody(unittest.TestCase):
+def test_blackbody_ratio():
+    nu_from = 100. * units.GHz
+    nu_to = 400. * units.GHz
+    temp = 20. * units.K
 
-    def setUp(self):
-        return
+    nu_from_unitless = 100.
+    nu_to_unitless = 400.
+    temp_unitless = 20.
 
-    def tearDown(self):
-        return
+    nu_from_wrong_unit = 100. * units.K
+    nu_to_wrong_unit = 400. * units.K
+    temp_wrong_unit = 20. * units.s
 
-    def test_emission(self):
-        return
-
-
-class TestDecorrelatedModifiedBlackBody(unittest.TestCase):
-
-    def setUp(self):
-        return
-
-    def tearDown(self):
-        return
-
-    def test_emission(self):
-        return
-
-
-class TestDecorrelationMatrices(unittest.TestCase):
-
-    def setUp(self):
-        return
-
-    def tearDown(self):
-        return
+    dust.blackbody_ratio(nu_to, nu_from, temp)
+    dust.blackbody_ratio(nu_to, nu_from, temp)
+    with pytest.raises(UnitsError):
+        dust.blackbody_ratio(nu_to, nu_from_wrong_unit, temp)
+    with pytest.raises(TypeError):
+        dust.blackbody_ratio(nu_to, nu_from_unitless, temp)
+    with pytest.raises(units.UnitsError):
+        dust.blackbody_ratio(nu_to_wrong_unit, nu_from, temp)
+    with pytest.raises(TypeError):
+        dust.blackbody_ratio(nu_to_unitless, nu_from, temp)
+    with pytest.raises(units.UnitsError):
+        dust.blackbody_ratio(nu_to, nu_from, temp_wrong_unit)
+    with pytest.raises(TypeError):
+        dust.blackbody_ratio(nu_to, nu_from, temp_unitless)
 
 
-class TestInvertSafe(unittest.TestCase):
+@pytest.mark.parametrize("freq", [30, 100, 353])
+@pytest.mark.parametrize("model_tag", ["d1"])
+# @pytest.mark.parametrize("model_tag", ["d1", "d2", "d3"]) # FIXME activate testing for other models
+def test_dust_model(model_tag, freq):
 
-    def setUp(self):
-        return
+    model = pysm.preset_models(model_tag, nside=64)
 
-    def tearDown(self):
-        return
+    model_number = {"d1": 1, "d2": 6, "d3": 9}[model_tag]
+    expected_output = pysm.read_map(
+        "pysm_2_test_data/check{}therm_{}p0_64.fits".format(model_number, freq),
+        64,
+        field=(0, 1, 2),
+    )
 
-    def test_inversion(self):
-        return
+    frac_error = (expected_output - model.get_emission(freq * units.GHz)) / expected_output
 
-
-class TestBlackbodyRatio(unittest.TestCase):
-
-    def setUp(self):
-        self.nu_from = 100. * units.GHz
-        self.nu_to = 400. * units.GHz
-        self.temp = 20. * units.K
-
-        self.nu_from_unitless = 100.
-        self.nu_to_unitless = 400.
-        self.temp_unitless = 20.
-
-        self.nu_from_wrong_unit = 100. * units.K
-        self.nu_to_wrong_unit = 400. * units.K
-        self.temp_wrong_unit = 20. * units.s
-
-    def test_blackbody_ratio(self):
-        dust.blackbody_ratio(self.nu_to, self.nu_from, self.temp)
-        dust.blackbody_ratio(self.nu_to, self.nu_from, self.temp)
-        self.assertRaises(
-            UnitsError,
-            dust.blackbody_ratio,
-            self.nu_to,
-            self.nu_from_wrong_unit,
-            self.temp,
-        )
-        self.assertRaises(
-            TypeError,
-            dust.blackbody_ratio,
-            self.nu_to,
-            self.nu_from_unitless,
-            self.temp,
-        )
-        self.assertRaises(
-            units.UnitsError,
-            dust.blackbody_ratio,
-            self.nu_to_wrong_unit,
-            self.nu_from,
-            self.temp,
-        )
-        self.assertRaises(
-            TypeError,
-            dust.blackbody_ratio,
-            self.nu_to_unitless,
-            self.nu_from,
-            self.temp,
-        )
-        self.assertRaises(
-            units.UnitsError,
-            dust.blackbody_ratio,
-            self.nu_to,
-            self.nu_from,
-            self.temp_wrong_unit,
-        )
-        self.assertRaises(
-            TypeError,
-            dust.blackbody_ratio,
-            self.nu_to,
-            self.nu_from,
-            self.temp_unitless,
-        )
-
-
-if __name__ == "__main__":
-    unittest.main()
+    np.testing.assert_array_almost_equal(
+        frac_error, np.zeros_like(frac_error), decimal=6
+    )

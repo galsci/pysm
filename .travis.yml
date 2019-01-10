@@ -31,14 +31,14 @@ env:
         - NUMPY_VERSION=stable
         - ASTROPY_VERSION=stable
         - MAIN_CMD='python setup.py'
-        - SETUP_CMD='test'
+        - SETUP_CMD='test -V'
         - EVENT_TYPE='pull_request push'
 
         
         # List runtime dependencies for the package that are available as conda
         # packages here.
-        - CONDA_DEPENDENCIES='healpy'
-        - CONDA_DEPENDENCIES_DOC='healpy sphinx-astropy'
+        - CONDA_DEPENDENCIES='configobj healpy'
+        - CONDA_DEPENDENCIES_DOC='configobj healpy sphinx-astropy'
         
         # List other runtime dependencies for the package that are available as
         # pip packages here.
@@ -73,7 +73,6 @@ matrix:
     include:
         # Try MacOS X
         - os: osx
-          env: SETUP_CMD='test'
 
         # Do a coverage test.
         - os: linux
