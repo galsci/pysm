@@ -19,7 +19,7 @@ def test_synchrotron_model(model, freq):
         field=(0, 1, 2),
     ).value
 
-    model_frac_diff = (synch - synchrotron.get_emission(freq)) / synch
+    model_frac_diff = (synch - synchrotron.get_emission(freq * pysm.units.GHz)) / synch
 
     np.testing.assert_array_almost_equal(
         model_frac_diff, np.zeros_like(model_frac_diff), decimal=6

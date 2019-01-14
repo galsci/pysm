@@ -1,5 +1,6 @@
 import numpy as np
-import astropy.units as units
+import healpy as hp
+from ... import units
 from ..template import Model, check_freq_input, read_map
 
 class SynchrotronPowerLaw(Model):
@@ -27,14 +28,17 @@ class SynchrotronPowerLaw(Model):
             Resolution parameter at which this model is to be calculated.
         """
         Model.__init__(self, mpi_comm)
-        # do model setup
-        self.I_ref = read_map(map_I, nside)[None, :] * units.uK
-        self.Q_ref = read_map(map_Q, nside)[None, :] * units.uK
-        self.U_ref = read_map(map_U, nside)[None, :] * units.uK
-        self.freq_ref_I = freq_ref_I * units.GHz
-        self.freq_ref_P = freq_ref_P * units.GHz
-        self.pl_index = read_map(map_pl_index, nside)[None, :]
-        self.nside = nside
+        self.__pl_index = read_map(map_pl_index, nside) * units.dimensionless_unscaled
+
+        freq_ref_I = float(freq_ref_I) * units.GHz
+        freq_ref_P = float(freq_ref_P) * units.GHz
+        self.__iqu_ref_freqs = units.Quantity([freq_ref_I] + 2 * [freq_ref_P])
+
+        npix = hp.nside2npix(nside)
+        self.__iqu_ref = np.empty((3, npix)) * units.uK_RJ
+        self.__iqu_ref[0] = read_map(map_I, nside) * units.uK_RJ
+        self.__iqu_ref[1] = read_map(map_Q, nside) * units.uK_RJ
+        self.__iqu_ref[2] = read_map(map_U, nside) * units.uK_RJ
         return
 
     def get_emission(self, freqs):
@@ -53,14 +57,29 @@ class SynchrotronPowerLaw(Model):
             Set of maps at the given frequency or frequencies. This will have
             shape (nfreq, 3, npix).
         """
+        freqs = freqs.to(units.GHz, equivalencies=units.spectral())
         # freqs must be given in GHz.
         freqs = check_freq_input(freqs)
-        outputs = []
-        for freq in freqs:
-            I_scal = (freq / self.freq_ref_I) ** self.pl_index
-            P_scal = (freq / self.freq_ref_P) ** self.pl_index
-            iqu_freq = np.concatenate((I_scal * self.I_ref,
-                                       P_scal * self.Q_ref,
-                                       P_scal * self.U_ref))
-            outputs.append(iqu_freq)
-        return np.array(outputs)
+        # calculate scaling, shape is (nfreqs, npol, npix)
+        scaling = pl_sed(freqs[:, None, None], self.__iqu_ref_freqs[None, :, None],
+                         self.__pl_index[None, None, :])
+        # calculate scaled templates, shape is (nfreqs, npol, npix)
+        return scaling * self.__iqu_ref[None, ...]
+
+@units.quantity_input(freqs_to=units.GHz, freqs_from=units.GHz, index=units.dimensionless_unscaled)
+def pl_sed(freqs_to, freqs_from, index) -> units.dimensionless_unscaled:
+    """ Power law SED.
+
+    Parameters
+    ----------
+    freqs_to: Quantity
+    freqs_from: Quantity
+    index: Quantity
+
+    Returns
+    -------
+    Quantity
+    """
+    freqs_to = freqs_to.to(units.GHz, equivalencies=units.spectral())
+    freqs_from = freqs_from.to(units.GHz, equivalencies=units.spectral())
+    return (freqs_to / freqs_from) ** index

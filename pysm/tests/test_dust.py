@@ -18,7 +18,7 @@ def test_blackbody_ratio():
     nu_from_wrong_unit = 100. * units.K
     nu_to_wrong_unit = 400. * units.K
     temp_wrong_unit = 20. * units.s
-
+    
     dust.blackbody_ratio(nu_to, nu_from, temp)
     dust.blackbody_ratio(nu_to, nu_from, temp)
     with pytest.raises(UnitsError):
