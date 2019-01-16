@@ -41,7 +41,8 @@ class SynchrotronPowerLaw(Model):
         self.__iqu_ref[2] = read_map(map_U, nside) * units.uK_RJ
         return
 
-    def get_emission(self, freqs):
+    @units.quantity_input(freqs=units.GHz, equivalencies=units.spectral())
+    def get_emission(self, freqs) -> units.uK_RJ:
         """ This function evaluates the component model at a either
         a single frequency, an array of frequencies, or over a bandpass.
 
@@ -57,18 +58,17 @@ class SynchrotronPowerLaw(Model):
             Set of maps at the given frequency or frequencies. This will have
             shape (nfreq, 3, npix).
         """
-        freqs = freqs.to(units.GHz, equivalencies=units.spectral())
-        # freqs must be given in GHz.
+        # ensure freqs in units of GHz, and reshape scalars to one dimensional array.
         freqs = check_freq_input(freqs)
-        # calculate scaling, shape is (nfreqs, npol, npix)
-        scaling = pl_sed(freqs[:, None, None], self.__iqu_ref_freqs[None, :, None],
-                         self.__pl_index[None, None, :])
         # calculate scaled templates, shape is (nfreqs, npol, npix)
-        return scaling * self.__iqu_ref[None, ...]
+        return pl_sed(freqs[:, None, None], self.__iqu_ref_freqs[None, :, None],
+                      self.__pl_index[None, None, :]) * self.__iqu_ref[None, ...]
 
 @units.quantity_input(freqs_to=units.GHz, freqs_from=units.GHz, index=units.dimensionless_unscaled)
 def pl_sed(freqs_to, freqs_from, index) -> units.dimensionless_unscaled:
     """ Power law SED.
+
+    FIXME: need to decide on how to make units of scaling explicit. i.e. whether index is beta or beta-2
 
     Parameters
     ----------

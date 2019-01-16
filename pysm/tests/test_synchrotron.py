@@ -1,8 +1,7 @@
-import unittest
+import pytest
 import numpy as np
 import pysm
-
-import pytest
+import pysm.units as units
 
 
 @pytest.mark.parametrize("freq", [30, 100, 353])
@@ -17,7 +16,7 @@ def test_synchrotron_model(model, freq):
         "pysm_2_test_data/check{}synch_{}p0_64.fits".format(model_number, freq),
         64,
         field=(0, 1, 2),
-    ).value
+    )
 
     model_frac_diff = (synch - synchrotron.get_emission(freq * pysm.units.GHz)) / synch
 
