@@ -2,11 +2,23 @@ import numpy as np
 import astropy.units as units
 from ..template import Model, check_freq_input
 
+
 class SynchrotronPowerLaw(Model):
     """ This is a model for a simple power law synchrotron model.
     """
-    def __init__(self, map_I=None, map_Q=None, map_U=None, freq_ref_I=None,
-                 freq_ref_P=None, map_pl_index=None, nside=None, mpi_comm=None):
+
+    def __init__(
+        self,
+        map_I,
+        map_Q,
+        map_U,
+        freq_ref_I,
+        freq_ref_P,
+        map_pl_index,
+        nside,
+        pixel_indices=None,
+        mpi_comm=None,
+    ):
         """ This function initialzes the power law model of synchrotron
         emission.
 
@@ -26,7 +38,7 @@ class SynchrotronPowerLaw(Model):
         nside: int
             Resolution parameter at which this model is to be calculated.
         """
-        Model.__init__(self, mpi_comm, nside)
+        super().__init__(nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
         # do model setup
         self.I_ref = self.read_map(map_I)[None, :] * units.uK
         self.Q_ref = self.read_map(map_Q)[None, :] * units.uK
@@ -58,8 +70,8 @@ class SynchrotronPowerLaw(Model):
         for freq in freqs:
             I_scal = (freq / self.freq_ref_I) ** self.pl_index
             P_scal = (freq / self.freq_ref_P) ** self.pl_index
-            iqu_freq = np.concatenate((I_scal * self.I_ref,
-                                       P_scal * self.Q_ref,
-                                       P_scal * self.U_ref))
+            iqu_freq = np.concatenate(
+                (I_scal * self.I_ref, P_scal * self.Q_ref, P_scal * self.U_ref)
+            )
             outputs.append(iqu_freq)
         return np.array(outputs)

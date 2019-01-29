@@ -20,7 +20,7 @@ from ..constants import DATAURL
 class Model(object):
     """ This is the template object for PySM objects."""
 
-    def __init__(self, mpi_comm=None, nside=None, pixel_indices=None):
+    def __init__(self, nside, pixel_indices=None, mpi_comm=None):
         """
         Parameters
         ----------
@@ -30,71 +30,22 @@ class Model(object):
             Resolution parameter at which this model is to be calculated.
         """
         self.nside = nside
+        assert nside is not None
         self.mpi_comm = mpi_comm
         self.pixel_indices = pixel_indices
         return
 
     def read_map(self, path, field=0):
-        """Wrapper of `healpy.read_map` for PySM data. This function also extracts
-        the units from the fits HDU and applies them to the data array to form an
-        `astropy.units.Quantity` object.
-        This function requires that the fits file contains a TUNIT key for each
-        populated field.
-
-        Parameters
-        ----------
-        path : object `pathlib.Path`, or str
-            Path of HEALPix map to be read.
-        nside : int
-            Resolution at which to return map. Map is read in at whatever resolution
-            it is stored, and `healpy.ud_grade` is applied.
-
-        Returns
-        -------
-        map : ndarray
-            Numpy array containing HEALPix map in RING ordering.
+        """Wrapper of the PySM read_map function that automatically
+        uses nside, pixel_indices and mpi_comm defined in this Model
         """
-        # read map. Add `str()` operator in case dealing with `Path` object.
-        if os.path.exists(
-            str(path)
-        ):  # Python 3.5 requires turning a Path object to str
-            filename = str(path)
-        else:
-            with data.conf.set_temp("dataurl", DATAURL), data.conf.set_temp(
-                "remote_timeout", 30
-            ):
-                filename = data.get_pkg_data_filename(path)
-        # inmap = hp.read_map(filename, field=field, verbose=False)
-        if (self.mpi_comm is not None and self.mpi_comm.rank == 0) or (
-            self.mpi_comm is None
-        ):
-            output_map = hp.ud_grade(
-                hp.read_map(filename, field=field, verbose=False), nside_out=self.nside
-            )
-            unit_string = extract_hdu_unit(filename)
-        elif self.mpi_comm is not None and self.mpi_comm.rank > 0:
-            npix = hp.nside2npix(self.nside)
-            try:
-                ncomp = len(field)
-            except TypeError:  # field is int
-                ncomp = 1
-            shape = npix if ncomp == 1 else (len(field), npix)
-            output_map = np.empty(shape, dtype=np.float64)
-
-        if self.mpi_comm is not None:
-            self.mpi_comm.Bcast(output_map, root=0)
-            unit_string = self.mpi_comm.bcast(unit_string, root=0)
-
-        if self.pixel_indices is None:
-            return output_map
-        else:
-            try:  # multiple components
-                return u.Quantity(
-                    np.array([each[self.pixel_indices] for each in output_map]),
-                    unit_string,
-                )
-            except IndexError:  # single component
-                return u.Quantity(output_map[self.pixel_indices], unit_string)
+        return read_map(
+            path,
+            self.nside,
+            field=field,
+            pixel_indices=self.pixel_indices,
+            mpi_comm=self.mpi_comm,
+        )
 
     def apply_bandpass(self, bpasses):
         """ Method to calculate the emission averaged over a bandpass.
@@ -245,3 +196,59 @@ def extract_hdu_unit(path):
         unit = ""
         warnings.warn("No physical unit associated with file " + str(path))
     return unit
+
+
+def read_map(path, nside, field=0, pixel_indices=None, mpi_comm=None):
+    """Wrapper of `healpy.read_map` for PySM data. This function also extracts
+    the units from the fits HDU and applies them to the data array to form an
+    `astropy.units.Quantity` object.
+    This function requires that the fits file contains a TUNIT key for each
+    populated field.
+
+    Parameters
+    ----------
+    path : object `pathlib.Path`, or str
+        Path of HEALPix map to be read.
+    nside : int
+        Resolution at which to return map. Map is read in at whatever resolution
+        it is stored, and `healpy.ud_grade` is applied.
+
+    Returns
+    -------
+    map : ndarray
+        Numpy array containing HEALPix map in RING ordering.
+    """
+    # read map. Add `str()` operator in case dealing with `Path` object.
+    if os.path.exists(str(path)):  # Python 3.5 requires turning a Path object to str
+        filename = str(path)
+    else:
+        with data.conf.set_temp("dataurl", DATAURL), data.conf.set_temp(
+            "remote_timeout", 30
+        ):
+            filename = data.get_pkg_data_filename(path)
+    # inmap = hp.read_map(filename, field=field, verbose=False)
+    if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
+        output_map = hp.ud_grade(
+            hp.read_map(filename, field=field, verbose=False), nside_out=nside
+        )
+        unit_string = extract_hdu_unit(filename)
+    elif mpi_comm is not None and mpi_comm.rank > 0:
+        npix = hp.nside2npix(nside)
+        try:
+            ncomp = len(field)
+        except TypeError:  # field is int
+            ncomp = 1
+        shape = npix if ncomp == 1 else (len(field), npix)
+        output_map = np.empty(shape, dtype=np.float64)
+
+    if mpi_comm is not None:
+        mpi_comm.Bcast(output_map, root=0)
+        unit_string = mpi_comm.bcast(unit_string, root=0)
+
+    if pixel_indices is not None:
+        try:  # multiple components
+            output_map = np.array([each[pixel_indices] for each in output_map])
+        except IndexError:  # single component
+            return output_map[pixel_indices]
+
+    return u.Quantity(output_map, unit_string)

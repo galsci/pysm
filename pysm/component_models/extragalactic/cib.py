@@ -8,14 +8,15 @@ import numpy as np
 import healpy as hp
 import matplotlib.pyplot as plt
 from pathlib import Path
-from ..template import Model, check_freq_input, read_map
+from ..template import Model, check_freq_input
+
 
 class InterpolatedCIB(Model):
     """ Model for CIB relying on interpolation between frequency samples
     of hydrodynamical simulations.
     """
-    def __init__(self, map_dir=None, info_file=None, nside=None,
-                 mpi_comm=None):
+
+    def __init__(self, map_dir=None, info_file=None, nside=None, pixel_indices=None, mpi_comm=None):
         """ 
         Parameters
         ----------
@@ -28,16 +29,16 @@ class InterpolatedCIB(Model):
             map is defined, and second the corresponding filename for the
             fits file containing the IQU maps at that frequency.
         """
-        Model.__init__(self, mpi_comm)
+        super().__init__(nside, pixel_indices=pixel_indices,mpi_comm=mpi_comm)
         try:
-            assert(isinstance(map_dir, Path))
+            assert isinstance(map_dir, Path)
         except AssertionError:
             print("map_dir must be an instance of pathlib.Path")
             raise
         # read in the metadata
         (freqs, cib_map_paths) = self.read_metadata(map_dir, info_file)
         # read in the CIB maps for each frequency
-        cib_maps = [read_map(path, nside, field=(0, 1, 2)) for path in cib_map_paths]
+        cib_maps = [self.read_map(path, field=(0, 1, 2)) for path in cib_map_paths]
         # do the interpolation using a linear interpolation method from
         # `scipy.interpolate.interp1d`. We choose to return 0 outside of
         # the frequency range for which the maps are provided, instead of
@@ -49,8 +50,9 @@ class InterpolatedCIB(Model):
         """ 
         """
         freqs = np.loadtxt(info_file)
-        map_fpaths = [map_dir / 'cib_map_{:04d}.fits'.format(i)
-                      for i, _ in enumerate(freqs)]
+        map_fpaths = [
+            map_dir / "cib_map_{:04d}.fits".format(i) for i, _ in enumerate(freqs)
+        ]
         return (freqs, map_fpaths)
 
     def get_emission(self, freqs):
@@ -58,7 +60,8 @@ class InterpolatedCIB(Model):
         """
         freqs = check_freq_input(freqs)
         return self.interp_sed(freqs)
-    
+
+
 def interpolate_cib_maps(freqs, cib_map_arr):
     """ Function to take a set of CIB maps and compute a linear spline
     interpolation between them.
@@ -78,5 +81,11 @@ def interpolate_cib_maps(freqs, cib_map_arr):
         of shape (3, npix), corresponding to the CIB emission at that
         that frequency.
     """
-    return interp1d(freqs, cib_map_arr, axis=0, kind='linear',
-                    bounds_error=False, fill_value=(0., 0.))
+    return interp1d(
+        freqs,
+        cib_map_arr,
+        axis=0,
+        kind="linear",
+        bounds_error=False,
+        fill_value=(0., 0.),
+    )
