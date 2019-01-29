@@ -1,6 +1,6 @@
 import numpy as np
 import astropy.units as units
-from ..template import Model, check_freq_input, read_map
+from ..template import Model, check_freq_input
 
 class SynchrotronPowerLaw(Model):
     """ This is a model for a simple power law synchrotron model.
@@ -26,15 +26,14 @@ class SynchrotronPowerLaw(Model):
         nside: int
             Resolution parameter at which this model is to be calculated.
         """
-        Model.__init__(self, mpi_comm)
+        Model.__init__(self, mpi_comm, nside)
         # do model setup
-        self.I_ref = read_map(map_I, nside)[None, :] * units.uK
-        self.Q_ref = read_map(map_Q, nside)[None, :] * units.uK
-        self.U_ref = read_map(map_U, nside)[None, :] * units.uK
+        self.I_ref = self.read_map(map_I)[None, :] * units.uK
+        self.Q_ref = self.read_map(map_Q)[None, :] * units.uK
+        self.U_ref = self.read_map(map_U)[None, :] * units.uK
         self.freq_ref_I = freq_ref_I * units.GHz
         self.freq_ref_P = freq_ref_P * units.GHz
-        self.pl_index = read_map(map_pl_index, nside)[None, :]
-        self.nside = nside
+        self.pl_index = self.read_map(map_pl_index)[None, :]
         return
 
     def get_emission(self, freqs):
