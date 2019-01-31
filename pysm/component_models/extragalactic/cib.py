@@ -56,7 +56,7 @@ class InterpolatedCIB(Model):
     def get_emission(self, freqs):
         """ 
         """
-        freqs = check_freq_input(freqs)
+        #freqs = check_freq_input(freqs)
         return self.interp_sed(freqs)
     
 def interpolate_cib_maps(freqs, cib_map_arr):
