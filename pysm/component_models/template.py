@@ -240,6 +240,7 @@ def read_map(path, nside, field=0, pixel_indices=None, mpi_comm=None):
             ncomp = 1
         shape = npix if ncomp == 1 else (len(field), npix)
         output_map = np.empty(shape, dtype=np.float64)
+        unit_string = ""
 
     if mpi_comm is not None:
         mpi_comm.Bcast(output_map, root=0)
