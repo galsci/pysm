@@ -1,4 +1,5 @@
 import pytest
+import healpy as hp
 import pysm
 
 try:
@@ -14,7 +15,7 @@ def setup_mpi_communicator():
     return comm, rank
 
 
-def test_read_map_mpi(setup_mpi_communicator):
+def test_read_map_mpi_pixel_indices(setup_mpi_communicator):
     comm, rank = setup_mpi_communicator
     # Reads pixel [0] on rank 0
     # pixels [0,1] on rank 1
@@ -27,3 +28,19 @@ def test_read_map_mpi(setup_mpi_communicator):
         mpi_comm=comm,
     )
     assert len(m) == rank + 1
+
+
+def test_read_map_mpi_uniform_distribution(setup_mpi_communicator):
+    comm, rank = setup_mpi_communicator
+    # Spreads the map equally across processes
+    m = pysm.read_map(
+        "pysm_2/dust_temp.fits",
+        nside=8,
+        field=0,
+        pixel_indices=None,
+        mpi_comm=comm,
+        distribute_rings_libsharp=False
+    )
+    npix = hp.nside2npix(8)
+    assert npix % comm.size == 0, "This test requires the size of the communicator to divide the number of pixels {}".format(npix)
+    assert len(m) == npix/comm.size

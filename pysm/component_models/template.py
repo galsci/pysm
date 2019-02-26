@@ -33,7 +33,6 @@ class Model(object):
         assert nside is not None
         self.mpi_comm = mpi_comm
         self.pixel_indices = pixel_indices
-        return
 
     def read_map(self, path, field=0):
         """Wrapper of the PySM read_map function that automatically
@@ -198,7 +197,14 @@ def extract_hdu_unit(path):
     return unit
 
 
-def read_map(path, nside, field=0, pixel_indices=None, mpi_comm=None):
+def read_map(
+    path,
+    nside,
+    field=0,
+    pixel_indices=None,
+    mpi_comm=None,
+    distribute_rings_libsharp=None,
+):
     """Wrapper of `healpy.read_map` for PySM data. This function also extracts
     the units from the fits HDU and applies them to the data array to form an
     `astropy.units.Quantity` object.
@@ -245,6 +251,17 @@ def read_map(path, nside, field=0, pixel_indices=None, mpi_comm=None):
     if mpi_comm is not None:
         mpi_comm.Bcast(output_map, root=0)
         unit_string = mpi_comm.bcast(unit_string, root=0)
+
+    if mpi_comm is not None and pixel_indices is None:
+        if distribute_rings_libsharp:
+            pass
+        else:
+            npix = hp.nside2npix(nside)
+            pix_per_proc = int(np.ceil(npix / mpi_comm.size))
+            pixel_indices = np.arange(
+                mpi_comm.rank * pix_per_proc,
+                min((mpi_comm.rank + 1) * pix_per_proc, npix),
+            )
 
     if pixel_indices is not None:
         try:  # multiple components
