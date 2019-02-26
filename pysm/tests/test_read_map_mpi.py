@@ -33,14 +33,18 @@ def test_read_map_mpi_pixel_indices(setup_mpi_communicator):
 def test_read_map_mpi_uniform_distribution(setup_mpi_communicator):
     comm, rank = setup_mpi_communicator
     # Spreads the map equally across processes
+    pixel_indices = pysm.mpi.distribute_pixels_uniformly(comm, nside=8)
     m = pysm.read_map(
         "pysm_2/dust_temp.fits",
         nside=8,
         field=0,
-        pixel_indices=None,
+        pixel_indices=pixel_indices,
         mpi_comm=comm,
-        distribute_rings_libsharp=False
     )
     npix = hp.nside2npix(8)
-    assert npix % comm.size == 0, "This test requires the size of the communicator to divide the number of pixels {}".format(npix)
-    assert len(m) == npix/comm.size
+    assert (
+        npix % comm.size == 0
+    ), "This test requires the size of the communicator to divide the number of pixels {}".format(
+        npix
+    )
+    assert len(m) == npix / comm.size

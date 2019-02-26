@@ -252,17 +252,6 @@ def read_map(
         mpi_comm.Bcast(output_map, root=0)
         unit_string = mpi_comm.bcast(unit_string, root=0)
 
-    if mpi_comm is not None and pixel_indices is None:
-        if distribute_rings_libsharp:
-            pass
-        else:
-            npix = hp.nside2npix(nside)
-            pix_per_proc = int(np.ceil(npix / mpi_comm.size))
-            pixel_indices = np.arange(
-                mpi_comm.rank * pix_per_proc,
-                min((mpi_comm.rank + 1) * pix_per_proc, npix),
-            )
-
     if pixel_indices is not None:
         try:  # multiple components
             output_map = np.array([each[pixel_indices] for each in output_map])
