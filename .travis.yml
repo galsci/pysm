@@ -20,6 +20,8 @@ addons:
             - graphviz
             - texlive-latex-extra
             - dvipng
+            - libopenmpi-dev
+            - openmpi-bin
 
 env:
     global:
@@ -38,12 +40,12 @@ env:
         # List runtime dependencies for the package that are available as conda
         # packages here.
         - CONDA_DEPENDENCIES='configobj healpy'
-        - CONDA_DEPENDENCIES_MPI='configobj healpy openmpi'
+        - CONDA_DEPENDENCIES_MPI='configobj healpy cython'
         - CONDA_DEPENDENCIES_DOC='configobj healpy sphinx-astropy'
         
         # List other runtime dependencies for the package that are available as
         # pip packages here.
-        - PIP_DEPENDENCIES=''
+        - PIP_DEPENDENCIES='mpi4py'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions
@@ -106,10 +108,7 @@ matrix:
           env: NUMPY_VERSION=1.14
 
         - os: linux
-          env: NUMPY_VERSION=1.14
-               MAIN_CMD='bash ci/install_libsharp.sh && bash run_mpi_tests.sh'
-               CONDA_DEPENDENCIES=$CONDA_DEPENDENCIES_MPI
-               PIP_DEPENDENCIES='mpi4py'
+          env: NUMPY_VERSION=1.14 MAIN_CMD='bash ci/install_libsharp.sh && bash run_mpi_tests.sh' SETUP_CMD='' CONDA_DEPENDENCIES=$CONDA_DEPENDENCIES_MPI
 
         # Try numpy pre-release
         - os: linux
