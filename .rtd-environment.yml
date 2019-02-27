@@ -2,13 +2,15 @@ name: pysm
 
 channels:
     - astropy
+    - conda-forge
 
 dependencies:
     - python>=3.5
     - astropy
     - Cython
     - matplotlib
+    - healpy
     - numpy
-    - sphinx-astropy
-#   - pip:
-#       - dependency_from_pip
+    - configobj
+    - pip:
+        - sphinx-astropy
