@@ -49,6 +49,7 @@ def test_read_map_mpi_uniform_distribution(mpi_comm):
 
 
 def test_distribute_rings_libsharp(mpi_comm):
+    pytest.importorskip("libsharp") # execute only if libsharp is available
     nside = 1
     two_processes_comm = mpi_comm.Split(
         color=0 if mpi_comm.rank in [0, 1] else MPI.UNDEFINED, key=mpi_comm.rank
