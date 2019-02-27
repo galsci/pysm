@@ -11,23 +11,65 @@ import warnings
 import os.path
 import numpy as np
 import healpy as hp
-import astropy.units as units
+import astropy.units as u
 from astropy.io import fits
 from astropy.utils import data
 from ..constants import DATAURL
+from .. import mpi
+
 
 class Model(object):
-    """ This is the template object for PySM objects."""
+    """ This is the template object for PySM objects.
 
-    def __init__(self, mpi_comm=None):
+    If a MPI communicator is passed as input and `pixel_indices` is None,
+    the class automatically distributes the maps across processes.
+    You can implement your own pixel distribution passing both a MPI
+    communicator and `pixel_indices`, however that won't support smoothing
+    with `libsharp`.
+    If `libsharp` is available, the rings are distributed as expected
+    by `libsharp` to perform distributed spherical harmonics transforms,
+    see :py:func:`pysm.mpi.distribute_rings_libsharp`, the `libsharp` grid
+    object is saved in `self.libsharp_grid`.
+    If libsharp is not available, pixels are distributed uniformly across
+    processes, see :py:func:`pysm.mpi.distribute_pixels_uniformly`"""
+
+    def __init__(self, nside, pixel_indices=None, mpi_comm=None):
         """
         Parameters
         ----------
         mpi_comm: object
             MPI communicator object (optional, default=None).
+        nside: int
+            Resolution parameter at which this model is to be calculated.
         """
+        self.nside = nside
+        assert nside is not None
         self.mpi_comm = mpi_comm
-        return
+
+        libsharp_grid = None
+        if self.mpi_comm is not None and pixel_indices is None:
+            if mpi.libsharp is None:
+                pixel_indices = mpi.distribute_pixels_uniformly(
+                    self.mpi_comm, self.nside
+                )
+            else:
+                pixel_indices, libsharp_grid = mpi.distribute_rings_libsharp(
+                    self.mpi_comm, self.nside
+                )
+        self.pixel_indices = pixel_indices
+        self.libsharp_grid = libsharp_grid
+
+    def read_map(self, path, field=0):
+        """Wrapper of the PySM read_map function that automatically
+        uses nside, pixel_indices and mpi_comm defined in this Model
+        """
+        return read_map(
+            path,
+            self.nside,
+            field=field,
+            pixel_indices=self.pixel_indices,
+            mpi_comm=self.mpi_comm,
+        )
 
     def apply_bandpass(self, bpasses):
         """ Method to calculate the emission averaged over a bandpass.
@@ -84,20 +126,21 @@ class Model(object):
             Array containing the smoothed skies.
         """
         if isinstance(fwhms, list):
-            fwhms = np.array(fwhms) * units.arcmin
+            fwhms = np.array(fwhms) * u.arcmin
         elif isinstance(fwhms, np.ndarray):
-            fwhms *= units.arcmin
+            fwhms *= u.arcmin
         else:
-            fwhms = np.array([fwhms]) * units.arcmin
+            fwhms = np.array([fwhms]) * u.arcmin
             try:
-                assert(fwhms.ndim < 2)
+                assert fwhms.ndim < 2
             except AssertionError:
-                print("""Check that FWHMs is given as a 1D list, 1D array.
-                of float""")
+                print(
+                    """Check that FWHMs is given as a 1D list, 1D array.
+                of float"""
+                )
         out = []
         for sky, fwhm in zip(skies, fwhms):
-            out.append(hp.smoothing(sky, fwhm=fwhm.to(units.rad) / units.rad,
-                       verbose=False))
+            out.append(hp.smoothing(sky, fwhm=fwhm.to(u.rad) / u.rad, verbose=False))
         return np.array(out)
 
 
@@ -146,17 +189,47 @@ def check_freq_input(freqs):
         try:
             freqs = np.array([freqs])
         except:
-            print("""Could not make freqs into an ndarray, check
-            input.""")
+            print(
+                """Could not make freqs into an ndarray, check
+            input."""
+            )
             raise
-    if isinstance(freqs, units.Quantity):
+    if isinstance(freqs, u.Quantity):
         if freqs.isscalar:
             return freqs[None]
         return freqs
-    return freqs * units.GHz
+    return freqs * u.GHz
 
 
-def read_map(path, nside, field=0):
+def extract_hdu_unit(path):
+    """ Function to extract unit from an hdu.
+    Parameters
+    ----------
+    path: Path object
+        Path to the fits file.
+    Returns
+    -------
+    string
+        String specifying the unit of the fits data.
+    """
+    hdul = fits.open(path)
+    try:
+        unit = hdul[1].header["TUNIT1"]
+    except KeyError:
+        # in the case that TUNIT1 does not exist, assume unitless quantity.
+        unit = ""
+        warnings.warn("No physical unit associated with file " + str(path))
+    return unit
+
+
+def read_map(
+    path,
+    nside,
+    field=0,
+    pixel_indices=None,
+    mpi_comm=None,
+    distribute_rings_libsharp=None,
+):
     """Wrapper of `healpy.read_map` for PySM data. This function also extracts
     the units from the fits HDU and applies them to the data array to form an
     `astropy.units.Quantity` object.
@@ -180,29 +253,34 @@ def read_map(path, nside, field=0):
     if os.path.exists(str(path)):  # Python 3.5 requires turning a Path object to str
         filename = str(path)
     else:
-        with data.conf.set_temp("dataurl", DATAURL), data.conf.set_temp("remote_timeout", 30):
+        with data.conf.set_temp("dataurl", DATAURL), data.conf.set_temp(
+            "remote_timeout", 30
+        ):
             filename = data.get_pkg_data_filename(path)
-    unit_string = extract_hdu_unit(filename)
-    inmap = hp.read_map(filename, field=field, verbose=False)
-    return units.Quantity(hp.ud_grade(inmap, nside_out=nside), unit_string)
+    # inmap = hp.read_map(filename, field=field, verbose=False)
+    if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
+        output_map = hp.ud_grade(
+            hp.read_map(filename, field=field, verbose=False), nside_out=nside
+        )
+        unit_string = extract_hdu_unit(filename)
+    elif mpi_comm is not None and mpi_comm.rank > 0:
+        npix = hp.nside2npix(nside)
+        try:
+            ncomp = len(field)
+        except TypeError:  # field is int
+            ncomp = 1
+        shape = npix if ncomp == 1 else (len(field), npix)
+        output_map = np.empty(shape, dtype=np.float64)
+        unit_string = ""
 
+    if mpi_comm is not None:
+        mpi_comm.Bcast(output_map, root=0)
+        unit_string = mpi_comm.bcast(unit_string, root=0)
 
-def extract_hdu_unit(path):
-    """ Function to extract unit from an hdu.
-    Parameters
-    ----------
-    path: Path object
-        Path to the fits file.
-    Returns
-    -------
-    string
-        String specifying the unit of the fits data.
-    """
-    hdul = fits.open(path)
-    try:
-        unit = hdul[1].header['TUNIT1']
-    except KeyError:
-        # in the case that TUNIT1 does not exist, assume unitless quantity.
-        unit = ''
-        warnings.warn("No physical unit associated with file " + str(path))
-    return unit
+    if pixel_indices is not None:
+        try:  # multiple components
+            output_map = np.array([each[pixel_indices] for each in output_map])
+        except IndexError:  # single component
+            return output_map[pixel_indices]
+
+    return u.Quantity(output_map, unit_string)

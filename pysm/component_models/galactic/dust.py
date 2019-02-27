@@ -2,7 +2,8 @@ import numpy as np
 from astropy.modeling.blackbody import blackbody_nu
 from ... import units
 from pathlib import Path
-from ..template import Model, check_freq_input, read_map
+from ..template import Model, check_freq_input
+
 
 class ModifiedBlackBody(Model):
     """ This is a model for modified black body emission.
@@ -13,10 +14,23 @@ class ModifiedBlackBody(Model):
         Arrays containing the intensity or polarization reference
         templates at frequency `freq_ref_I` or `freq_ref_P`.
     """
-    def __init__(self, map_I=None, map_Q=None, map_U=None, unit_I=None,
-                 unit_Q=None, unit_U=None, freq_ref_I=None,
-                 freq_ref_P=None, map_mbb_index=None, map_mbb_temperature=None,
-                 nside=None, mpi_comm=None):
+
+    def __init__(
+        self,
+        map_I=None,
+        map_Q=None,
+        map_U=None,
+        unit_I=None,
+        unit_Q=None,
+        unit_U=None,
+        freq_ref_I=None,
+        freq_ref_P=None,
+        map_mbb_index=None,
+        map_mbb_temperature=None,
+        nside=None,
+        pixel_indices=None,
+        mpi_comm=None,
+    ):
         """ This function initializes the modified black body model.
 
         The initialization of this model consists of reading in emission
@@ -39,50 +53,50 @@ class ModifiedBlackBody(Model):
         nside: int
             Resolution parameter at which this model is to be calculated.
         """
-        Model.__init__(self, mpi_comm)
+        super().__init__(nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
         # do model setup
-        self.I_ref = read_map(map_I, nside)[None, :] * units.uK
-        self.Q_ref = read_map(map_Q, nside)[None, :] * units.uK
-        self.U_ref = read_map(map_U, nside)[None, :] * units.uK
+        self.I_ref = self.read_map(map_I)[None, :] * units.uK
+        self.Q_ref = self.read_map(map_Q)[None, :] * units.uK
+        self.U_ref = self.read_map(map_U)[None, :] * units.uK
         self.freq_ref_I = float(freq_ref_I) * units.GHz
         self.freq_ref_P = float(freq_ref_P) * units.GHz
-        self.mbb_index = read_map(map_mbb_index, nside)[None, :]
-        self.mbb_temperature = read_map(map_mbb_temperature,
-                                        nside)[None, :] * units.K
+        self.mbb_index = self.read_map(map_mbb_index)[None, :]
+        self.mbb_temperature = self.read_map(map_mbb_temperature)[None, :] * units.K
         self.nside = nside
 
         @property
         def freq_ref_I(self):
             return self.__freq_ref_I
-    
+
         @freq_ref_I.setter
         def freq_ref_I(self, value):
             if value < 0:
                 raise InputParameterError
             try:
-                assert(isinstance(value, units.Quantity))
+                assert isinstance(value, units.Quantity)
             except AssertionError:
                 raise InputParameterError(
                     r"""Must be instance of `astropy.units.Quantity`, with 
-                    Hz equivalency.""")
+                    Hz equivalency."""
+                )
             self.__freq_ref_I = value
 
         @property
         def freq_ref_P(self):
             return self.__freq_ref_P
-    
+
         @freq_ref_P.setter
         def freq_ref_P(self, value):
             if value < 0:
                 raise InputParameterError
             try:
-                assert(isinstance(value, units.Quantity))
+                assert isinstance(value, units.Quantity)
             except AssertionError:
                 raise InputParameterError(
                     r"""Must be instance of `astropy.units.Quantity`, with 
-                    Hz equivalency.""")
+                    Hz equivalency."""
+                )
             self.__freq_ref_P = value
-        
 
     @units.quantity_input
     def get_emission(self, freqs: units.GHz) -> units.uK_RJ:
@@ -107,21 +121,31 @@ class ModifiedBlackBody(Model):
         for freq in freqs:
             I_scal = (freq / self.freq_ref_I) ** (self.mbb_index - 2.)
             P_scal = (freq / self.freq_ref_P) ** (self.mbb_index - 2.)
-            I_scal *= blackbody_ratio(freq, self.freq_ref_I,
-                                      self.mbb_temperature)
-            P_scal *= blackbody_ratio(freq, self.freq_ref_P,
-                                      self.mbb_temperature)
-            iqu_freq = np.concatenate((I_scal * self.I_ref,
-                                       P_scal * self.Q_ref,
-                                       P_scal * self.U_ref))
+            I_scal *= blackbody_ratio(freq, self.freq_ref_I, self.mbb_temperature)
+            P_scal *= blackbody_ratio(freq, self.freq_ref_P, self.mbb_temperature)
+            iqu_freq = np.concatenate(
+                (I_scal * self.I_ref, P_scal * self.Q_ref, P_scal * self.U_ref)
+            )
             outputs.append(iqu_freq)
         return np.array(outputs) * units.uK_RJ
 
 
 class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
-    def __init__(self, map_I=None, map_Q=None, map_U=None, freq_ref_I=None,
-                 freq_ref_P=None, map_mbb_index=None, map_mbb_temperature=None,
-                 nside=None, mpi_comm=None, correlation_length=None):
+
+    def __init__(
+        self,
+        map_I=None,
+        map_Q=None,
+        map_U=None,
+        freq_ref_I=None,
+        freq_ref_P=None,
+        map_mbb_index=None,
+        map_mbb_temperature=None,
+        nside=None,
+        pixel_indices=None,
+        mpi_comm=None,
+        correlation_length=None,
+    ):
         """ See parent class for other documentation.
         
         Parameters
@@ -132,9 +156,18 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
             frequencies much much closer than this distance, the emission is
             well correlated.
         """
-        ModifiedBlackBody.__init__(self, map_I, map_Q, map_U, freq_ref_I,
-                                   freq_ref_P, map_mbb_index,
-                                   map_mbb_temperature, nside, mpi_comm)
+        super().__init__(
+            map_I,
+            map_Q,
+            map_U,
+            freq_ref_I,
+            freq_ref_P,
+            map_mbb_index,
+            map_mbb_temperature,
+            nside,
+            pixel_indices=pixel_indices,
+            mpi_comm=mpi_comm,
+        )
         self.correlation_length = correlation_length
 
     def get_emission(self, freqs):
@@ -143,12 +176,12 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
         """
         freqs = check_freq_input(freqs)
         # calculate the decorrelation
-        (rho_cov_I, rho_mean_I) = get_decorrelation_matrix(self.freq_ref_I,
-                                                           freqs,
-                                                           self.correlation_length)
-        (rho_cov_P, rho_mean_P) = get_decorrelation_matrix(self.freq_ref_P,
-                                                           freqs,
-                                                           self.correlation_length)
+        (rho_cov_I, rho_mean_I) = get_decorrelation_matrix(
+            self.freq_ref_I, freqs, self.correlation_length
+        )
+        (rho_cov_P, rho_mean_P) = get_decorrelation_matrix(
+            self.freq_ref_P, freqs, self.correlation_length
+        )
         nfreqs = freqs.shape[-1]
         extra_I = np.dot(rho_cov_I, np.random.randn(nfreqs))
         extra_P = np.dot(rho_cov_P, np.random.randn(nfreqs))
@@ -159,19 +192,24 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
         # apply the decorrelation to the mbb_emission
         return decorr[..., None] * super().get_emission(freqs)
 
-@units.quantity_input(freqs=units.GHz,
-                      correlation_length=units.dimensionless_unscaled)
+
+@units.quantity_input(freqs=units.GHz, correlation_length=units.dimensionless_unscaled)
 def frequency_decorr_model(freqs, correlation_length) -> units.dimensionless_unscaled:
     """ Function to calculate the frequency decorrelation method of
     Vansyngel+17.
     """
     log_dep = np.log(freqs[:, None] / freqs[None, :])
-    return np.exp(- 0.5 * (log_dep / correlation_length) ** 2)
+    return np.exp(-0.5 * (log_dep / correlation_length) ** 2)
 
-@units.quantity_input(freq_constrained=units.GHz, freqs_constrained=units.GHz,
-                      correlation_length=units.dimensionless_unscaled)
-def get_decorrelation_matrix(freq_constrained, freqs_unconstrained,
-                             correlation_length) -> units.dimensionless_unscaled:
+
+@units.quantity_input(
+    freq_constrained=units.GHz,
+    freqs_constrained=units.GHz,
+    correlation_length=units.dimensionless_unscaled,
+)
+def get_decorrelation_matrix(
+    freq_constrained, freqs_unconstrained, correlation_length
+) -> units.dimensionless_unscaled:
     """ Function to calculate the correlation matrix between observed
     frequencies. This model is based on the proposed model for decorrelation
     of Vanyngel+17. The proposed frequency covariance matrix in this paper
@@ -196,8 +234,8 @@ def get_decorrelation_matrix(freq_constrained, freqs_unconstrained,
     ndarray
         Frequency covariance matrix used to calculate a constrained realization.
     """
-    assert(correlation_length >= 0)
-    assert(isinstance(freqs_unconstrained, np.ndarray))
+    assert correlation_length >= 0
+    assert isinstance(freqs_unconstrained, np.ndarray)
     freq_constrained = check_freq_input(freq_constrained)
     freqs_all = np.insert(freqs_unconstrained, 0, freq_constrained)
     indref = np.where(freqs_all == freq_constrained)
@@ -213,7 +251,7 @@ def get_decorrelation_matrix(freq_constrained, freqs_unconstrained,
     # square root as we use this to draw directly the pixels (sigma).
     evals = np.diag(np.sqrt(np.maximum(rho_uu_w, np.zeros_like(rho_uu_w))))
     rho_covar = np.dot(rho_uu_v, np.dot(evals, np.transpose(rho_uu_v)))
-    rho_mean = - np.dot(rho_uu, rho_inv_cu)
+    rho_mean = -np.dot(rho_uu, rho_inv_cu)
     return (rho_covar, rho_mean)
 
 
@@ -241,6 +279,7 @@ def invert_safe(matrix):
             mb += np.diag(2. * np.max([1E-14, -wmin]) * np.ones(len(mb)))
     winv = 1. / w
     return np.dot(v, np.dot(np.diag(winv), np.transpose(v)))
+
 
 @units.quantity_input(freq_to=units.GHz, freq_from=units.GHz, temp=units.K)
 def blackbody_ratio(freq_to, freq_from, temp) -> units.dimensionless_unscaled:
