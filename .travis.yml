@@ -38,7 +38,7 @@ env:
         # List runtime dependencies for the package that are available as conda
         # packages here.
         - CONDA_DEPENDENCIES='configobj healpy'
-        - CONDA_DEPENDENCIES_MPI='configobj healpy mpi4py'
+        - CONDA_DEPENDENCIES_MPI='configobj healpy openmpi'
         - CONDA_DEPENDENCIES_DOC='configobj healpy sphinx-astropy'
         
         # List other runtime dependencies for the package that are available as
@@ -109,6 +109,7 @@ matrix:
           env: NUMPY_VERSION=1.14
                MAIN_CMD='bash ci/install_libsharp.sh && bash run_mpi_tests.sh'
                CONDA_DEPENDENCIES=$CONDA_DEPENDENCIES_MPI
+               PIP_DEPENDENCIES='mpi4py'
 
         # Try numpy pre-release
         - os: linux
