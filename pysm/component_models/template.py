@@ -15,10 +15,23 @@ import astropy.units as u
 from astropy.io import fits
 from astropy.utils import data
 from ..constants import DATAURL
+from .. import mpi
 
 
 class Model(object):
-    """ This is the template object for PySM objects."""
+    """ This is the template object for PySM objects.
+
+    If a MPI communicator is passed as input and `pixel_indices` is None,
+    the class automatically distributes the maps across processes.
+    You can implement your own pixel distribution passing both a MPI
+    communicator and `pixel_indices`, however that won't support smoothing
+    with `libsharp`.
+    If `libsharp` is available, the rings are distributed as expected
+    by `libsharp` to perform distributed spherical harmonics transforms,
+    see :py:func:`pysm.mpi.distribute_rings_libsharp`, the `libsharp` grid
+    object is saved in `self.libsharp_grid`.
+    If libsharp is not available, pixels are distributed uniformly across
+    processes, see :py:func:`pysm.mpi.distribute_pixels_uniformly`"""
 
     def __init__(self, nside, pixel_indices=None, mpi_comm=None):
         """
@@ -32,7 +45,19 @@ class Model(object):
         self.nside = nside
         assert nside is not None
         self.mpi_comm = mpi_comm
+
+        libsharp_grid = None
+        if self.mpi_comm is not None and pixel_indices is None:
+            if mpi.libsharp is None:
+                pixel_indices = mpi.distribute_pixels_uniformly(
+                    self.mpi_comm, self.nside
+                )
+            else:
+                pixel_indices, libsharp_grid = mpi.distribute_rings_libsharp(
+                    self.mpi_comm, self.nside
+                )
         self.pixel_indices = pixel_indices
+        self.libsharp_grid = libsharp_grid
 
     def read_map(self, path, field=0):
         """Wrapper of the PySM read_map function that automatically
