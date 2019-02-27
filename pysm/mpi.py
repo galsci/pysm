@@ -64,6 +64,8 @@ def distribute_rings_libsharp(mpi_comm, nside):
         integer array of local pixel indices in the current MPI process in RING
         ordering
     """
+    import libsharp
+
     nrings = 4 * nside - 1  # four missing pixels
 
     # ring indices are 1-based
