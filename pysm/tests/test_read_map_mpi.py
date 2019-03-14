@@ -49,18 +49,22 @@ def test_read_map_mpi_uniform_distribution(mpi_comm):
 
 
 def test_distribute_rings_libsharp(mpi_comm):
-    pytest.importorskip("libsharp") # execute only if libsharp is available
+    pytest.importorskip("libsharp")  # execute only if libsharp is available
     nside = 1
     two_processes_comm = mpi_comm.Split(
         color=0 if mpi_comm.rank in [0, 1] else MPI.UNDEFINED, key=mpi_comm.rank
     )
     if mpi_comm.rank in [0, 1]:
-        local_pixels, grid = pysm.mpi.distribute_rings_libsharp(
-            two_processes_comm, nside
+        local_pixels, grid, order = pysm.mpi.distribute_rings_libsharp(
+            two_processes_comm, nside, lmax=2 * nside
         )
-        expected_local_pixels = (
-            np.concatenate([np.arange(4), np.arange(8, 12)])
-            if mpi_comm.rank == 0
-            else np.arange(4, 8)
-        )
+
+        if mpi_comm.size == 1: # serial
+            expected_local_pixels = np.arange(12)
+        else:
+            expected_local_pixels = (
+                np.concatenate([np.arange(4), np.arange(8, 12)])
+                if mpi_comm.rank == 0
+                else np.arange(4, 8)
+            )
         np.testing.assert_allclose(local_pixels, expected_local_pixels)

@@ -41,7 +41,7 @@ def expand_pix(startpix, ringpix, local_npix):
     return local_pix
 
 
-def distribute_rings_libsharp(mpi_comm, nside):
+def distribute_rings_libsharp(mpi_comm, nside, lmax):
     """Create a libsharp map distribution based on rings
 
     Build a libsharp grid object to distribute a HEALPix map
@@ -94,5 +94,26 @@ def distribute_rings_libsharp(mpi_comm, nside):
         nside, local_ring_indices.astype(np.int64))
 
     local_npix = libsharp_grid.local_size()
-    local_pixels = expand_pix(startpix, ringpix, local_npix)
-    return local_pixels, libsharp_grid
+    local_pixels = expand_pix(startpix, ringpix, local_npix).astype(np.int)
+
+    local_m_indices = np.arange(
+        mpi_comm.rank,
+        lmax + 1,
+        mpi_comm.size,
+        dtype=np.int32,
+    )
+    libsharp_order = libsharp.packed_real_order(
+        lmax, ms=local_m_indices
+    )
+    return local_pixels, libsharp_grid, libsharp_order
+
+
+def assemble_map_on_rank0(comm, local_map, pixel_indices, n_components, npix):
+    from mpi4py import MPI
+    full_maps_rank0 = np.zeros((n_components, npix),
+                               dtype=np.float64) if comm.rank == 0 else None
+    local_map_buffer = np.zeros((n_components, npix),
+                                   dtype=np.float64)
+    local_map_buffer[:, pixel_indices] = local_map
+    comm.Reduce(local_map_buffer, full_maps_rank0, root=0, op=MPI.SUM)
+    return full_maps_rank0
