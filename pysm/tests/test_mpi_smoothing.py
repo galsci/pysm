@@ -17,7 +17,7 @@ def mpi_comm():
 
 
 def test_mpi_smoothing(mpi_comm):
-    nside = 256
+    nside = 128
     lmax = 2 * nside
     model = pysm.Model(
         nside, mpi_comm=mpi_comm, pixel_indices=None, smoothing_lmax=lmax
@@ -38,8 +38,9 @@ def test_mpi_smoothing(mpi_comm):
             hp.smoothing(
                 pysm.read_map("pysm_2/dust_temp.fits", nside=nside).value,
                 fwhm.to(u.rad).value,
+                iter=0,
                 lmax=lmax,
-                use_pixel_weights=True,
+                use_pixel_weights=False,
             ),
-            rtol=1e-3,
+            rtol=1e-5,
         )
