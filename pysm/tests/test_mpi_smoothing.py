@@ -9,6 +9,11 @@ try:
 except ImportError:
     pytest.skip("mpi4py failed to import, skip MPI tests", allow_module_level=True)
 
+try:
+    import libsharp
+except ImportError:
+    pytest.skip("libsharp failed to import, skip MPI smoothing tests", allow_module_level=True)
+
 
 @pytest.fixture
 def mpi_comm():
