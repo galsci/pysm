@@ -14,8 +14,11 @@ import healpy as hp
 import astropy.units as u
 from astropy.io import fits
 from astropy.utils import data
+from .. import utils
 from ..constants import DATAURL
 from .. import mpi
+
+from unittest.mock import Mock
 
 
 class Model(object):
@@ -33,7 +36,7 @@ class Model(object):
     If libsharp is not available, pixels are distributed uniformly across
     processes, see :py:func:`pysm.mpi.distribute_pixels_uniformly`"""
 
-    def __init__(self, nside, pixel_indices=None, mpi_comm=None):
+    def __init__(self, nside, smoothing_lmax=None, pixel_indices=None, mpi_comm=None):
         """
         Parameters
         ----------
@@ -41,23 +44,26 @@ class Model(object):
             MPI communicator object (optional, default=None).
         nside: int
             Resolution parameter at which this model is to be calculated.
+        smoothing_lmax : int
+            :math:`\ell_{max}` for the smoothing step, by default :math:`2*N_{side}`
         """
         self.nside = nside
         assert nside is not None
         self.mpi_comm = mpi_comm
+        self.smoothing_lmax = (
+            2 * self.nside if smoothing_lmax is None else smoothing_lmax
+        )
 
-        libsharp_grid = None
+        self.pixel_indices = pixel_indices
         if self.mpi_comm is not None and pixel_indices is None:
             if mpi.libsharp is None:
-                pixel_indices = mpi.distribute_pixels_uniformly(
+                self.pixel_indices = mpi.distribute_pixels_uniformly(
                     self.mpi_comm, self.nside
                 )
             else:
-                pixel_indices, libsharp_grid = mpi.distribute_rings_libsharp(
-                    self.mpi_comm, self.nside
+                self.pixel_indices, self.libsharp_grid, self.libsharp_order = mpi.distribute_rings_libsharp(
+                    self.mpi_comm, self.nside, lmax=self.smoothing_lmax
                 )
-        self.pixel_indices = pixel_indices
-        self.libsharp_grid = libsharp_grid
 
     def read_map(self, path, field=0):
         """Wrapper of the PySM read_map function that automatically
@@ -125,6 +131,7 @@ class Model(object):
         ndarray
             Array containing the smoothed skies.
         """
+
         if isinstance(fwhms, list):
             fwhms = np.array(fwhms) * u.arcmin
         elif isinstance(fwhms, np.ndarray):
@@ -138,10 +145,70 @@ class Model(object):
                     """Check that FWHMs is given as a 1D list, 1D array.
                 of float"""
                 )
+
         out = []
         for sky, fwhm in zip(skies, fwhms):
-            out.append(hp.smoothing(sky, fwhm=fwhm.to(u.rad) / u.rad, verbose=False))
+            if self.mpi_comm is None:
+                smoothed_sky = hp.smoothing(
+                    sky,
+                    lmax=self.smoothing_lmax,
+                    fwhm=fwhm.to(u.rad) / u.rad,
+                    verbose=False,
+                )
+            else:
+                smoothed_sky = self.mpi_smoothing(sky)
+            out.append(smoothed_sky)
         return np.array(out)
+
+    def mpi_smoothing(self, sky, fwhm):
+        import libsharp
+
+        beam = hp.gauss_beam(
+            fwhm=fwhm.to(u.rad).value, lmax=self.smoothing_lmax, pol=True
+        )
+
+        sky_I = sky if sky.ndim == 1 else sky[0]
+        sky_I_contig = np.ascontiguousarray(sky_I.reshape((1, 1, -1)))
+
+        alm_sharp_I = libsharp.analysis(
+            self.libsharp_grid,
+            self.libsharp_order,
+            sky_I_contig,
+            spin=0,
+            comm=self.mpi_comm,
+        )
+        self.libsharp_order.almxfl(alm_sharp_I, np.ascontiguousarray(beam[:, 0:1]))
+        out = libsharp.synthesis(
+            self.libsharp_grid,
+            self.libsharp_order,
+            alm_sharp_I,
+            spin=0,
+            comm=self.mpi_comm,
+        )[0]
+        assert np.isnan(out).sum() == 0
+
+        if utils.has_polarization(sky):
+            alm_sharp_P = libsharp.analysis(
+                self.libsharp_grid,
+                self.libsharp_order,
+                np.ascontiguousarray(sky[1:3, :].reshape((1, 2, -1))),
+                spin=2,
+                comm=self.mpi_comm,
+            )
+
+            self.libsharp_order.almxfl(
+                alm_sharp_P, np.ascontiguousarray(beam[:, (1, 2)])
+            )
+
+            signal_map_P = libsharp.synthesis(
+                self.libsharp_grid,
+                self.libsharp_order,
+                alm_sharp_P,
+                spin=2,
+                comm=self.mpi_comm,
+            )[0]
+            out = np.vstack((out, signal_map_P))
+        return out
 
 
 def apply_normalization(freqs, weights):
