@@ -150,7 +150,7 @@ class Model(object):
         for sky, fwhm in zip(skies, fwhms):
             if self.mpi_comm is None:
                 smoothed_sky = hp.smoothing(
-                    sky,
+                    sky.astype(np.float64, copy=False),
                     lmax=self.smoothing_lmax,
                     fwhm=fwhm.to(u.rad) / u.rad,
                     verbose=False,
@@ -168,7 +168,7 @@ class Model(object):
         )
 
         sky_I = sky if sky.ndim == 1 else sky[0]
-        sky_I_contig = np.ascontiguousarray(sky_I.reshape((1, 1, -1)))
+        sky_I_contig = np.ascontiguousarray(sky_I.reshape((1, 1, -1))).astype(np.float64, copy=False)
 
         alm_sharp_I = libsharp.analysis(
             self.libsharp_grid,
@@ -191,7 +191,7 @@ class Model(object):
             alm_sharp_P = libsharp.analysis(
                 self.libsharp_grid,
                 self.libsharp_order,
-                np.ascontiguousarray(sky[1:3, :].reshape((1, 2, -1))),
+                np.ascontiguousarray(sky[1:3, :].reshape((1, 2, -1))).astype(np.float64, copy=False),
                 spin=2,
                 comm=self.mpi_comm,
             )

@@ -26,8 +26,8 @@ def test_dust_model(model_tag, freq):
         "pysm_2_test_data/check{}therm_{}p0_64.fits".format(model_number, freq),
         64,
         field=(0, 1, 2),
-    )
+    ).reshape((1, 3, -1))
 
     np.testing.assert_allclose(
-        expected_output.value, model.get_emission(freq * units.GHz).value, rtol=1e-4, atol=0
+        expected_output.value, model.get_emission(freq * units.GHz).value, rtol=1e-5, atol=0
     )
