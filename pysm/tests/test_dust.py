@@ -49,8 +49,6 @@ def test_dust_model(model_tag, freq):
         field=(0, 1, 2),
     )
 
-    frac_error = (expected_output - model.get_emission(freq * units.GHz)) / expected_output
-
-    np.testing.assert_array_almost_equal(
-        frac_error, np.zeros_like(frac_error), decimal=6
+    np.testing.assert_allclose(
+        expected_output.value, model.get_emission(freq * units.GHz).value, rtol=1e-4, atol=0
     )
