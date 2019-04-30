@@ -326,9 +326,19 @@ def read_map(
             filename = data.get_pkg_data_filename(path)
     # inmap = hp.read_map(filename, field=field, verbose=False)
     if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
-        output_map = hp.ud_grade(
-            hp.read_map(filename, field=field, verbose=False, dtype=None), nside_out=nside
-        )
+        output_map = hp.read_map(filename, field=field, verbose=False, dtype=None)
+        nside_in = hp.get_nside(output_map)
+        if nside < nside_in:  # do downgrading in double precision
+            original_dtype = output_map.dtype
+            if original_dtype.byteorder == ">":
+                original_dtype = original_dtype.newbyteorder()
+            output_map = hp.ud_grade(
+                output_map.astype(np.float64), nside_out=nside
+            ).astype(original_dtype)
+        else:
+            output_map = hp.ud_grade(
+                output_map, nside_out=nside
+            )
         unit_string = extract_hdu_unit(filename)
     elif mpi_comm is not None and mpi_comm.rank > 0:
         npix = hp.nside2npix(nside)
