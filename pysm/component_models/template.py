@@ -327,7 +327,7 @@ def read_map(
     # inmap = hp.read_map(filename, field=field, verbose=False)
     if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
         output_map = hp.ud_grade(
-            hp.read_map(filename, field=field, verbose=False), nside_out=nside
+            hp.read_map(filename, field=field, verbose=False, dtype=None), nside_out=nside
         )
         unit_string = extract_hdu_unit(filename)
     elif mpi_comm is not None and mpi_comm.rank > 0:
