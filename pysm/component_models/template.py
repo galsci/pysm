@@ -106,7 +106,7 @@ class Model(object):
             out.append(np.trapz(weight_emission, freqs, axis=0))
         return np.array(out)
 
-    def apply_smoothing(self, skies, fwhms):
+    def apply_smoothing(self, skies, fwhms, coord="G"):
         """ Method to apply smoothing to a set of simulations. This currently
         applies only the `healpy.smoothing` Gaussian smoothing kernel, but will
         be updated with a more general functionality.
@@ -149,12 +149,26 @@ class Model(object):
         out = []
         for sky, fwhm in zip(skies, fwhms):
             if self.mpi_comm is None:
-                smoothed_sky = hp.smoothing(
-                    sky.astype(np.float64, copy=False),
+                alm = hp.map2alm(sky,
                     lmax=self.smoothing_lmax,
-                    fwhm=fwhm.to(u.rad) / u.rad,
-                    verbose=False,
+                    use_pixel_weights=True,
+                    iter = 1,
                 )
+                hp.smoothalm(alm,
+                    fwhm=fwhm.to_value(u.rad),
+                    verbose=False,
+                    inplace=True,
+                    pol=True,
+                )
+                if coord != "G":
+                    rot = hp.Rotator(coord = ["G", coord])
+                    alm = rot.rotate_alm(alm)
+                smoothed_sky = hp.alm2map(alm,
+                        nside=self.nside,
+                        verbose=False,
+                        pixwin=False
+                        )
+
             else:
                 smoothed_sky = self.mpi_smoothing(sky)
             out.append(smoothed_sky)
