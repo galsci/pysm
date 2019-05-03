@@ -341,18 +341,25 @@ def read_map(
     # inmap = hp.read_map(filename, field=field, verbose=False)
     if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
         output_map = hp.read_map(filename, field=field, verbose=False, dtype=None)
+        dtype = output_map.dtype
+        # numba only supports little endian
+        if dtype.byteorder == ">":
+            dtype = dtype.newbyteorder()
+        # mpi4py has issues if the dtype is a string like ">f4"
+        if dtype == np.dtype(np.float32):
+            dtype = np.dtype(np.float32)
+        elif dtype == np.dtype(np.float64):
+            dtype = np.dtype(np.float64)
         nside_in = hp.get_nside(output_map)
         if nside < nside_in:  # do downgrading in double precision
-            original_dtype = output_map.dtype
-            if original_dtype.byteorder == ">":
-                original_dtype = original_dtype.newbyteorder()
             output_map = hp.ud_grade(
                 output_map.astype(np.float64), nside_out=nside
-            ).astype(original_dtype)
+            )
         else:
             output_map = hp.ud_grade(
                 output_map, nside_out=nside
             )
+        output_map = output_map.astype(dtype, copy=False)
         unit_string = extract_hdu_unit(filename)
     elif mpi_comm is not None and mpi_comm.rank > 0:
         npix = hp.nside2npix(nside)
