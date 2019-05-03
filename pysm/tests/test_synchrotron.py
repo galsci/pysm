@@ -20,5 +20,5 @@ def test_synchrotron_model(model, freq):
     ).reshape((1, 3, -1)).value
 
     np.testing.assert_allclose(
-        synch, synchrotron.get_emission(freq), rtol=1e-3
+        synch, synchrotron.get_emission(freq), rtol=1e-5
     )
