@@ -368,11 +368,14 @@ def read_map(
         except TypeError:  # field is int
             ncomp = 1
         shape = npix if ncomp == 1 else (len(field), npix)
-        output_map = np.empty(shape, dtype=np.float64)
         unit_string = ""
+        dtype = None
 
     if mpi_comm is not None:
-        mpi_comm.Bcast(output_map, root=0)
+        dtype = mpi_comm.bcast(dtype, root=0)
+        if mpi_comm.rank > 0:
+            output_map = np.empty(shape, dtype=dtype)
+        mpi_comm.Bcast(output_map.astype(np.float32), root=0)
         unit_string = mpi_comm.bcast(unit_string, root=0)
 
     if pixel_indices is not None:

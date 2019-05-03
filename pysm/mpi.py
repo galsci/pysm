@@ -111,9 +111,9 @@ def distribute_rings_libsharp(mpi_comm, nside, lmax):
 def assemble_map_on_rank0(comm, local_map, pixel_indices, n_components, npix):
     from mpi4py import MPI
     full_maps_rank0 = np.zeros((n_components, npix),
-                               dtype=np.float64) if comm.rank == 0 else None
+                               dtype=local_map.dtype) if comm.rank == 0 else None
     local_map_buffer = np.zeros((n_components, npix),
-                                   dtype=np.float64)
+                                   dtype=local_map.dtype)
     local_map_buffer[:, pixel_indices] = local_map
     comm.Reduce(local_map_buffer, full_maps_rank0, root=0, op=MPI.SUM)
     return full_maps_rank0
