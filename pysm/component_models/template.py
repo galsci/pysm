@@ -379,9 +379,10 @@ def read_map(
         unit_string = mpi_comm.bcast(unit_string, root=0)
 
     if pixel_indices is not None:
+        # make copies so that Python can release the full array
         try:  # multiple components
-            output_map = np.array([each[pixel_indices] for each in output_map])
+            output_map = np.array([each[pixel_indices].copy() for each in output_map])
         except IndexError:  # single component
-            return output_map[pixel_indices]
+            output_map = output_map[pixel_indices].copy()
 
-    return u.Quantity(output_map, unit_string)
+    return u.Quantity(output_map, unit_string, copy=False)
