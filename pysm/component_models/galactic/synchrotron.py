@@ -1,5 +1,7 @@
 import numpy as np
-import astropy.units as units
+from ... import units as u
+from numba import njit
+
 from ..template import Model, check_freq_input
 
 
@@ -16,6 +18,10 @@ class SynchrotronPowerLaw(Model):
         freq_ref_P,
         map_pl_index,
         nside,
+        has_polarization=True,
+        unit_I=None,
+        unit_Q=None,
+        unit_U=None,
         pixel_indices=None,
         mpi_comm=None,
     ):
@@ -30,9 +36,13 @@ class SynchrotronPowerLaw(Model):
         ----------
         map_I, map_Q, map_U: `pathlib.Path` object
             Paths to the maps to be used as I, Q, U templates.
-        freq_ref_I, freq_ref_P: float
+        unit_* : string or Unit
+            Unit string or Unit object for all input FITS maps, if None, the input file
+            should have a unit defined in the FITS header.
+        freq_ref_I, freq_ref_P: Quantity or string
             Reference frequencies at which the intensity and polarization
-            templates are defined.
+            templates are defined.  They should be a astropy Quantity object
+            or a string (e.g. "1500 MHz") compatible with GHz.
         map_pl_index: `pathlib.Path` object
             Path to the map to be used as the power law index.
         nside: int
@@ -40,15 +50,24 @@ class SynchrotronPowerLaw(Model):
         """
         super().__init__(nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
         # do model setup
-        self.I_ref = self.read_map(map_I)[None, :] * units.uK
-        self.Q_ref = self.read_map(map_Q)[None, :] * units.uK
-        self.U_ref = self.read_map(map_U)[None, :] * units.uK
-        self.freq_ref_I = freq_ref_I * units.GHz
-        self.freq_ref_P = freq_ref_P * units.GHz
-        self.pl_index = self.read_map(map_pl_index)[None, :]
+        self.I_ref = self.read_map(map_I, unit=unit_I)
+        # This does unit conversion in place so we do not copy the data
+        # we do not keep the original unit because otherwise we would need
+        # to make a copy of the array when we run the model
+        self.I_ref <<= u.uK_RJ
+        self.freq_ref_I = u.Quantity(freq_ref_I).to(u.GHz)
+        self.has_polarization = has_polarization
+        if has_polarization:
+            self.Q_ref = self.read_map(map_Q, unit=unit_Q)
+            self.Q_ref <<= u.uK_RJ
+            self.U_ref = self.read_map(map_U, unit=unit_U)
+            self.U_ref <<= u.uK_RJ
+            self.freq_ref_P = u.Quantity(freq_ref_P).to(u.GHz)
+        self.pl_index = self.read_map(map_pl_index, unit="")
         return
 
-    def get_emission(self, freqs):
+    @u.quantity_input
+    def get_emission(self, freqs: u.GHz):
         """ This function evaluates the component model at a either
         a single frequency, an array of frequencies, or over a bandpass.
 
@@ -64,14 +83,18 @@ class SynchrotronPowerLaw(Model):
             Set of maps at the given frequency or frequencies. This will have
             shape (nfreq, 3, npix).
         """
-        # freqs must be given in GHz.
         freqs = check_freq_input(freqs)
-        outputs = []
-        for freq in freqs:
-            I_scal = (freq / self.freq_ref_I) ** self.pl_index
-            P_scal = (freq / self.freq_ref_P) ** self.pl_index
-            iqu_freq = np.concatenate(
-                (I_scal * self.I_ref, P_scal * self.Q_ref, P_scal * self.U_ref)
-            )
-            outputs.append(iqu_freq)
-        return np.array(outputs)
+        outputs = get_emission_numba(freqs.value, self.I_ref.value, self.Q_ref.value, self.U_ref.value, self.freq_ref_I.value, self.freq_ref_P.value, self.pl_index.value) << u.uK_RJ
+        return outputs
+
+@njit(parallel=True)
+def get_emission_numba(freqs, I_ref, Q_ref, U_ref, freq_ref_I, freq_ref_P, pl_index):
+    outputs = np.empty((len(freqs), 3, len(I_ref)), dtype=I_ref.dtype)
+    I, Q, U = 0, 1, 2
+    for i_freq, freq in enumerate(freqs):
+        outputs[i_freq, I, :] = I_ref
+        outputs[i_freq, Q, :] = Q_ref
+        outputs[i_freq, U, :] = U_ref
+        outputs[i_freq, I] *= (freq / freq_ref_I) ** pl_index
+        outputs[i_freq, Q:] *= (freq / freq_ref_P) ** pl_index
+    return outputs

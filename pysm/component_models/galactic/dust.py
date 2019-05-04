@@ -47,12 +47,12 @@ class ModifiedBlackBody(Model):
         ----------
         map_I, map_Q, map_U: `pathlib.Path` object
             Paths to the maps to be used as I, Q, U templates.
-        unit_* : string
-            Unit string for all input FITS maps, if None, the input file
+        unit_* : string or Unit
+            Unit string or Unit object for all input FITS maps, if None, the input file
             should have a unit defined in the FITS header.
         freq_ref_I, freq_ref_P: Quantity or string
             Reference frequencies at which the intensity and polarization
-            templates are defined. The should be a astropy Quantity object
+            templates are defined. They should be a astropy Quantity object
             or a string (e.g. "1500 MHz") compatible with GHz.
         map_mbb_index: `pathlib.Path` object
             Path to the map to be used as the power law index for the dust
@@ -103,7 +103,7 @@ class ModifiedBlackBody(Model):
         # freqs must be given in GHz.
         freqs = check_freq_input(freqs)
         outputs = get_emission_numba(freqs.value, self.I_ref.value, self.Q_ref.value, self.U_ref.value, self.freq_ref_I.value, self.freq_ref_P.value, self.mbb_index.value, self.mbb_temperature.value)
-        return outputs * units.uK_RJ
+        return outputs << units.uK_RJ
 
 @njit(parallel=True)
 def get_emission_numba(freqs, I_ref, Q_ref, U_ref, freq_ref_I, freq_ref_P, mbb_index, mbb_temperature):
