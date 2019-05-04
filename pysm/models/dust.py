@@ -1,9 +1,9 @@
 import numpy as np
 import warnings
-from ... import units
-from ... import units as u
+from .. import units
+from .. import units as u
 from pathlib import Path
-from ..template import Model, check_freq_input
+from .template import Model, check_freq_input
 
 from numba import njit
 from astropy import constants as const

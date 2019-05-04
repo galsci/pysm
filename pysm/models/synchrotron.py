@@ -1,8 +1,8 @@
 import numpy as np
-from ... import units as u
+from .. import units as u
 from numba import njit
 
-from ..template import Model, check_freq_input
+from .template import Model, check_freq_input
 
 
 class SynchrotronPowerLaw(Model):

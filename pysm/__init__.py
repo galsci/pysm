@@ -29,7 +29,7 @@ if not _ASTROPY_SETUP_:
     # For egg_info test builds to pass, put package imports here.
     pass
 
-from .component_models import *
+from .models import *
 from .sky import Sky
 from .presets import preset_models
 from . import units
