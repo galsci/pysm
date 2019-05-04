@@ -21,7 +21,7 @@ from .. import mpi
 from unittest.mock import Mock
 
 
-class Model(object):
+class Model:
     """ This is the template object for PySM objects.
 
     If a MPI communicator is passed as input and `pixel_indices` is None,
@@ -77,6 +77,9 @@ class Model(object):
             pixel_indices=self.pixel_indices,
             mpi_comm=self.mpi_comm,
         )
+
+    def read_txt(self, path, **kwargs):
+        return read_txt(path, mpi_comm=self.mpi_comm, **kwargs)
 
     def apply_bandpass(self, bpasses):
         """ Method to calculate the emission averaged over a bandpass.
@@ -386,3 +389,38 @@ def read_map(
             output_map = output_map[pixel_indices].copy()
 
     return u.Quantity(output_map, unit, copy=False)
+
+
+def read_txt(path, mpi_comm=None, **kwargs):
+    """MPI-aware numpy.loadtxt function
+    reads text file on rank 0 with np.loadtxt and broadcasts over MPI
+
+    Parameters
+    ----------
+    path : str
+        path to fits file.
+    mpi_comm :  mpi4py MPI Communicator.
+
+    Returns
+    -------
+    output : numpy.ndarray
+        data read with numpy.loadtxt
+    """
+
+    if os.path.exists(str(path)):
+        filename = str(path)
+    else:
+        with data.conf.set_temp("dataurl", DATAURL), data.conf.set_temp(
+            "remote_timeout", 30
+        ):
+            filename = data.get_pkg_data_filename(path)
+
+    if (mpi_comm is not None and mpi_comm.rank==0) or (mpi_comm is None):
+        output = np.loadtxt(filename, **kwargs)
+    elif mpi_comm is not None and mpi_comm.rank>0:
+        output = None
+
+    if mpi_comm is not None:
+        output = mpi_comm.bcast(output, root=0)
+
+    return output
