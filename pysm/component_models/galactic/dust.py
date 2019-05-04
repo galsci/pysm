@@ -28,10 +28,11 @@ class ModifiedBlackBody(Model):
         freq_ref_P,
         map_mbb_index,
         map_mbb_temperature,
+        nside,
+        has_polarization=True,
         unit_I=None,
         unit_Q=None,
         unit_U=None,
-        nside=None,
         pixel_indices=None,
         mpi_comm=None,
     ):
@@ -59,11 +60,13 @@ class ModifiedBlackBody(Model):
         """
         super().__init__(nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
         # do model setup
-        self.I_ref = self.read_map(map_I) * u.uK_RJ
-        self.Q_ref = self.read_map(map_Q) * u.uK_RJ
-        self.U_ref = self.read_map(map_U) * u.uK_RJ
+        self.I_ref = self.read_map(map_I, unit=unit_I)
         self.freq_ref_I = float(freq_ref_I) * units.GHz
-        self.freq_ref_P = float(freq_ref_P) * units.GHz
+        self.has_polarization = has_polarization
+        if has_polarization:
+            self.Q_ref = self.read_map(map_Q, unit=unit_Q)
+            self.U_ref = self.read_map(map_U, unit=unit_U)
+            self.freq_ref_P = float(freq_ref_P) * units.GHz
         self.mbb_index = self.read_map(map_mbb_index)
         self.mbb_temperature = self.read_map(map_mbb_temperature) * units.K
         self.nside = nside
