@@ -12,13 +12,12 @@ class PowerLaw(Model):
     def __init__(
         self,
         map_I,
-        map_Q,
-        map_U,
         freq_ref_I,
-        freq_ref_P,
         map_pl_index,
         nside,
-        has_polarization=True,
+        map_Q=None,
+        map_U=None,
+        freq_ref_P=None,
         unit_I=None,
         unit_Q=None,
         unit_U=None,
@@ -56,14 +55,17 @@ class PowerLaw(Model):
         # to make a copy of the array when we run the model
         self.I_ref <<= u.uK_RJ
         self.freq_ref_I = u.Quantity(freq_ref_I).to(u.GHz)
-        self.has_polarization = has_polarization
-        if has_polarization:
+        self.has_polarization = map_Q is not None
+        if self.has_polarization:
             self.Q_ref = self.read_map(map_Q, unit=unit_Q)
             self.Q_ref <<= u.uK_RJ
             self.U_ref = self.read_map(map_U, unit=unit_U)
             self.U_ref <<= u.uK_RJ
             self.freq_ref_P = u.Quantity(freq_ref_P).to(u.GHz)
-        self.pl_index = self.read_map(map_pl_index, unit="")
+        try:  # input is a number
+            self.pl_index = u.Quantity(map_pl_index, unit="")
+        except TypeError:  # input is a path
+            self.pl_index = self.read_map(map_pl_index, unit="")
         return
 
     @u.quantity_input

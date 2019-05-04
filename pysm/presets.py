@@ -13,12 +13,12 @@ from .models import (
     PowerLaw,
 )
 from .sky import Sky
-from configobj import ConfigObj
+import toml
 from .constants import DATAURL
 from astropy.utils import data
 
 with data.conf.set_temp("dataurl", DATAURL):
-    PRESET_MODELS = ConfigObj(data.get_pkg_data_filename("data/presets.cfg"))
+    PRESET_MODELS = toml.load(data.get_pkg_data_filename("data/presets.cfg"))
 
 
 def preset_models(model_string, nside):
