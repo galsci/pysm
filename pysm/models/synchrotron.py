@@ -84,29 +84,50 @@ class SynchrotronPowerLaw(Model):
             shape (nfreq, 3, npix).
         """
         freqs = check_freq_input(freqs)
-        outputs = (
-            get_emission_numba(
-                freqs.value,
-                self.I_ref.value,
-                self.Q_ref.value,
-                self.U_ref.value,
-                self.freq_ref_I.value,
-                self.freq_ref_P.value,
-                self.pl_index.value,
+        if self.has_polarization:
+            outputs = (
+                get_emission_numba_IQU(
+                    freqs.value,
+                    self.I_ref.value,
+                    self.Q_ref.value,
+                    self.U_ref.value,
+                    self.freq_ref_I.value,
+                    self.freq_ref_P.value,
+                    self.pl_index.value,
+                )
+                << u.uK_RJ
             )
-            << u.uK_RJ
-        )
+        else:
+            outputs = (
+                get_emission_numba_I(
+                    freqs.value,
+                    self.I_ref.value,
+                    self.freq_ref_I.value,
+                    self.pl_index.value,
+                )
+                << u.uK_RJ
+            )
         return outputs
 
 
 @njit(parallel=True)
-def get_emission_numba(freqs, I_ref, Q_ref, U_ref, freq_ref_I, freq_ref_P, pl_index):
+def get_emission_numba_IQU(
+    freqs, I_ref, Q_ref, U_ref, freq_ref_I, freq_ref_P, pl_index
+):
     outputs = np.empty((len(freqs), 3, len(I_ref)), dtype=I_ref.dtype)
     I, Q, U = 0, 1, 2
     for i_freq, freq in enumerate(freqs):
-        outputs[i_freq, I, :] = I_ref
+        outputs[i_freq, I, :] = I_ref * (freq / freq_ref_I) ** pl_index
         outputs[i_freq, Q, :] = Q_ref
         outputs[i_freq, U, :] = U_ref
-        outputs[i_freq, I] *= (freq / freq_ref_I) ** pl_index
         outputs[i_freq, Q:] *= (freq / freq_ref_P) ** pl_index
+    return outputs
+
+
+@njit(parallel=True)
+def get_emission_numba_I(freqs, I_ref, freq_ref_I, pl_index):
+    outputs = np.empty((len(freqs), 1, len(I_ref)), dtype=I_ref.dtype)
+    I = 0
+    for i_freq, freq in enumerate(freqs):
+        outputs[i_freq, I, :] = I_ref * (freq / freq_ref_I) ** pl_index
     return outputs
