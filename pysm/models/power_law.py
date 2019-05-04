@@ -5,7 +5,7 @@ from numba import njit
 from .template import Model, check_freq_input
 
 
-class SynchrotronPowerLaw(Model):
+class PowerLaw(Model):
     """ This is a model for a simple power law synchrotron model.
     """
 

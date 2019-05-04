@@ -7,10 +7,10 @@ Functions:
     d1
 """
 from pathlib import Path
-from .component_models import (
+from .models import (
     ModifiedBlackBody,
     DecorrelatedModifiedBlackBody,
-    SynchrotronPowerLaw,
+    PowerLaw,
 )
 from .sky import Sky
 from configobj import ConfigObj

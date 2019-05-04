@@ -1,3 +1,3 @@
 from .dust import ModifiedBlackBody, DecorrelatedModifiedBlackBody
-from .synchrotron import SynchrotronPowerLaw
+from .power_law import PowerLaw
 from .template import Model, read_map
