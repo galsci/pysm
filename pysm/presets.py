@@ -7,11 +7,7 @@ Functions:
     d1
 """
 from pathlib import Path
-from .models import (
-    ModifiedBlackBody,
-    DecorrelatedModifiedBlackBody,
-    PowerLaw,
-)
+from .models import *
 from .sky import Sky
 import toml
 from .constants import DATAURL
