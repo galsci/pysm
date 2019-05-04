@@ -1,8 +1,12 @@
 import numpy as np
-from astropy.modeling.blackbody import blackbody_nu
+import warnings
 from ... import units
+from ... import units as u
 from pathlib import Path
 from ..template import Model, check_freq_input
+
+from numba import njit
+from astropy import constants as const
 
 
 class ModifiedBlackBody(Model):
@@ -17,17 +21,19 @@ class ModifiedBlackBody(Model):
 
     def __init__(
         self,
-        map_I=None,
-        map_Q=None,
-        map_U=None,
+        map_I,
+        map_Q,
+        map_U,
+        freq_ref_I,
+        freq_ref_P,
+        map_mbb_index,
+        map_mbb_temperature,
+        nside,
+        has_polarization=True,
         unit_I=None,
         unit_Q=None,
         unit_U=None,
-        freq_ref_I=None,
-        freq_ref_P=None,
-        map_mbb_index=None,
-        map_mbb_temperature=None,
-        nside=None,
+        unit_mbb_temperature=None,
         pixel_indices=None,
         mpi_comm=None,
     ):
@@ -41,9 +47,13 @@ class ModifiedBlackBody(Model):
         ----------
         map_I, map_Q, map_U: `pathlib.Path` object
             Paths to the maps to be used as I, Q, U templates.
-        freq_ref_I, freq_ref_P: float
+        unit_* : string
+            Unit string for all input FITS maps, if None, the input file
+            should have a unit defined in the FITS header.
+        freq_ref_I, freq_ref_P: Quantity or string
             Reference frequencies at which the intensity and polarization
-            templates are defined.
+            templates are defined. The should be a astropy Quantity object
+            or a string (e.g. "1500 MHz") compatible with GHz.
         map_mbb_index: `pathlib.Path` object
             Path to the map to be used as the power law index for the dust
             opacity in a modified blackbody model.
@@ -55,48 +65,23 @@ class ModifiedBlackBody(Model):
         """
         super().__init__(nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
         # do model setup
-        self.I_ref = self.read_map(map_I)[None, :] * units.uK
-        self.Q_ref = self.read_map(map_Q)[None, :] * units.uK
-        self.U_ref = self.read_map(map_U)[None, :] * units.uK
-        self.freq_ref_I = float(freq_ref_I) * units.GHz
-        self.freq_ref_P = float(freq_ref_P) * units.GHz
-        self.mbb_index = self.read_map(map_mbb_index)[None, :]
-        self.mbb_temperature = self.read_map(map_mbb_temperature)[None, :] * units.K
-        self.nside = nside
-
-        @property
-        def freq_ref_I(self):
-            return self.__freq_ref_I
-
-        @freq_ref_I.setter
-        def freq_ref_I(self, value):
-            if value < 0:
-                raise InputParameterError
-            try:
-                assert isinstance(value, units.Quantity)
-            except AssertionError:
-                raise InputParameterError(
-                    r"""Must be instance of `astropy.units.Quantity`, with 
-                    Hz equivalency."""
-                )
-            self.__freq_ref_I = value
-
-        @property
-        def freq_ref_P(self):
-            return self.__freq_ref_P
-
-        @freq_ref_P.setter
-        def freq_ref_P(self, value):
-            if value < 0:
-                raise InputParameterError
-            try:
-                assert isinstance(value, units.Quantity)
-            except AssertionError:
-                raise InputParameterError(
-                    r"""Must be instance of `astropy.units.Quantity`, with 
-                    Hz equivalency."""
-                )
-            self.__freq_ref_P = value
+        self.I_ref = self.read_map(map_I, unit=unit_I)
+        # This does unit conversion in place so we do not copy the data
+        # we do not keep the original unit because otherwise we would need
+        # to make a copy of the array when we run the model
+        self.I_ref <<= units.uK_RJ
+        self.freq_ref_I = units.Quantity(freq_ref_I).to(units.GHz)
+        self.has_polarization = has_polarization
+        if has_polarization:
+            self.Q_ref = self.read_map(map_Q, unit=unit_Q)
+            self.Q_ref <<= units.uK_RJ
+            self.U_ref = self.read_map(map_U, unit=unit_U)
+            self.U_ref <<= units.uK_RJ
+            self.freq_ref_P = units.Quantity(freq_ref_P).to(units.GHz)
+        self.mbb_index = self.read_map(map_mbb_index, unit="")
+        self.mbb_temperature = self.read_map(map_mbb_temperature, unit=unit_mbb_temperature)
+        self.mbb_temperature <<= units.K
+        self.nside = int(nside)
 
     @units.quantity_input
     def get_emission(self, freqs: units.GHz) -> units.uK_RJ:
@@ -117,17 +102,22 @@ class ModifiedBlackBody(Model):
         """
         # freqs must be given in GHz.
         freqs = check_freq_input(freqs)
-        outputs = []
-        for freq in freqs:
-            I_scal = (freq / self.freq_ref_I) ** (self.mbb_index - 2.)
-            P_scal = (freq / self.freq_ref_P) ** (self.mbb_index - 2.)
-            I_scal *= blackbody_ratio(freq, self.freq_ref_I, self.mbb_temperature)
-            P_scal *= blackbody_ratio(freq, self.freq_ref_P, self.mbb_temperature)
-            iqu_freq = np.concatenate(
-                (I_scal * self.I_ref, P_scal * self.Q_ref, P_scal * self.U_ref)
-            )
-            outputs.append(iqu_freq)
-        return np.array(outputs) * units.uK_RJ
+        outputs = get_emission_numba(freqs.value, self.I_ref.value, self.Q_ref.value, self.U_ref.value, self.freq_ref_I.value, self.freq_ref_P.value, self.mbb_index.value, self.mbb_temperature.value)
+        return outputs * units.uK_RJ
+
+@njit(parallel=True)
+def get_emission_numba(freqs, I_ref, Q_ref, U_ref, freq_ref_I, freq_ref_P, mbb_index, mbb_temperature):
+    outputs = np.empty((len(freqs), 3, len(I_ref)), dtype=I_ref.dtype)
+    I, Q, U = 0, 1, 2
+    for i_freq, freq in enumerate(freqs):
+        outputs[i_freq, I, :] = I_ref
+        outputs[i_freq, Q, :] = Q_ref
+        outputs[i_freq, U, :] = U_ref
+        outputs[i_freq, I] *= (freq / freq_ref_I) ** (mbb_index - 2.)
+        outputs[i_freq, Q:] *= (freq / freq_ref_P) ** (mbb_index - 2.)
+        outputs[i_freq, I] *= blackbody_ratio(freq, freq_ref_I, mbb_temperature)
+        outputs[i_freq, Q:] *= blackbody_ratio(freq, freq_ref_P, mbb_temperature)
+    return outputs
 
 
 class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
@@ -281,8 +271,8 @@ def invert_safe(matrix):
     return np.dot(v, np.dot(np.diag(winv), np.transpose(v)))
 
 
-@units.quantity_input(freq_to=units.GHz, freq_from=units.GHz, temp=units.K)
-def blackbody_ratio(freq_to, freq_from, temp) -> units.dimensionless_unscaled:
+@njit
+def blackbody_ratio(freq_to, freq_from, temp):
     """ Function to calculate the flux ratio between two frequencies for a
     blackbody at a given temperature.
 
@@ -302,3 +292,60 @@ def blackbody_ratio(freq_to, freq_from, temp) -> units.dimensionless_unscaled:
         `temp`.
     """
     return blackbody_nu(freq_to, temp) / blackbody_nu(freq_from, temp)
+
+h = const.h.value
+c = const.c.value
+k_B = const.k_B.value
+
+@njit
+def blackbody_nu(freq, temp):
+    """Calculate blackbody flux per steradian, :math:`B_{\\nu}(T)`.
+
+    .. note::
+
+        Use `numpy.errstate` to suppress Numpy warnings, if desired.
+
+    .. warning::
+
+        Output values might contain ``nan`` and ``inf``.
+
+    Parameters
+    ----------
+    in_x : number, array-like, or `~astropy.units.Quantity`
+        Frequency, wavelength, or wave number.
+        If not a Quantity, it is assumed to be in Hz.
+
+    temperature : number, array-like, or `~astropy.units.Quantity`
+        Blackbody temperature.
+        If not a Quantity, it is assumed to be in Kelvin.
+
+    Returns
+    -------
+    flux : `~astropy.units.Quantity`
+        Blackbody monochromatic flux in
+        :math:`erg \\; cm^{-2} s^{-1} Hz^{-1} sr^{-1}`.
+
+    Raises
+    ------
+    ValueError
+        Invalid temperature.
+
+    ZeroDivisionError
+        Wavelength is zero (when converting to frequency).
+
+    """
+
+    # Check if input values are physically possible
+    if np.any(temp < 0):
+        print('Temperature should be positive')
+    #if (not np.all(np.isfinite(freq))) or np.any(freq <= 0):
+    #    print('Input contains invalid wavelength/frequency value(s)')
+
+    log_boltz = h* freq * 1e9/ (k_B * temp)
+    boltzm1 = np.expm1(log_boltz)
+
+    # Calculate blackbody flux
+    bb_nu = (2.0 * h * (freq * 1e9)** 3 / (c ** 2 * boltzm1))
+    #flux = bb_nu.to(FNU, u.spectral_density(freq * 1e9))
+
+    return bb_nu

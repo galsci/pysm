@@ -20,6 +20,26 @@ def mpi_comm():
     comm = MPI.COMM_WORLD
     return comm
 
+def test_mpi_assemble(mpi_comm):
+    nside = 128
+    lmax = 2 * nside
+    model = pysm.Model(
+        nside, mpi_comm=mpi_comm, pixel_indices=None, smoothing_lmax=lmax
+    )
+    distributed_map = model.read_map("pysm_2/dust_temp.fits")
+    full_map_rank0 = pysm.mpi.assemble_map_on_rank0(
+        mpi_comm,
+        distributed_map,
+        model.pixel_indices,
+        n_components=1,
+        npix=hp.nside2npix(nside),
+    )[0]
+    if mpi_comm.rank == 0:
+        np.testing.assert_allclose(
+            full_map_rank0,
+            pysm.read_map("pysm_2/dust_temp.fits", nside=nside).value,
+            rtol=1e-5,
+        )
 
 def test_mpi_smoothing(mpi_comm):
     nside = 128

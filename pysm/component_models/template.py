@@ -65,13 +65,14 @@ class Model(object):
                     self.mpi_comm, self.nside, lmax=self.smoothing_lmax
                 )
 
-    def read_map(self, path, field=0):
+    def read_map(self, path, unit=None, field=0):
         """Wrapper of the PySM read_map function that automatically
         uses nside, pixel_indices and mpi_comm defined in this Model
         """
         return read_map(
             path,
             self.nside,
+            unit=unit,
             field=field,
             pixel_indices=self.pixel_indices,
             mpi_comm=self.mpi_comm,
@@ -106,7 +107,7 @@ class Model(object):
             out.append(np.trapz(weight_emission, freqs, axis=0))
         return np.array(out)
 
-    def apply_smoothing(self, skies, fwhms):
+    def apply_smoothing(self, skies, fwhms, coord="G"):
         """ Method to apply smoothing to a set of simulations. This currently
         applies only the `healpy.smoothing` Gaussian smoothing kernel, but will
         be updated with a more general functionality.
@@ -149,12 +150,26 @@ class Model(object):
         out = []
         for sky, fwhm in zip(skies, fwhms):
             if self.mpi_comm is None:
-                smoothed_sky = hp.smoothing(
-                    sky,
+                alm = hp.map2alm(sky,
                     lmax=self.smoothing_lmax,
-                    fwhm=fwhm.to(u.rad) / u.rad,
-                    verbose=False,
+                    use_pixel_weights=True,
+                    iter = 1,
                 )
+                hp.smoothalm(alm,
+                    fwhm=fwhm.to_value(u.rad),
+                    verbose=False,
+                    inplace=True,
+                    pol=True,
+                )
+                if coord != "G":
+                    rot = hp.Rotator(coord = ["G", coord])
+                    alm = rot.rotate_alm(alm)
+                smoothed_sky = hp.alm2map(alm,
+                        nside=self.nside,
+                        verbose=False,
+                        pixwin=False
+                        )
+
             else:
                 smoothed_sky = self.mpi_smoothing(sky)
             out.append(smoothed_sky)
@@ -168,7 +183,7 @@ class Model(object):
         )
 
         sky_I = sky if sky.ndim == 1 else sky[0]
-        sky_I_contig = np.ascontiguousarray(sky_I.reshape((1, 1, -1)))
+        sky_I_contig = np.ascontiguousarray(sky_I.reshape((1, 1, -1))).astype(np.float64, copy=False)
 
         alm_sharp_I = libsharp.analysis(
             self.libsharp_grid,
@@ -191,7 +206,7 @@ class Model(object):
             alm_sharp_P = libsharp.analysis(
                 self.libsharp_grid,
                 self.libsharp_order,
-                np.ascontiguousarray(sky[1:3, :].reshape((1, 2, -1))),
+                np.ascontiguousarray(sky[1:3, :].reshape((1, 2, -1))).astype(np.float64, copy=False),
                 spin=2,
                 comm=self.mpi_comm,
             )
@@ -292,6 +307,7 @@ def extract_hdu_unit(path):
 def read_map(
     path,
     nside,
+    unit=None,
     field=0,
     pixel_indices=None,
     mpi_comm=None,
@@ -326,10 +342,28 @@ def read_map(
             filename = data.get_pkg_data_filename(path)
     # inmap = hp.read_map(filename, field=field, verbose=False)
     if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
-        output_map = hp.ud_grade(
-            hp.read_map(filename, field=field, verbose=False), nside_out=nside
-        )
-        unit_string = extract_hdu_unit(filename)
+        output_map = hp.read_map(filename, field=field, verbose=False, dtype=None)
+        dtype = output_map.dtype
+        # numba only supports little endian
+        if dtype.byteorder == ">":
+            dtype = dtype.newbyteorder()
+        # mpi4py has issues if the dtype is a string like ">f4"
+        if dtype == np.dtype(np.float32):
+            dtype = np.dtype(np.float32)
+        elif dtype == np.dtype(np.float64):
+            dtype = np.dtype(np.float64)
+        nside_in = hp.get_nside(output_map)
+        if nside < nside_in:  # do downgrading in double precision
+            output_map = hp.ud_grade(
+                output_map.astype(np.float64), nside_out=nside
+            )
+        else:
+            output_map = hp.ud_grade(
+                output_map, nside_out=nside
+            )
+        output_map = output_map.astype(dtype, copy=False)
+        if unit is None:
+            unit = extract_hdu_unit(filename)
     elif mpi_comm is not None and mpi_comm.rank > 0:
         npix = hp.nside2npix(nside)
         try:
@@ -337,17 +371,21 @@ def read_map(
         except TypeError:  # field is int
             ncomp = 1
         shape = npix if ncomp == 1 else (len(field), npix)
-        output_map = np.empty(shape, dtype=np.float64)
-        unit_string = ""
+        unit = ""
+        dtype = None
 
     if mpi_comm is not None:
-        mpi_comm.Bcast(output_map, root=0)
-        unit_string = mpi_comm.bcast(unit_string, root=0)
+        dtype = mpi_comm.bcast(dtype, root=0)
+        if mpi_comm.rank > 0:
+            output_map = np.empty(shape, dtype=dtype)
+        mpi_comm.Bcast(output_map.astype(np.float32), root=0)
+        unit = mpi_comm.bcast(unit, root=0)
 
     if pixel_indices is not None:
+        # make copies so that Python can release the full array
         try:  # multiple components
-            output_map = np.array([each[pixel_indices] for each in output_map])
+            output_map = np.array([each[pixel_indices].copy() for each in output_map])
         except IndexError:  # single component
-            return output_map[pixel_indices]
+            output_map = output_map[pixel_indices].copy()
 
-    return u.Quantity(output_map, unit_string)
+    return u.Quantity(output_map, unit, copy=False)
