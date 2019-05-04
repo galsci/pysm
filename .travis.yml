@@ -39,9 +39,9 @@ env:
         
         # List runtime dependencies for the package that are available as conda
         # packages here.
-        - CONDA_DEPENDENCIES='configobj healpy numba'
-        - CONDA_DEPENDENCIES_MPI='configobj healpy numba cython'
-        - CONDA_DEPENDENCIES_DOC='configobj healpy numba sphinx-astropy'
+        - CONDA_DEPENDENCIES='toml healpy numba'
+        - CONDA_DEPENDENCIES_MPI='toml healpy numba cython'
+        - CONDA_DEPENDENCIES_DOC='toml healpy numba sphinx-astropy'
         
         # List other runtime dependencies for the package that are available as
         # pip packages here.
