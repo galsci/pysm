@@ -65,13 +65,14 @@ class Model(object):
                     self.mpi_comm, self.nside, lmax=self.smoothing_lmax
                 )
 
-    def read_map(self, path, field=0):
+    def read_map(self, path, unit=None, field=0):
         """Wrapper of the PySM read_map function that automatically
         uses nside, pixel_indices and mpi_comm defined in this Model
         """
         return read_map(
             path,
             self.nside,
+            unit=unit,
             field=field,
             pixel_indices=self.pixel_indices,
             mpi_comm=self.mpi_comm,
@@ -306,6 +307,7 @@ def extract_hdu_unit(path):
 def read_map(
     path,
     nside,
+    unit=None,
     field=0,
     pixel_indices=None,
     mpi_comm=None,
@@ -360,7 +362,8 @@ def read_map(
                 output_map, nside_out=nside
             )
         output_map = output_map.astype(dtype, copy=False)
-        unit_string = extract_hdu_unit(filename)
+        if unit is None:
+            unit = extract_hdu_unit(filename)
     elif mpi_comm is not None and mpi_comm.rank > 0:
         npix = hp.nside2npix(nside)
         try:
@@ -368,7 +371,7 @@ def read_map(
         except TypeError:  # field is int
             ncomp = 1
         shape = npix if ncomp == 1 else (len(field), npix)
-        unit_string = ""
+        unit = ""
         dtype = None
 
     if mpi_comm is not None:
@@ -376,7 +379,7 @@ def read_map(
         if mpi_comm.rank > 0:
             output_map = np.empty(shape, dtype=dtype)
         mpi_comm.Bcast(output_map.astype(np.float32), root=0)
-        unit_string = mpi_comm.bcast(unit_string, root=0)
+        unit = mpi_comm.bcast(unit, root=0)
 
     if pixel_indices is not None:
         # make copies so that Python can release the full array
@@ -385,4 +388,4 @@ def read_map(
         except IndexError:  # single component
             output_map = output_map[pixel_indices].copy()
 
-    return u.Quantity(output_map, unit_string, copy=False)
+    return u.Quantity(output_map, unit, copy=False)
