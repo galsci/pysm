@@ -1,9 +1,8 @@
 import pytest
 import numpy as np
 import pysm
-import pysm.component_models.galactic.dust as dust
+import pysm.models.dust as dust
 import astropy.units as units
-from astropy.units import UnitsError
 from astropy.tests.helper import assert_quantity_allclose
 
 

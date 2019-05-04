@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import healpy as hp
 import pysm.units as units
-from pysm.component_models.template import read_map
+from pysm.models.template import read_map
 
 
 class TestUnits(unittest.TestCase):
