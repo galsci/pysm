@@ -1,6 +1,5 @@
 import numpy as np
 import warnings
-from .. import units
 from .. import units as u
 from pathlib import Path
 from .template import Model, check_freq_input
@@ -69,24 +68,24 @@ class ModifiedBlackBody(Model):
         # This does unit conversion in place so we do not copy the data
         # we do not keep the original unit because otherwise we would need
         # to make a copy of the array when we run the model
-        self.I_ref <<= units.uK_RJ
-        self.freq_ref_I = units.Quantity(freq_ref_I).to(units.GHz)
+        self.I_ref <<= u.uK_RJ
+        self.freq_ref_I = u.Quantity(freq_ref_I).to(u.GHz)
         self.has_polarization = has_polarization
         if has_polarization:
             self.Q_ref = self.read_map(map_Q, unit=unit_Q)
-            self.Q_ref <<= units.uK_RJ
+            self.Q_ref <<= u.uK_RJ
             self.U_ref = self.read_map(map_U, unit=unit_U)
-            self.U_ref <<= units.uK_RJ
-            self.freq_ref_P = units.Quantity(freq_ref_P).to(units.GHz)
+            self.U_ref <<= u.uK_RJ
+            self.freq_ref_P = u.Quantity(freq_ref_P).to(u.GHz)
         self.mbb_index = self.read_map(map_mbb_index, unit="")
         self.mbb_temperature = self.read_map(
             map_mbb_temperature, unit=unit_mbb_temperature
         )
-        self.mbb_temperature <<= units.K
+        self.mbb_temperature <<= u.K
         self.nside = int(nside)
 
-    @units.quantity_input
-    def get_emission(self, freqs: units.GHz) -> units.uK_RJ:
+    @u.quantity_input
+    def get_emission(self, freqs: u.GHz) -> u.uK_RJ:
         """ This function evaluates the component model at a either
         a single frequency, an array of frequencies, or over a bandpass.
 
@@ -114,7 +113,7 @@ class ModifiedBlackBody(Model):
             self.mbb_index.value,
             self.mbb_temperature.value,
         )
-        return outputs << units.uK_RJ
+        return outputs << u.uK_RJ
 
 
 @njit(parallel=True)
@@ -196,8 +195,8 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
         return decorr[..., None] * super().get_emission(freqs)
 
 
-@units.quantity_input(freqs=units.GHz, correlation_length=units.dimensionless_unscaled)
-def frequency_decorr_model(freqs, correlation_length) -> units.dimensionless_unscaled:
+@u.quantity_input(freqs=u.GHz, correlation_length=u.dimensionless_unscaled)
+def frequency_decorr_model(freqs, correlation_length) -> u.dimensionless_unscaled:
     """ Function to calculate the frequency decorrelation method of
     Vansyngel+17.
     """
@@ -205,14 +204,14 @@ def frequency_decorr_model(freqs, correlation_length) -> units.dimensionless_uns
     return np.exp(-0.5 * (log_dep / correlation_length) ** 2)
 
 
-@units.quantity_input(
-    freq_constrained=units.GHz,
-    freqs_constrained=units.GHz,
-    correlation_length=units.dimensionless_unscaled,
+@u.quantity_input(
+    freq_constrained=u.GHz,
+    freqs_constrained=u.GHz,
+    correlation_length=u.dimensionless_unscaled,
 )
 def get_decorrelation_matrix(
     freq_constrained, freqs_unconstrained, correlation_length
-) -> units.dimensionless_unscaled:
+) -> u.dimensionless_unscaled:
     """ Function to calculate the correlation matrix between observed
     frequencies. This model is based on the proposed model for decorrelation
     of Vanyngel+17. The proposed frequency covariance matrix in this paper
