@@ -22,9 +22,14 @@ class Sky(Model):
     """
 
     def __init__(
-        self, nside=None, component_objects=None, preset_strings=None, mpi_comm=None
+        self,
+        nside=None,
+        pixel_indices=None,
+        component_objects=None,
+        preset_strings=None,
+        mpi_comm=None,
     ):
-        Model.__init__(self, mpi_comm=mpi_comm)
+        super().__init__(nside=nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
         if component_objects is not None:
             self.components = component_objects
         # otherwise instantiate the sky object from list of predefined models,
