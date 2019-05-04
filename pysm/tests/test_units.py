@@ -7,12 +7,11 @@ from pysm.component_models.template import read_map
 
 
 class TestUnits(unittest.TestCase):
-
     def setUp(self):
-        self.T_CMB = 100. * units.K_CMB
-        self.T_RJ = 100. * units.K_RJ
-        self.freqs = 100. * units.GHz
-        self.freqs_arr = np.array([10., 100., 1000.]) * units.GHz
+        self.T_CMB = 100.0 * units.K_CMB
+        self.T_RJ = 100.0 * units.K_RJ
+        self.freqs = 100.0 * units.GHz
+        self.freqs_arr = np.array([10.0, 100.0, 1000.0]) * units.GHz
         self.temp_dir = Path(__file__).absolute().parent / "temp_dir"
         self.temp_dir.mkdir(parents=True, exist_ok=True)
         self.temp_fits_file_RJ = self.temp_dir / "test_RJ.fits"
@@ -68,8 +67,8 @@ class TestUnits(unittest.TestCase):
         reverse1 = rj_from_cmb.to(units.K_CMB, **equiv)
         reverse2 = cmb_from_rj.to(units.K_RJ, **equiv)
 
-        np.testing.assert_almost_equal(1., self.T_CMB / reverse1, decimal=6)
-        np.testing.assert_almost_equal(1., self.T_RJ / reverse2, decimal=6)
+        np.testing.assert_almost_equal(1.0, self.T_CMB / reverse1, decimal=6)
+        np.testing.assert_almost_equal(1.0, self.T_RJ / reverse2, decimal=6)
 
     def test_fits_unit_funcitonality(self):
         """ Test that the units can be written to the fits header. Check that

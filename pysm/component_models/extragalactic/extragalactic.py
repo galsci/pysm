@@ -8,6 +8,7 @@ objects:
     CMB
 """
 
+
 class CIB(object):
     def __init__(self):
         return

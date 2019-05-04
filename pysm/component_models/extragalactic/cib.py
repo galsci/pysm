@@ -16,7 +16,14 @@ class InterpolatedCIB(Model):
     of hydrodynamical simulations.
     """
 
-    def __init__(self, map_dir=None, info_file=None, nside=None, pixel_indices=None, mpi_comm=None):
+    def __init__(
+        self,
+        map_dir=None,
+        info_file=None,
+        nside=None,
+        pixel_indices=None,
+        mpi_comm=None,
+    ):
         """ 
         Parameters
         ----------
@@ -29,7 +36,7 @@ class InterpolatedCIB(Model):
             map is defined, and second the corresponding filename for the
             fits file containing the IQU maps at that frequency.
         """
-        super().__init__(nside, pixel_indices=pixel_indices,mpi_comm=mpi_comm)
+        super().__init__(nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
         try:
             assert isinstance(map_dir, Path)
         except AssertionError:
@@ -87,5 +94,5 @@ def interpolate_cib_maps(freqs, cib_map_arr):
         axis=0,
         kind="linear",
         bounds_error=False,
-        fill_value=(0., 0.),
+        fill_value=(0.0, 0.0),
     )

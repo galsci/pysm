@@ -6,7 +6,6 @@ from pysm.component_models.extragalactic.cib import InterpolatedCIB
 
 
 class TestInterpolatedCIB(unittest.TestCase):
-
     def setUp(self):
         """ Create some fake data that corresponds to a linear SED, which
         the linear interpolation should capture perfectly. Calculate the
@@ -21,7 +20,7 @@ class TestInterpolatedCIB(unittest.TestCase):
         self.freqs_test = np.linspace(10.5, 999.5, nsamps - 1)
         # create some fake test data
         ref_amp_map = np.random.randn(3, self.npix)
-        freq_0 = 150.
+        freq_0 = 150.0
         self.samples = linear_sed(ref_amp_map, self.freqs_sample, freq_0)
         self.test_samples = linear_sed(ref_amp_map, self.freqs_test, freq_0)
         # save some of this data to a temporary directory.

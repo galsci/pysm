@@ -84,8 +84,20 @@ class SynchrotronPowerLaw(Model):
             shape (nfreq, 3, npix).
         """
         freqs = check_freq_input(freqs)
-        outputs = get_emission_numba(freqs.value, self.I_ref.value, self.Q_ref.value, self.U_ref.value, self.freq_ref_I.value, self.freq_ref_P.value, self.pl_index.value) << u.uK_RJ
+        outputs = (
+            get_emission_numba(
+                freqs.value,
+                self.I_ref.value,
+                self.Q_ref.value,
+                self.U_ref.value,
+                self.freq_ref_I.value,
+                self.freq_ref_P.value,
+                self.pl_index.value,
+            )
+            << u.uK_RJ
+        )
         return outputs
+
 
 @njit(parallel=True)
 def get_emission_numba(freqs, I_ref, Q_ref, U_ref, freq_ref_I, freq_ref_P, pl_index):

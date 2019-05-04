@@ -150,25 +150,22 @@ class Model(object):
         out = []
         for sky, fwhm in zip(skies, fwhms):
             if self.mpi_comm is None:
-                alm = hp.map2alm(sky,
-                    lmax=self.smoothing_lmax,
-                    use_pixel_weights=True,
-                    iter = 1,
+                alm = hp.map2alm(
+                    sky, lmax=self.smoothing_lmax, use_pixel_weights=True, iter=1
                 )
-                hp.smoothalm(alm,
+                hp.smoothalm(
+                    alm,
                     fwhm=fwhm.to_value(u.rad),
                     verbose=False,
                     inplace=True,
                     pol=True,
                 )
                 if coord != "G":
-                    rot = hp.Rotator(coord = ["G", coord])
+                    rot = hp.Rotator(coord=["G", coord])
                     alm = rot.rotate_alm(alm)
-                smoothed_sky = hp.alm2map(alm,
-                        nside=self.nside,
-                        verbose=False,
-                        pixwin=False
-                        )
+                smoothed_sky = hp.alm2map(
+                    alm, nside=self.nside, verbose=False, pixwin=False
+                )
 
             else:
                 smoothed_sky = self.mpi_smoothing(sky)
@@ -183,7 +180,9 @@ class Model(object):
         )
 
         sky_I = sky if sky.ndim == 1 else sky[0]
-        sky_I_contig = np.ascontiguousarray(sky_I.reshape((1, 1, -1))).astype(np.float64, copy=False)
+        sky_I_contig = np.ascontiguousarray(sky_I.reshape((1, 1, -1))).astype(
+            np.float64, copy=False
+        )
 
         alm_sharp_I = libsharp.analysis(
             self.libsharp_grid,
@@ -206,7 +205,9 @@ class Model(object):
             alm_sharp_P = libsharp.analysis(
                 self.libsharp_grid,
                 self.libsharp_order,
-                np.ascontiguousarray(sky[1:3, :].reshape((1, 2, -1))).astype(np.float64, copy=False),
+                np.ascontiguousarray(sky[1:3, :].reshape((1, 2, -1))).astype(
+                    np.float64, copy=False
+                ),
                 spin=2,
                 comm=self.mpi_comm,
             )
@@ -354,13 +355,9 @@ def read_map(
             dtype = np.dtype(np.float64)
         nside_in = hp.get_nside(output_map)
         if nside < nside_in:  # do downgrading in double precision
-            output_map = hp.ud_grade(
-                output_map.astype(np.float64), nside_out=nside
-            )
+            output_map = hp.ud_grade(output_map.astype(np.float64), nside_out=nside)
         else:
-            output_map = hp.ud_grade(
-                output_map, nside_out=nside
-            )
+            output_map = hp.ud_grade(output_map, nside_out=nside)
         output_map = output_map.astype(dtype, copy=False)
         if unit is None:
             unit = extract_hdu_unit(filename)

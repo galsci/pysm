@@ -79,7 +79,9 @@ class ModifiedBlackBody(Model):
             self.U_ref <<= units.uK_RJ
             self.freq_ref_P = units.Quantity(freq_ref_P).to(units.GHz)
         self.mbb_index = self.read_map(map_mbb_index, unit="")
-        self.mbb_temperature = self.read_map(map_mbb_temperature, unit=unit_mbb_temperature)
+        self.mbb_temperature = self.read_map(
+            map_mbb_temperature, unit=unit_mbb_temperature
+        )
         self.mbb_temperature <<= units.K
         self.nside = int(nside)
 
@@ -102,26 +104,37 @@ class ModifiedBlackBody(Model):
         """
         # freqs must be given in GHz.
         freqs = check_freq_input(freqs)
-        outputs = get_emission_numba(freqs.value, self.I_ref.value, self.Q_ref.value, self.U_ref.value, self.freq_ref_I.value, self.freq_ref_P.value, self.mbb_index.value, self.mbb_temperature.value)
+        outputs = get_emission_numba(
+            freqs.value,
+            self.I_ref.value,
+            self.Q_ref.value,
+            self.U_ref.value,
+            self.freq_ref_I.value,
+            self.freq_ref_P.value,
+            self.mbb_index.value,
+            self.mbb_temperature.value,
+        )
         return outputs << units.uK_RJ
 
+
 @njit(parallel=True)
-def get_emission_numba(freqs, I_ref, Q_ref, U_ref, freq_ref_I, freq_ref_P, mbb_index, mbb_temperature):
+def get_emission_numba(
+    freqs, I_ref, Q_ref, U_ref, freq_ref_I, freq_ref_P, mbb_index, mbb_temperature
+):
     outputs = np.empty((len(freqs), 3, len(I_ref)), dtype=I_ref.dtype)
     I, Q, U = 0, 1, 2
     for i_freq, freq in enumerate(freqs):
         outputs[i_freq, I, :] = I_ref
         outputs[i_freq, Q, :] = Q_ref
         outputs[i_freq, U, :] = U_ref
-        outputs[i_freq, I] *= (freq / freq_ref_I) ** (mbb_index - 2.)
-        outputs[i_freq, Q:] *= (freq / freq_ref_P) ** (mbb_index - 2.)
+        outputs[i_freq, I] *= (freq / freq_ref_I) ** (mbb_index - 2.0)
+        outputs[i_freq, Q:] *= (freq / freq_ref_P) ** (mbb_index - 2.0)
         outputs[i_freq, I] *= blackbody_ratio(freq, freq_ref_I, mbb_temperature)
         outputs[i_freq, Q:] *= blackbody_ratio(freq, freq_ref_P, mbb_temperature)
     return outputs
 
 
 class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
-
     def __init__(
         self,
         map_I=None,
@@ -266,8 +279,8 @@ def invert_safe(matrix):
         if wmin > 0:
             w_ok = True
         else:
-            mb += np.diag(2. * np.max([1E-14, -wmin]) * np.ones(len(mb)))
-    winv = 1. / w
+            mb += np.diag(2.0 * np.max([1e-14, -wmin]) * np.ones(len(mb)))
+    winv = 1.0 / w
     return np.dot(v, np.dot(np.diag(winv), np.transpose(v)))
 
 
@@ -293,9 +306,11 @@ def blackbody_ratio(freq_to, freq_from, temp):
     """
     return blackbody_nu(freq_to, temp) / blackbody_nu(freq_from, temp)
 
+
 h = const.h.value
 c = const.c.value
 k_B = const.k_B.value
+
 
 @njit
 def blackbody_nu(freq, temp):
@@ -337,15 +352,15 @@ def blackbody_nu(freq, temp):
 
     # Check if input values are physically possible
     if np.any(temp < 0):
-        print('Temperature should be positive')
-    #if (not np.all(np.isfinite(freq))) or np.any(freq <= 0):
+        print("Temperature should be positive")
+    # if (not np.all(np.isfinite(freq))) or np.any(freq <= 0):
     #    print('Input contains invalid wavelength/frequency value(s)')
 
-    log_boltz = h* freq * 1e9/ (k_B * temp)
+    log_boltz = h * freq * 1e9 / (k_B * temp)
     boltzm1 = np.expm1(log_boltz)
 
     # Calculate blackbody flux
-    bb_nu = (2.0 * h * (freq * 1e9)** 3 / (c ** 2 * boltzm1))
-    #flux = bb_nu.to(FNU, u.spectral_density(freq * 1e9))
+    bb_nu = 2.0 * h * (freq * 1e9) ** 3 / (c ** 2 * boltzm1)
+    # flux = bb_nu.to(FNU, u.spectral_density(freq * 1e9))
 
     return bb_nu

@@ -7,11 +7,11 @@ import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     nside = 16
-    bpass = [(np.linspace(140., 170., 10), np.ones(10))]
-    freqs = np.linspace(1, 500, 100.)
+    bpass = [(np.linspace(140.0, 170.0, 10), np.ones(10))]
+    freqs = np.linspace(1, 500, 100.0)
 
     sky = pysm.Sky(nside, preset_strings=["d6"])
-    sky.correlation_length = 1.
+    sky.correlation_length = 1.0
     sky_d1 = pysm.Sky(nside, preset_strings=["d1"])
     # hp.mollview(sky.get_emission(150.)[0, 0], title="model d4", norm='log')
     # plt.show()
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     # the three main functions to be used (haven't added noise yet)
     out_delta = sky.get_emission(bpass[0][0].mean())
     out_bpass = sky.apply_bandpass(bpass)
-    out_smoothed = sky.apply_smoothing(out_bpass, [120.])
+    out_smoothed = sky.apply_smoothing(out_bpass, [120.0])
 
     hp.mollview(out_smoothed[0, 0], norm="log", title="bpass smoothed")
     hp.mollview(out_delta[0, 0], norm="log", title="delta bpass")
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     # or the same functionality using the individual component
     out_delta = mbb.get_emission(bpass[0][0].mean())
     out_bpass = mbb.apply_bandpass(bpass)
-    out_smoothed = mbb.apply_smoothing(out_bpass, [120.])
+    out_smoothed = mbb.apply_smoothing(out_bpass, [120.0])
 
     hp.mollview(out_smoothed[0, 0], norm="log", title="bpass smoothed")
     hp.mollview(out_delta[0, 0], norm="log", title="delta bpass")

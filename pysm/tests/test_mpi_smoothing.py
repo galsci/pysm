@@ -12,13 +12,16 @@ except ImportError:
 try:
     import libsharp
 except ImportError:
-    pytest.skip("libsharp failed to import, skip MPI smoothing tests", allow_module_level=True)
+    pytest.skip(
+        "libsharp failed to import, skip MPI smoothing tests", allow_module_level=True
+    )
 
 
 @pytest.fixture
 def mpi_comm():
     comm = MPI.COMM_WORLD
     return comm
+
 
 def test_mpi_assemble(mpi_comm):
     nside = 128
@@ -40,6 +43,7 @@ def test_mpi_assemble(mpi_comm):
             pysm.read_map("pysm_2/dust_temp.fits", nside=nside).value,
             rtol=1e-5,
         )
+
 
 def test_mpi_smoothing(mpi_comm):
     nside = 128

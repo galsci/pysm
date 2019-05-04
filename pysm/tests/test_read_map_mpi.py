@@ -59,7 +59,7 @@ def test_distribute_rings_libsharp(mpi_comm):
             two_processes_comm, nside, lmax=2 * nside
         )
 
-        if mpi_comm.size == 1: # serial
+        if mpi_comm.size == 1:  # serial
             expected_local_pixels = np.arange(12)
         else:
             expected_local_pixels = (

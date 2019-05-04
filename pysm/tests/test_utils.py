@@ -1,6 +1,7 @@
 import numpy as np
 import pysm
 
+
 def test_has_polarization():
     h = pysm.utils.has_polarization
 

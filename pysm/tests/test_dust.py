@@ -8,11 +8,13 @@ from astropy.tests.helper import assert_quantity_allclose
 
 
 def test_blackbody_ratio():
-    nu_from = 100.
-    nu_to = 400.
-    temp = np.array([20.])
+    nu_from = 100.0
+    nu_to = 400.0
+    temp = np.array([20.0])
 
-    np.testing.assert_allclose(dust.blackbody_ratio(nu_to, nu_from, temp), np.array([10.77195547]))
+    np.testing.assert_allclose(
+        dust.blackbody_ratio(nu_to, nu_from, temp), np.array([10.77195547])
+    )
 
 
 @pytest.mark.parametrize("freq", [30, 100, 353])
