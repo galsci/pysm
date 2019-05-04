@@ -4,6 +4,7 @@ import pysm
 import pysm.component_models.galactic.dust as dust
 import astropy.units as units
 from astropy.units import UnitsError
+from astropy.tests.helper import assert_quantity_allclose
 
 
 def test_blackbody_ratio():
@@ -25,9 +26,10 @@ def test_dust_model(model_tag, freq):
     expected_output = pysm.read_map(
         "pysm_2_test_data/check{}therm_{}p0_64.fits".format(model_number, freq),
         64,
+        unit="uK_RJ",
         field=(0, 1, 2),
     ).reshape((1, 3, -1))
 
-    np.testing.assert_allclose(
-        expected_output.value, model.get_emission(freq * units.GHz).value, rtol=1e-5, atol=0
+    assert_quantity_allclose(
+        expected_output, model.get_emission(freq * units.GHz), rtol=1e-5
     )
