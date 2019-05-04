@@ -5,6 +5,8 @@
 
 import numpy as np
 
+from .exceptions import IllegalArgumentError
+
 def has_polarization(m):
     """Checks if a map or a group of map is polarized
 
