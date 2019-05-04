@@ -6,7 +6,7 @@ Objects:
     Sky
 """
 import numpy as np
-from .component_models import Model
+from .models import Model
 
 
 class Sky(Model):
