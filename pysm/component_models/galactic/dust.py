@@ -33,6 +33,7 @@ class ModifiedBlackBody(Model):
         unit_I=None,
         unit_Q=None,
         unit_U=None,
+        unit_mbb_temperature=None,
         pixel_indices=None,
         mpi_comm=None,
     ):
@@ -46,9 +47,13 @@ class ModifiedBlackBody(Model):
         ----------
         map_I, map_Q, map_U: `pathlib.Path` object
             Paths to the maps to be used as I, Q, U templates.
-        freq_ref_I, freq_ref_P: float
+        unit_* : string
+            Unit string for all input FITS maps, if None, the input file
+            should have a unit defined in the FITS header.
+        freq_ref_I, freq_ref_P: Quantity or string
             Reference frequencies at which the intensity and polarization
-            templates are defined.
+            templates are defined. The should be a astropy Quantity object
+            or a string (e.g. "1500 MHz") compatible with GHz.
         map_mbb_index: `pathlib.Path` object
             Path to the map to be used as the power law index for the dust
             opacity in a modified blackbody model.
@@ -61,49 +66,22 @@ class ModifiedBlackBody(Model):
         super().__init__(nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
         # do model setup
         self.I_ref = self.read_map(map_I, unit=unit_I)
-        self.freq_ref_I = float(freq_ref_I) * units.GHz
+        # This does unit conversion in place so we do not copy the data
+        # we do not keep the original unit because otherwise we would need
+        # to make a copy of the array when we run the model
+        self.I_ref <<= units.uK_RJ
+        self.freq_ref_I = units.Quantity(freq_ref_I).to(units.GHz)
         self.has_polarization = has_polarization
         if has_polarization:
             self.Q_ref = self.read_map(map_Q, unit=unit_Q)
+            self.Q_ref <<= units.uK_RJ
             self.U_ref = self.read_map(map_U, unit=unit_U)
-            self.freq_ref_P = float(freq_ref_P) * units.GHz
-        self.mbb_index = self.read_map(map_mbb_index)
-        self.mbb_temperature = self.read_map(map_mbb_temperature) * units.K
-        self.nside = nside
-
-        @property
-        def freq_ref_I(self):
-            return self.__freq_ref_I
-
-        @freq_ref_I.setter
-        def freq_ref_I(self, value):
-            if value < 0:
-                raise InputParameterError
-            try:
-                assert isinstance(value, units.Quantity)
-            except AssertionError:
-                raise InputParameterError(
-                    r"""Must be instance of `astropy.units.Quantity`, with 
-                    Hz equivalency."""
-                )
-            self.__freq_ref_I = value
-
-        @property
-        def freq_ref_P(self):
-            return self.__freq_ref_P
-
-        @freq_ref_P.setter
-        def freq_ref_P(self, value):
-            if value < 0:
-                raise InputParameterError
-            try:
-                assert isinstance(value, units.Quantity)
-            except AssertionError:
-                raise InputParameterError(
-                    r"""Must be instance of `astropy.units.Quantity`, with 
-                    Hz equivalency."""
-                )
-            self.__freq_ref_P = value
+            self.U_ref <<= units.uK_RJ
+            self.freq_ref_P = units.Quantity(freq_ref_P).to(units.GHz)
+        self.mbb_index = self.read_map(map_mbb_index, unit="")
+        self.mbb_temperature = self.read_map(map_mbb_temperature, unit=unit_mbb_temperature)
+        self.mbb_temperature <<= units.K
+        self.nside = int(nside)
 
     @units.quantity_input
     def get_emission(self, freqs: units.GHz) -> units.uK_RJ:
@@ -124,7 +102,7 @@ class ModifiedBlackBody(Model):
         """
         # freqs must be given in GHz.
         freqs = check_freq_input(freqs)
-        outputs = get_emission_numba(freqs.to_value(units.GHz), self.I_ref.to_value(u.uK_RJ), self.Q_ref.to_value(u.uK_RJ), self.U_ref.to_value(u.uK_RJ), self.freq_ref_I.to_value(u.GHz), self.freq_ref_P.to_value(u.GHz), self.mbb_index.value, self.mbb_temperature.to_value(u.K))
+        outputs = get_emission_numba(freqs.value, self.I_ref.value, self.Q_ref.value, self.U_ref.value, self.freq_ref_I.value, self.freq_ref_P.value, self.mbb_index.value, self.mbb_temperature.value)
         return outputs * units.uK_RJ
 
 @njit(parallel=True)
