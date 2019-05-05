@@ -1,5 +1,3 @@
-import unittest
-import numpy as np
 import pysm
 
 import pytest
@@ -11,7 +9,7 @@ from astropy.tests.helper import assert_quantity_allclose
 # @pytest.mark.parametrize("model", ["s1", "s2", "s3"]) # FIXME activate testing for other models
 def test_synchrotron_model(model, freq):
 
-    synchrotron = pysm.preset_models(model, nside=64)
+    synchrotron = pysm.Sky(preset_strings=[model], nside=64)
 
     model_number = {"s1": 2, "s2": 7, "s3": 10}[model]
     synch = pysm.read_map(

@@ -8,7 +8,7 @@ from astropy.tests.helper import assert_quantity_allclose
 @pytest.mark.parametrize("model", ["a2"])
 def test_model(model, freq):
 
-    model = pysm.preset_models(model, nside=64)
+    model = pysm.Sky(preset_strings=[model], nside=64)
 
     model_number = 8
     expected_map = pysm.read_map(
