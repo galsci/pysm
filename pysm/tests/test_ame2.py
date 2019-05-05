@@ -15,7 +15,7 @@ def test_model(model, freq):
         "pysm_2_test_data/check{}spinn_{}p0_64.fits".format(model_number, freq),
         64,
         unit=pysm.units.uK_RJ,
-        field=(0,1,2),
+        field=(0, 1, 2),
     ).reshape((1, 3, -1))
 
     assert_quantity_allclose(

@@ -415,9 +415,9 @@ def read_txt(path, mpi_comm=None, **kwargs):
         ):
             filename = data.get_pkg_data_filename(path)
 
-    if (mpi_comm is not None and mpi_comm.rank==0) or (mpi_comm is None):
+    if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
         output = np.loadtxt(filename, **kwargs)
-    elif mpi_comm is not None and mpi_comm.rank>0:
+    elif mpi_comm is not None and mpi_comm.rank > 0:
         output = None
 
     if mpi_comm is not None:

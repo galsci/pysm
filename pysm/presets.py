@@ -16,9 +16,11 @@ from astropy.utils import data
 with data.conf.set_temp("dataurl", DATAURL):
     PRESET_MODELS = toml.load(data.get_pkg_data_filename("data/presets.cfg"))
 
+
 def remove_class_from_dict(d):
     """Return a copy of dictionary without the key "class" """
-    return {k:d[k] for k in d.keys() if k != "class"}
+    return {k: d[k] for k in d.keys() if k != "class"}
+
 
 def preset_models(model_string, nside):
     """ Function to take a given model string, and nside, and construct
@@ -48,9 +50,13 @@ def preset_models(model_string, nside):
         for each_config in config.values():
             class_name = each_config["class"]
             component_class = globals()[class_name]
-            components.append(component_class(**remove_class_from_dict(each_config), nside=nside))
+            components.append(
+                component_class(**remove_class_from_dict(each_config), nside=nside)
+            )
         output_component = Sky(component_objects=components, nside=nside)
     else:
         component_class = globals()[class_name]
-        output_component = component_class(**remove_class_from_dict(config), nside=nside)
+        output_component = component_class(
+            **remove_class_from_dict(config), nside=nside
+        )
     return output_component

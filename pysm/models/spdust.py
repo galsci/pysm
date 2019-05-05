@@ -174,7 +174,7 @@ class SpDustPol(SpDust):
                 self.freq_peak.value,
                 self.emissivity,
                 self.pol_angle,
-                self.pol_frac
+                self.pol_frac,
             )
             << u.uK_RJ
         )
