@@ -71,13 +71,21 @@ class Sky(Model):
 
     def __init__(
         self,
-        nside,
+        nside=None,
         component_objects=None,
         component_config=None,
         preset_strings=None,
         pixel_indices=None,
         mpi_comm=None,
     ):
+        if nside is None and not component_objects: # not None and not []
+            raise Exception("Need to specify nside in Sky")
+        elif nside is None:
+            nside = component_objects[0].nside
+        elif component_objects:
+            for comp in component_objects:
+                assert nside == comp.nside, "Component objects should have same NSIDE of Sky"
+
         super().__init__(nside=nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
         self.components = component_objects if component_objects is not None else []
         # otherwise instantiate the sky object from list of predefined models,
