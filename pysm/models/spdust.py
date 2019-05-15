@@ -135,15 +135,15 @@ class SpDustPol(SpDust):
         mpi_comm=None,
     ):
         super().__init__(
-            map_I,
-            freq_ref_I,
-            emissivity,
-            freq_peak,
-            freq_ref_peak,
-            nside,
-            unit_I,
-            pixel_indices,
-            mpi_comm,
+            map_I=map_I,
+            freq_ref_I=freq_ref_I,
+            emissivity=emissivity,
+            freq_peak=freq_peak,
+            freq_ref_peak=freq_ref_peak,
+            nside=nside,
+            unit_I=unit_I,
+            pixel_indices=pixel_indices,
+            mpi_comm=mpi_comm,
         )
         self.pol_angle = np.arctan2(self.read_map(angle_U), self.read_map(angle_Q))
         self.pol_frac = pol_frac
