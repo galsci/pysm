@@ -53,16 +53,18 @@ class ModifiedBlackBody(Model):
             Reference frequencies at which the intensity and polarization
             templates are defined. They should be a astropy Quantity object
             or a string (e.g. "1500 MHz") compatible with GHz.
-        map_mbb_index: `pathlib.Path` object
+        map_mbb_index: `pathlib.Path` object or scalar value
             Path to the map to be used as the power law index for the dust
-            opacity in a modified blackbody model.
+            opacity in a modified blackbody model, for a constant value use
+            a float or an integer
         map_mbb_temperature: `pathlib.Path` object
             Path to the map to be used as the temperature of the dust in a
-            modified blackbody model.
+            modified blackbody model. For a constant value use a float or an
+            integer
         nside: int
             Resolution parameter at which this model is to be calculated.
         """
-        super().__init__(nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
+        super().__init__(nside=nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
         # do model setup
         self.I_ref = self.read_map(map_I, unit=unit_I)
         # This does unit conversion in place so we do not copy the data
@@ -77,10 +79,10 @@ class ModifiedBlackBody(Model):
             self.U_ref = self.read_map(map_U, unit=unit_U)
             self.U_ref <<= u.uK_RJ
             self.freq_ref_P = u.Quantity(freq_ref_P).to(u.GHz)
-        self.mbb_index = self.read_map(map_mbb_index, unit="")
+        self.mbb_index = self.read_map(map_mbb_index, unit="") if isinstance(map_mbb_index, (str, Path)) else u.Quantity(map_mbb_index, unit="")
         self.mbb_temperature = self.read_map(
             map_mbb_temperature, unit=unit_mbb_temperature
-        )
+        ) if isinstance(map_mbb_index, (str, Path)) else map_mbb_temperature
         self.mbb_temperature <<= u.K
         self.nside = int(nside)
 
