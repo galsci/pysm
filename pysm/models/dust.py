@@ -351,12 +351,6 @@ def blackbody_nu(freq, temp):
 
     """
 
-    # Check if input values are physically possible
-    if np.any(temp < 0):
-        print("Temperature should be positive")
-    # if (not np.all(np.isfinite(freq))) or np.any(freq <= 0):
-    #    print('Input contains invalid wavelength/frequency value(s)')
-
     log_boltz = h * freq * 1e9 / (k_B * temp)
     boltzm1 = np.expm1(log_boltz)
 
