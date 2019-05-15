@@ -110,124 +110,125 @@ class Model:
             out.append(np.trapz(weight_emission, freqs, axis=0))
         return np.array(out)
 
-    def apply_smoothing(self, skies, fwhms, coord="G"):
-        """ Method to apply smoothing to a set of simulations. This currently
-        applies only the `healpy.smoothing` Gaussian smoothing kernel, but will
-        be updated with a more general functionality.
+def apply_smoothing(skies, fwhms, coord="G", lmax=None, mpi_comm=None):
+    """ Method to apply smoothing to a set of simulations. This currently
+    applies only the `healpy.smoothing` Gaussian smoothing kernel, but will
+    be updated with a more general functionality.
 
-        Note: this method may be overridden by child classes which require more
-        complicated implementations of smoothing, as long as they are compatible
-        with the input and output of this template.
+    Note: this method may be overridden by child classes which require more
+    complicated implementations of smoothing, as long as they are compatible
+    with the input and output of this template.
 
-        Parameters
-        ----------
-        skies: ndarray
-            Numpy array of shape (nchannels, 3, npix), containing the unsmoothed
-            skies. This is assumed to have no beam at this point, as the
-            simulated small scale tempalte on which the simulations are based
-            have no beam.
-        fwhms: list(float)
-            List of full width at half-maixima in arcminutes, defining the
-            Gaussian kernels to be applied.
+    Parameters
+    ----------
+    skies: ndarray
+        Numpy array of shape (nchannels, 3, npix), containing the unsmoothed
+        skies. This is assumed to have no beam at this point, as the
+        simulated small scale tempalte on which the simulations are based
+        have no beam.
+    fwhms: list(float)
+        List of full width at half-maixima in arcminutes, defining the
+        Gaussian kernels to be applied.
 
-        Returns
-        -------
-        ndarray
-            Array containing the smoothed skies.
-        """
+    Returns
+    -------
+    ndarray
+        Array containing the smoothed skies.
+    """
 
-        if isinstance(fwhms, list):
-            fwhms = np.array(fwhms) * u.arcmin
-        elif isinstance(fwhms, np.ndarray):
-            fwhms *= u.arcmin
+    if isinstance(fwhms, list):
+        fwhms = np.array(fwhms) * u.arcmin
+    elif isinstance(fwhms, np.ndarray):
+        fwhms *= u.arcmin
+    else:
+        fwhms = np.array([fwhms]) * u.arcmin
+        try:
+            assert fwhms.ndim < 2
+        except AssertionError:
+            print(
+                """Check that FWHMs is given as a 1D list, 1D array.
+            of float"""
+            )
+
+    nside = hp.get_nside(skies[0])
+    out = []
+    for sky, fwhm in zip(skies, fwhms):
+        if mpi_comm is None:
+            alm = hp.map2alm(
+                sky, lmax=lmax, use_pixel_weights=True, iter=1
+            )
+            hp.smoothalm(
+                alm,
+                fwhm=fwhm.to_value(u.rad),
+                verbose=False,
+                inplace=True,
+                pol=True,
+            )
+            if coord != "G":
+                rot = hp.Rotator(coord=["G", coord])
+                rot.rotate_alm(alm, inplace=True)
+            smoothed_sky = hp.alm2map(
+                alm, nside=nside, verbose=False, pixwin=False
+            )
+
         else:
-            fwhms = np.array([fwhms]) * u.arcmin
-            try:
-                assert fwhms.ndim < 2
-            except AssertionError:
-                print(
-                    """Check that FWHMs is given as a 1D list, 1D array.
-                of float"""
-                )
+            smoothed_sky = mpi_smoothing(sky)
+        out.append(smoothed_sky)
+    return np.array(out)
 
-        out = []
-        for sky, fwhm in zip(skies, fwhms):
-            if self.mpi_comm is None:
-                alm = hp.map2alm(
-                    sky, lmax=self.smoothing_lmax, use_pixel_weights=True, iter=1
-                )
-                hp.smoothalm(
-                    alm,
-                    fwhm=fwhm.to_value(u.rad),
-                    verbose=False,
-                    inplace=True,
-                    pol=True,
-                )
-                if coord != "G":
-                    rot = hp.Rotator(coord=["G", coord])
-                    alm = rot.rotate_alm(alm)
-                smoothed_sky = hp.alm2map(
-                    alm, nside=self.nside, verbose=False, pixwin=False
-                )
+def mpi_smoothing(self, sky, fwhm):
+    import libsharp
 
-            else:
-                smoothed_sky = self.mpi_smoothing(sky)
-            out.append(smoothed_sky)
-        return np.array(out)
+    beam = hp.gauss_beam(
+        fwhm=fwhm.to(u.rad).value, lmax=self.smoothing_lmax, pol=True
+    )
 
-    def mpi_smoothing(self, sky, fwhm):
-        import libsharp
+    sky_I = sky if sky.ndim == 1 else sky[0]
+    sky_I_contig = np.ascontiguousarray(sky_I.reshape((1, 1, -1))).astype(
+        np.float64, copy=False
+    )
 
-        beam = hp.gauss_beam(
-            fwhm=fwhm.to(u.rad).value, lmax=self.smoothing_lmax, pol=True
-        )
+    alm_sharp_I = libsharp.analysis(
+        self.libsharp_grid,
+        self.libsharp_order,
+        sky_I_contig,
+        spin=0,
+        comm=self.mpi_comm,
+    )
+    self.libsharp_order.almxfl(alm_sharp_I, np.ascontiguousarray(beam[:, 0:1]))
+    out = libsharp.synthesis(
+        self.libsharp_grid,
+        self.libsharp_order,
+        alm_sharp_I,
+        spin=0,
+        comm=self.mpi_comm,
+    )[0]
+    assert np.isnan(out).sum() == 0
 
-        sky_I = sky if sky.ndim == 1 else sky[0]
-        sky_I_contig = np.ascontiguousarray(sky_I.reshape((1, 1, -1))).astype(
-            np.float64, copy=False
-        )
-
-        alm_sharp_I = libsharp.analysis(
+    if utils.has_polarization(sky):
+        alm_sharp_P = libsharp.analysis(
             self.libsharp_grid,
             self.libsharp_order,
-            sky_I_contig,
-            spin=0,
+            np.ascontiguousarray(sky[1:3, :].reshape((1, 2, -1))).astype(
+                np.float64, copy=False
+            ),
+            spin=2,
             comm=self.mpi_comm,
         )
-        self.libsharp_order.almxfl(alm_sharp_I, np.ascontiguousarray(beam[:, 0:1]))
-        out = libsharp.synthesis(
+
+        self.libsharp_order.almxfl(
+            alm_sharp_P, np.ascontiguousarray(beam[:, (1, 2)])
+        )
+
+        signal_map_P = libsharp.synthesis(
             self.libsharp_grid,
             self.libsharp_order,
-            alm_sharp_I,
-            spin=0,
+            alm_sharp_P,
+            spin=2,
             comm=self.mpi_comm,
         )[0]
-        assert np.isnan(out).sum() == 0
-
-        if utils.has_polarization(sky):
-            alm_sharp_P = libsharp.analysis(
-                self.libsharp_grid,
-                self.libsharp_order,
-                np.ascontiguousarray(sky[1:3, :].reshape((1, 2, -1))).astype(
-                    np.float64, copy=False
-                ),
-                spin=2,
-                comm=self.mpi_comm,
-            )
-
-            self.libsharp_order.almxfl(
-                alm_sharp_P, np.ascontiguousarray(beam[:, (1, 2)])
-            )
-
-            signal_map_P = libsharp.synthesis(
-                self.libsharp_grid,
-                self.libsharp_order,
-                alm_sharp_P,
-                spin=2,
-                comm=self.mpi_comm,
-            )[0]
-            out = np.vstack((out, signal_map_P))
-        return out
+        out = np.vstack((out, signal_map_P))
+    return out
 
 
 def apply_normalization(freqs, weights):
