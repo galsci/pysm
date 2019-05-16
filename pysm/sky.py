@@ -7,6 +7,7 @@ Objects:
 """
 import toml
 from astropy.utils import data
+from . import units as u
 
 from .constants import DATAURL
 from .models import Model, ModifiedBlackBody, DecorrelatedModifiedBlackBody, PowerLaw, SpDust, SpDustPol
@@ -62,7 +63,7 @@ class Sky(Model):
     component models. It acts like a single `pysm.Model` object, in that it
     is sub-classed from the `pysm.Model` template, and therefore has the same
     functionality.
-    
+
     Attributes
     ----------
     components: list(pysm.Model object)
@@ -76,6 +77,7 @@ class Sky(Model):
         component_config=None,
         preset_strings=None,
         pixel_indices=None,
+        output_unit=u.uK_RJ,
         mpi_comm=None,
     ):
         if nside is None and not component_objects: # not None and not []
@@ -105,6 +107,7 @@ class Sky(Model):
                 pixel_indices=self.pixel_indices,
                 mpi_comm=self.mpi_comm,
             )
+        self.output_unit = output_unit
 
     def get_emission(self, freq):
         """ This function returns the emission at a frequency, set of
@@ -113,4 +116,4 @@ class Sky(Model):
         output = self.components[0].get_emission(freq)
         for comp in self.components[1:]:
             output += comp.get_emission(freq)
-        return output
+        return output.to(self.output_unit, equivalencies=u.cmb_equivalencies(freq))
