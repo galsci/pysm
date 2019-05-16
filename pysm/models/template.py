@@ -51,7 +51,7 @@ class Model:
         assert nside is not None
         self.mpi_comm = mpi_comm
         self.smoothing_lmax = (
-            2 * self.nside if smoothing_lmax is None else smoothing_lmax
+            (3 * self.nside - 1) if smoothing_lmax is None else smoothing_lmax
         )
 
         self.pixel_indices = pixel_indices
