@@ -16,8 +16,7 @@ class InterpolatingComponent(Model):
         nside,
         interpolation_kind="linear",
         has_polarization=True,
-        pixel_indices=None,
-        mpi_comm=None,
+        map_dist=None,
         verbose=False,
     ):
         """PySM component interpolating between precomputed maps
@@ -32,15 +31,13 @@ class InterpolatingComponent(Model):
             HEALPix NSIDE of the output maps
         has_polarization : bool
             whether or not to simulate also polarization maps
-        pixel_indices : ndarray of ints
-            Outputs partial maps given HEALPix pixel indices in RING ordering
-        mpi_comm : mpi4py communicator
-            See the documentation of pysm.read_map
+        map_dist : pysm.MapDistribution
+            Required for partial sky or MPI, see the PySM docs
         verbose : bool
             Control amount of output
         """
 
-        super().__init__(nside=nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
+        super().__init__(nside=nside, map_dist=map_dist)
         self.maps = {}
         self.maps = self.get_filenames(path)
 
@@ -123,11 +120,10 @@ class InterpolatingComponent(Model):
         if self.verbose:
             print("Frequencies considered:", freq_range)
 
-        npix = (
-            len(self.pixel_indices)
-            if self.pixel_indices is not None
-            else hp.nside2npix(self.nside)
-        )
+        if self.map_dist is None or self.map_dist.pixel_indices is None:
+            npix = hp.nside2npix(self.nside)
+        else:
+            npix = len(self.map_dist.pixel_indices)
 
         # allocate a single array for all maps to be used by the interpolator
         # always use size 3 for polarization because PySM always expects IQU maps
