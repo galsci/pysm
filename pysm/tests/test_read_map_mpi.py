@@ -19,26 +19,20 @@ def test_read_map_mpi_pixel_indices(mpi_comm):
     # Reads pixel [0] on rank 0
     # pixels [0,1] on rank 1
     # pixels [0,1,2] on rank 2 and so on.
-    m = pysm.read_map(
-        "pysm_2/dust_temp.fits",
-        nside=8,
-        field=0,
-        pixel_indices=list(range(0, mpi_comm.rank + 1)),
-        mpi_comm=mpi_comm,
+    map_dist = pysm.MapDistribution(
+        mpi_comm=mpi_comm, pixel_indices=list(range(0, mpi_comm.rank + 1))
     )
+    m = pysm.read_map("pysm_2/dust_temp.fits", nside=8, field=0, map_dist=map_dist)
     assert len(m) == mpi_comm.rank + 1
 
 
 def test_read_map_mpi_uniform_distribution(mpi_comm):
     # Spreads the map equally across processes
-    pixel_indices = pysm.mpi.distribute_pixels_uniformly(mpi_comm, nside=8)
-    m = pysm.read_map(
-        "pysm_2/dust_temp.fits",
-        nside=8,
-        field=0,
-        pixel_indices=pixel_indices,
+    map_dist = pysm.MapDistribution(
         mpi_comm=mpi_comm,
+        pixel_indices=pysm.mpi.distribute_pixels_uniformly(mpi_comm, nside=8),
     )
+    m = pysm.read_map("pysm_2/dust_temp.fits", nside=8, field=0, map_dist=map_dist)
     npix = hp.nside2npix(8)
     assert (
         npix % mpi_comm.size == 0

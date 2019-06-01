@@ -26,14 +26,13 @@ def mpi_comm():
 def test_mpi_assemble(mpi_comm):
     nside = 128
     lmax = 2 * nside
-    model = pysm.Model(
-        nside, mpi_comm=mpi_comm, pixel_indices=None, smoothing_lmax=lmax
-    )
+    map_dist = pysm.MapDistribution(pixel_indices=None, mpi_comm=mpi_comm, nside=nside)
+    model = pysm.Model(nside, map_dist=map_dist)
     distributed_map = model.read_map("pysm_2/dust_temp.fits")
     full_map_rank0 = pysm.mpi.assemble_map_on_rank0(
         mpi_comm,
         distributed_map,
-        model.pixel_indices,
+        model.map_dist.pixel_indices,
         n_components=1,
         npix=hp.nside2npix(nside),
     )[0]
@@ -48,16 +47,19 @@ def test_mpi_assemble(mpi_comm):
 def test_mpi_smoothing(mpi_comm):
     nside = 128
     lmax = 2 * nside
-    model = pysm.Model(
-        nside, mpi_comm=mpi_comm, pixel_indices=None, smoothing_lmax=lmax
+    map_dist = pysm.MapDistribution(
+        pixel_indices=None, mpi_comm=mpi_comm, smoothing_lmax=lmax, nside=nside
     )
+    model = pysm.Model(nside, map_dist=map_dist)
     distributed_map = model.read_map("pysm_2/dust_temp.fits")
     fwhm = 5 * u.deg
-    smoothed_distributed_map = model.mpi_smoothing(distributed_map, fwhm)
+    smoothed_distributed_map = pysm.mpi_smoothing(
+        distributed_map, fwhm, map_dist=map_dist
+    )
     full_map_rank0 = pysm.mpi.assemble_map_on_rank0(
         mpi_comm,
         smoothed_distributed_map,
-        model.pixel_indices,
+        model.map_dist.pixel_indices,
         n_components=1,
         npix=hp.nside2npix(nside),
     )[0]
