@@ -24,3 +24,9 @@ def has_polarization(m):
         return len(m[0]) == 3
     else:
         raise TypeError("Map format not understood")
+
+
+def normalize_weights(freqs, weights):
+    if weights is None:
+        weights = np.ones(len(freqs), dtype=np.float)
+    return weights / weights.sum()

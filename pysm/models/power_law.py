@@ -1,6 +1,7 @@
 import numpy as np
 from .. import units as u
 from numba import njit
+from .. import utils
 
 from .template import Model, check_freq_input
 
@@ -21,8 +22,7 @@ class PowerLaw(Model):
         unit_I=None,
         unit_Q=None,
         unit_U=None,
-        pixel_indices=None,
-        mpi_comm=None,
+        map_dist=None,
     ):
         """ This function initialzes the power law model of synchrotron
         emission.
@@ -47,7 +47,7 @@ class PowerLaw(Model):
         nside: int
             Resolution parameter at which this model is to be calculated.
         """
-        super().__init__(nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
+        super().__init__(nside, map_dist=map_dist)
         # do model setup
         self.I_ref = self.read_map(map_I, unit=unit_I)
         # This does unit conversion in place so we do not copy the data
@@ -69,7 +69,7 @@ class PowerLaw(Model):
         return
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz):
+    def get_emission(self, freqs: u.GHz, weights=None):
         """ This function evaluates the component model at a either
         a single frequency, an array of frequencies, or over a bandpass.
 
@@ -86,10 +86,26 @@ class PowerLaw(Model):
             shape (nfreq, 3, npix).
         """
         freqs = check_freq_input(freqs)
-        if self.has_polarization:
+        weights = utils.normalize_weights(freqs, weights)
+        if not self.has_polarization:
             outputs = (
                 get_emission_numba_IQU(
                     freqs.value,
+                    weights,
+                    self.I_ref.value,
+                    None,
+                    None,
+                    self.freq_ref_I.value,
+                    None,
+                    self.pl_index.value,
+                )
+                << u.uK_RJ
+            )
+        else:
+            outputs = (
+                get_emission_numba_IQU(
+                    freqs.value,
+                    weights,
                     self.I_ref.value,
                     self.Q_ref.value,
                     self.U_ref.value,
@@ -99,37 +115,20 @@ class PowerLaw(Model):
                 )
                 << u.uK_RJ
             )
-        else:
-            outputs = (
-                get_emission_numba_I(
-                    freqs.value,
-                    self.I_ref.value,
-                    self.freq_ref_I.value,
-                    self.pl_index.value,
-                )
-                << u.uK_RJ
-            )
         return outputs
 
 
 @njit(parallel=True)
 def get_emission_numba_IQU(
-    freqs, I_ref, Q_ref, U_ref, freq_ref_I, freq_ref_P, pl_index
+    freqs, weights, I_ref, Q_ref, U_ref, freq_ref_I, freq_ref_P, pl_index
 ):
-    outputs = np.empty((len(freqs), 3, len(I_ref)), dtype=I_ref.dtype)
+    has_pol = Q_ref is not None
+    output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
     I, Q, U = 0, 1, 2
-    for i_freq, freq in enumerate(freqs):
-        outputs[i_freq, I, :] = I_ref * (freq / freq_ref_I) ** pl_index
-        outputs[i_freq, Q, :] = Q_ref
-        outputs[i_freq, U, :] = U_ref
-        outputs[i_freq, Q:] *= (freq / freq_ref_P) ** pl_index
-    return outputs
-
-
-@njit(parallel=True)
-def get_emission_numba_I(freqs, I_ref, freq_ref_I, pl_index):
-    outputs = np.empty((len(freqs), 1, len(I_ref)), dtype=I_ref.dtype)
-    I = 0
-    for i_freq, freq in enumerate(freqs):
-        outputs[i_freq, I, :] = I_ref * (freq / freq_ref_I) ** pl_index
-    return outputs
+    for freq, weight in zip(freqs, weights):
+        output[I] += weight * I_ref * (freq / freq_ref_I) ** pl_index
+        if has_pol:
+            pol_scaling = (freq / freq_ref_P) ** pl_index * weight
+            output[Q] += Q_ref * pol_scaling
+            output[U] += U_ref * pol_scaling
+    return output
