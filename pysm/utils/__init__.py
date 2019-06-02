@@ -4,6 +4,7 @@
 # functions.
 
 import numpy as np
+from numba import njit
 
 from .exceptions import IllegalArgumentError
 
@@ -27,6 +28,36 @@ def has_polarization(m):
 
 
 def normalize_weights(freqs, weights):
-    if weights is None:
-        weights = np.ones(len(freqs), dtype=np.float)
-    return weights / weights.sum()
+    if freqs.isscalar or len(freqs) == 1:
+        return np.array([1.0])
+    else:
+        if weights is None:
+            weights = np.ones(len(freqs), dtype=np.float)
+        return weights / np.trapz(weights, freqs.value)
+
+
+@njit
+def trapz_step_inplace(freqs, weights, i, m, output):
+    """Execute a step of the trapezoidal rule and accumulate into output
+
+    freqs : ndarray
+        Frequency axis, generally in GHz, but doesn't matter as long as
+        weights were normalized accordingly
+    weights : ndarray
+        Frequency bandpass response, normalized to unit integral (with trapz)
+    i : integer
+        Index of the current step in the arrays
+    m : ndarray
+        Emission evaluated at the current frequency to be accumulated
+    output : ndarray
+        Array where the integrated emission is accumulated.
+    """
+    if i == 0 and len(freqs) == 1:
+        delta_freq = 0.5
+    elif i == 0:
+        delta_freq = freqs[1] - freqs[0]
+    elif i == (len(freqs) - 1):
+        delta_freq = freqs[-1] - freqs[-2]
+    else:
+        delta_freq = freqs[i + 1] - freqs[i - 1]
+    output += 0.5 * m * weights[i] * delta_freq
