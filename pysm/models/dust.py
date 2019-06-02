@@ -145,7 +145,7 @@ def get_emission_numba(
         temp = output
 
     I, Q, U = 0, 1, 2
-    for freq, weight in zip(freqs, weights):
+    for i, (freq, weight) in enumerate(zip(freqs, weights)):
         temp[I, :] = I_ref
         temp[Q, :] = Q_ref
         temp[U, :] = U_ref
@@ -154,8 +154,9 @@ def get_emission_numba(
         temp[I] *= blackbody_ratio(freq, freq_ref_I, mbb_temperature)
         temp[Q:] *= blackbody_ratio(freq, freq_ref_P, mbb_temperature)
         if len(freqs) > 1:
-            output += temp * weight
+            utils.trapz_step_inplace(freqs, weights, i, temp, output)
     return output
+
 
 
 class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
