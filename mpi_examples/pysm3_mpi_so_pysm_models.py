@@ -2,6 +2,7 @@ import numpy as np
 import pysm
 import pysm.units as u
 from so_pysm_models import get_so_models
+import so_pysm_models
 
 from mpi4py import MPI
 
@@ -14,6 +15,12 @@ map_dist = pysm.MapDistribution(
 components = []
 for comp in ["SO_d0", "SO_s0", "SO_f0", "SO_a0"]:
     components.append(get_so_models(comp, nside, map_dist=map_dist))
+
+components.append(so_pysm_models.WebSkyCIB(
+  websky_version = "0.3",
+  interpolation_kind = "linear",
+  target_nside = nside,
+  map_dist = map_dist))
 
 sky = pysm.Sky(nside=nside, component_objects=components, map_dist=map_dist)
 
