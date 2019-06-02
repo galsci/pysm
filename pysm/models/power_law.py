@@ -125,10 +125,12 @@ def get_emission_numba_IQU(
     has_pol = Q_ref is not None
     output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
     I, Q, U = 0, 1, 2
-    for freq, weight in zip(freqs, weights):
-        output[I] += weight * I_ref * (freq / freq_ref_I) ** pl_index
+    for i, (freq, weight) in enumerate(zip(freqs, weights)):
+        utils.trapz_step_inplace(
+            freqs, weights, i, I_ref * (freq / freq_ref_I) ** pl_index, output[I]
+        )
         if has_pol:
-            pol_scaling = (freq / freq_ref_P) ** pl_index * weight
-            output[Q] += Q_ref * pol_scaling
-            output[U] += U_ref * pol_scaling
+            pol_scaling = (freq / freq_ref_P) ** pl_index
+            utils.trapz_step_inplace(freqs, weights, i, Q_ref * pol_scaling, output[Q])
+            utils.trapz_step_inplace(freqs, weights, i, U_ref * pol_scaling, output[U])
     return output
