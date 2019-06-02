@@ -3,6 +3,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 from .template import Model, check_freq_input
 from .. import units as u
+from .. import utils
 
 import healpy as hp
 
@@ -58,7 +59,7 @@ class InterpolatingComponent(Model):
         return filenames
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz) -> u.uK_RJ:
+    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
         """ This function evaluates the component model at a either
         a single frequency, an array of frequencies, or over a bandpass.
 
@@ -76,6 +77,7 @@ class InterpolatingComponent(Model):
         """
 
         nu = freqs.to(u.GHz).value
+        weights = utils.normalize_weights(freqs, weights)
 
         if not np.isscalar(nu) and len(nu) == 1:
             nu = nu[0]
@@ -145,10 +147,10 @@ class InterpolatingComponent(Model):
             else:
                 all_maps[i][0] = self.read_map_by_frequency(freq)
 
-        out = interp1d(freq_range, all_maps, axis=0, kind=self.interpolation_kind)(nu) << u.uK_RJ
+        out = interp1d(freq_range, all_maps, axis=0, kind=self.interpolation_kind)(nu).sum(axis=0)
 
-        # the output of out is always 3D, (num_freqs, IQU, npix)
-        return out
+        # the output of out is always 2D, (IQU, npix)
+        return out << u.uK_RJ
 
     def read_map_by_frequency(self, freq):
         filename = self.maps[freq]
