@@ -52,12 +52,16 @@ def trapz_step_inplace(freqs, weights, i, m, output):
     output : ndarray
         Array where the integrated emission is accumulated.
     """
+    # case for a single frequency, compensate for the .5 factor
     if i == 0 and len(freqs) == 1:
-        delta_freq = 0.5
+        delta_freq = 2
+    # first step of the integration
     elif i == 0:
         delta_freq = freqs[1] - freqs[0]
+    # last step
     elif i == (len(freqs) - 1):
         delta_freq = freqs[-1] - freqs[-2]
+    # middle steps
     else:
         delta_freq = freqs[i + 1] - freqs[i - 1]
     output += 0.5 * m * weights[i] * delta_freq
