@@ -193,12 +193,13 @@ def compute_spdust_emission_pol_numba(
 ):
     output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
     I, Q, U = 0, 1, 2
-    for freq, weight in zip(freqs, weights):
-        scaling = (
-            compute_spdust_scaling_numba(freq, freq_ref_I, freq_peak, emissivity)
-            * weight
+    for i, (freq, weight) in enumerate(zip(freqs, weights)):
+        scaling = compute_spdust_scaling_numba(freq, freq_ref_I, freq_peak, emissivity)
+        utils.trapz_step_inplace(freqs, weights, i, scaling * I_ref, output[I])
+        utils.trapz_step_inplace(
+            freqs, weights, i, scaling * I_ref * pol_frac * np.cos(pol_angle), output[Q]
         )
-        output[I] += scaling * I_ref
-        output[Q] += scaling * I_ref * pol_frac * np.cos(pol_angle)
-        output[U] += scaling * I_ref * pol_frac * np.sin(pol_angle)
+        utils.trapz_step_inplace(
+            freqs, weights, i, scaling * I_ref * pol_frac * np.sin(pol_angle), output[U]
+        )
     return output
