@@ -1,15 +1,16 @@
 import os
+from numba import njit
 import numpy as np
 from scipy.interpolate import interp1d
 from .template import Model, check_freq_input
 from .. import units as u
 from .. import utils
+from pysm.utils import trapz_step_inplace
 
 import healpy as hp
 
 
 class InterpolatingComponent(Model):
-
     def __init__(
         self,
         path,
@@ -30,6 +31,8 @@ class InterpolatingComponent(Model):
             Any unit available in PySM (see `pysm.convert_units` e.g. `Jysr`, `MJsr`, `uK_RJ`, `K_CMB`).
         nside : int
             HEALPix NSIDE of the output maps
+        interpolation_kind : string
+            Currently only linear is implemented
         has_polarization : bool
             whether or not to simulate also polarization maps
         map_dist : pysm.MapDistribution
@@ -147,7 +150,7 @@ class InterpolatingComponent(Model):
             else:
                 all_maps[i][0] = self.read_map_by_frequency(freq)
 
-        out = interp1d(freq_range, all_maps, axis=0, kind=self.interpolation_kind)(nu).sum(axis=0)
+        out = compute_interpolated_emission_numba(nu, weights, freq_range, all_maps)
 
         # the output of out is always 2D, (IQU, npix)
         return out << u.uK_RJ
@@ -165,3 +168,21 @@ class InterpolatingComponent(Model):
             unit=self.input_units,
         )
         return m.to(u.uK_RJ).value
+
+
+@njit(parallel=False)
+def compute_interpolated_emission_numba(freqs, weights, freq_range, all_maps):
+    output = np.zeros(all_maps[0].shape, dtype=all_maps.dtype)
+    index_range = np.arange(len(freq_range))
+    for i in range(len(freqs)):
+        interpolation_weight = np.interp(freqs[i], freq_range, index_range)
+        int_interpolation_weight = int(interpolation_weight)
+        m = (interpolation_weight - int_interpolation_weight) * all_maps[
+            int_interpolation_weight
+        ]
+        m += (int_interpolation_weight + 1 - interpolation_weight) * all_maps[
+            int_interpolation_weight + 1
+        ]
+
+        trapz_step_inplace(freqs, weights, i, m, output)
+    return output
