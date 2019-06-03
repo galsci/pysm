@@ -94,7 +94,7 @@ def apply_smoothing_and_coord_transform(
 
     if map_dist is None:
         nside = hp.get_nside(input_map)
-        alm = hp.map2alm(input_map, lmax=lmax, use_pixel_weights=True, iter=1)
+        alm = hp.map2alm(input_map, lmax=lmax, use_pixel_weights=True if nside > 16 else False, iter=1)
         if fwhm is not None:
             hp.smoothalm(
                 alm, fwhm=fwhm.to_value(u.rad), verbose=False, inplace=True, pol=True
