@@ -63,35 +63,6 @@ class Model:
         mpi_comm = None if self.map_dist is None else self.map_dist.mpi_comm
         return read_txt(path, mpi_comm=mpi_comm, **kwargs)
 
-    def apply_bandpass(self, bpasses):
-        """ Method to calculate the emission averaged over a bandpass.
-
-        Note: this method may be overridden by child classes which require more
-        complicated implementations of bandpass integration, as long as they are
-        compatible with the input and output of this template.
-
-        Parameters
-        ----------
-        bandpass: list(dict)
-            List of dictionaries. Each dictionary contains 'freqs' and 'weights'
-            which give the range of frequencies over which the bandpass is
-            sensitive, and the correpsonding weight.
-
-        Returns
-        -------
-        list(dict)
-            The same list of dictionaries, updated with a 'response' keyword,
-            containing the sky response to this bandpass.
-        """
-        out = []
-        for (freqs, weights) in bpasses:
-            freqs, weights = apply_normalization(freqs, weights)
-            weight_emission = self.get_emission(freqs) * weights[:, None, None]
-            # NOTE THIS CURRENTLY ASSUMES THAT THE BANDPASS IS GIVEN IN UNITS OF
-            # UKRJ. THIS SHOULD BE MADE EXPLICIT.
-            out.append(np.trapz(weight_emission, freqs, axis=0))
-        return np.array(out)
-
 
 def apply_smoothing_and_coord_transform(
     input_map, fwhm=None, coord="G", lmax=None, map_dist=None
