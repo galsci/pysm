@@ -19,7 +19,7 @@ for comp in ["SO_d0", "SO_s0", "SO_f0", "SO_a0"]:
 components.append(so_pysm_models.WebSkyCIB(
   websky_version = "0.3",
   interpolation_kind = "linear",
-  target_nside = nside,
+  nside = nside,
   map_dist = map_dist))
 
 sky = pysm.Sky(nside=nside, component_objects=components, map_dist=map_dist)

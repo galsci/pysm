@@ -167,7 +167,7 @@ class InterpolatingComponent(Model):
             field=(0, 1, 2) if self.has_polarization else 0,
             unit=self.input_units,
         )
-        return m.to(u.uK_RJ).value
+        return m.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq*u.GHz)).value
 
 
 @njit(parallel=False)
