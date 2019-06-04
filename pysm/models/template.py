@@ -107,6 +107,8 @@ def apply_smoothing_and_coord_transform(
     else:
         smoothed_map = mpi_smoothing(input_map, fwhm, map_dist)
 
+    if hasattr(input_map, "unit"):
+        smoothed_map <<= input_map.unit
     return smoothed_map
 
 
