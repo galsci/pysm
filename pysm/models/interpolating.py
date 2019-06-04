@@ -95,10 +95,10 @@ class InterpolatingComponent(Model):
                 freq = self.freqs[check_isclose][0]
                 out = self.read_map_by_frequency(freq)
                 if self.has_polarization:
-                    return out
+                    return out << u.uK_RJ
                 else:
                     zeros = np.zeros_like(out)
-                    return np.array([out, zeros, zeros])
+                    return np.array([out, zeros, zeros]) << u.uK_RJ
 
             else:  # continue with interpolation as with an array of nus
                 nu = np.array([nu])

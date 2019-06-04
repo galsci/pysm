@@ -36,7 +36,7 @@ class Model:
     If libsharp is not available, pixels are distributed uniformly across
     processes, see :py:func:`pysm.mpi.distribute_pixels_uniformly`"""
 
-    def __init__(self, nside, map_dist=None):
+    def __init__(self, nside, map_dist=None, dataurl=None):
         """
         Parameters
         ----------
@@ -50,13 +50,15 @@ class Model:
         self.nside = nside
         assert nside is not None
         self.map_dist = map_dist
+        self.dataurl = dataurl
 
     def read_map(self, path, unit=None, field=0):
         """Wrapper of the PySM read_map function that automatically
         uses nside, pixel_indices and mpi_comm defined in this Model
         """
         return read_map(
-            path, self.nside, unit=unit, field=field, map_dist=self.map_dist
+            path, self.nside, unit=unit, field=field, map_dist=self.map_dist,
+            dataurl=self.dataurl
         )
 
     def read_txt(self, path, **kwargs):
@@ -245,7 +247,7 @@ def extract_hdu_unit(path):
     return unit
 
 
-def read_map(path, nside, unit=None, field=0, map_dist=None):
+def read_map(path, nside, unit=None, field=0, map_dist=None,dataurl=None):
     """Wrapper of `healpy.read_map` for PySM data. This function also extracts
     the units from the fits HDU and applies them to the data array to form an
     `astropy.units.Quantity` object.
@@ -267,11 +269,13 @@ def read_map(path, nside, unit=None, field=0, map_dist=None):
     """
     mpi_comm = None if map_dist is None else map_dist.mpi_comm
     pixel_indices = None if map_dist is None else map_dist.pixel_indices
+    if dataurl is None:
+        dataurl = DATAURL
     # read map. Add `str()` operator in case dealing with `Path` object.
     if os.path.exists(str(path)):  # Python 3.5 requires turning a Path object to str
         filename = str(path)
     else:
-        with data.conf.set_temp("dataurl", DATAURL), data.conf.set_temp(
+        with data.conf.set_temp("dataurl", dataurl), data.conf.set_temp(
             "remote_timeout", 30
         ):
             filename = data.get_pkg_data_filename(path)

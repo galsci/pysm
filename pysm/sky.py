@@ -107,6 +107,9 @@ class Sky(Model):
             )
         self.output_unit = output_unit
 
+    def add_component(self, component):
+        self.components.append(component)
+
     def get_emission(self, freq, weights=None):
         """ This function returns the emission at a frequency, set of
         frequencies, or over a bandpass.
