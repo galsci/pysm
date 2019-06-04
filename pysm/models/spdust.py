@@ -1,6 +1,7 @@
 import numpy as np
 from .. import units as u
 from numba import njit
+from .. import utils
 
 from .template import Model, check_freq_input
 
@@ -22,8 +23,7 @@ class SpDust(Model):
         freq_ref_peak,
         nside,
         unit_I=None,
-        pixel_indices=None,
-        mpi_comm=None,
+        map_dist=None,
     ):
         """ This function initializes the spinning dust model
 
@@ -48,7 +48,7 @@ class SpDust(Model):
         nside: int
             Resolution parameter at which this model is to be calculated.
         """
-        super().__init__(nside=nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
+        super().__init__(nside=nside, map_dist=map_dist)
         # do model setup
         self.I_ref = self.read_map(map_I, unit=unit_I)
         # This does unit conversion in place so we do not copy the data
@@ -65,7 +65,7 @@ class SpDust(Model):
         self.emissivity = self.read_txt(emissivity, unpack=True)
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz):
+    def get_emission(self, freqs: u.GHz, weights=None):
         """ This function evaluates the component model at a either
         a single frequency, an array of frequencies, or over a bandpass.
 
@@ -82,9 +82,11 @@ class SpDust(Model):
             shape (nfreq, 3, npix).
         """
         freqs = check_freq_input(freqs)
+        weights = utils.normalize_weights(freqs, weights)
         outputs = (
             compute_spdust_emission_numba(
                 freqs.value,
+                weights,
                 self.I_ref.value,
                 self.freq_ref_I.value,
                 self.freq_peak.value,
@@ -107,11 +109,15 @@ def compute_spdust_scaling_numba(freq, freq_ref_I, freq_peak, emissivity):
 
 
 @njit(parallel=True)
-def compute_spdust_emission_numba(freqs, I_ref, freq_ref_I, freq_peak, emissivity):
-    outputs = np.empty((len(freqs), 1, len(I_ref)), dtype=I_ref.dtype)
-    for i_freq, freq in enumerate(freqs):
-        outputs[i_freq, 0] = I_ref * compute_spdust_scaling_numba(
-            freq, freq_ref_I, freq_peak, emissivity
+def compute_spdust_emission_numba(
+    freqs, weights, I_ref, freq_ref_I, freq_peak, emissivity
+):
+    outputs = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
+    for freq, weight in zip(freqs, weights):
+        outputs[0] += (
+            weight
+            * I_ref
+            * compute_spdust_scaling_numba(freq, freq_ref_I, freq_peak, emissivity)
         )
     return outputs
 
@@ -131,8 +137,7 @@ class SpDustPol(SpDust):
         angle_U,
         nside,
         unit_I=None,
-        pixel_indices=None,
-        mpi_comm=None,
+        map_dist=None,
     ):
         super().__init__(
             map_I=map_I,
@@ -142,14 +147,13 @@ class SpDustPol(SpDust):
             freq_ref_peak=freq_ref_peak,
             nside=nside,
             unit_I=unit_I,
-            pixel_indices=pixel_indices,
-            mpi_comm=mpi_comm,
+            map_dist=map_dist,
         )
         self.pol_angle = np.arctan2(self.read_map(angle_U), self.read_map(angle_Q))
         self.pol_frac = pol_frac
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz):
+    def get_emission(self, freqs: u.GHz, weights=None):
         """ This function evaluates the component model at a either
         a single frequency, an array of frequencies, or over a bandpass.
 
@@ -166,9 +170,11 @@ class SpDustPol(SpDust):
             shape (nfreq, 3, npix).
         """
         freqs = check_freq_input(freqs)
+        weights = utils.normalize_weights(freqs, weights)
         outputs = (
             compute_spdust_emission_pol_numba(
                 freqs.value,
+                weights,
                 self.I_ref.value,
                 self.freq_ref_I.value,
                 self.freq_peak.value,
@@ -183,15 +189,17 @@ class SpDustPol(SpDust):
 
 @njit(parallel=True)
 def compute_spdust_emission_pol_numba(
-    freqs, I_ref, freq_ref_I, freq_peak, emissivity, pol_angle, pol_frac
+    freqs, weights, I_ref, freq_ref_I, freq_peak, emissivity, pol_angle, pol_frac
 ):
-    outputs = np.empty((len(freqs), 3, len(I_ref)), dtype=I_ref.dtype)
+    output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
     I, Q, U = 0, 1, 2
-    for i_freq, freq in enumerate(freqs):
-        outputs[i_freq, I] = I_ref
-        outputs[i_freq, Q] = I_ref * pol_frac * np.cos(pol_angle)
-        outputs[i_freq, U] = I_ref * pol_frac * np.sin(pol_angle)
-        outputs[i_freq, :] *= compute_spdust_scaling_numba(
-            freq, freq_ref_I, freq_peak, emissivity
+    for i, (freq, weight) in enumerate(zip(freqs, weights)):
+        scaling = compute_spdust_scaling_numba(freq, freq_ref_I, freq_peak, emissivity)
+        utils.trapz_step_inplace(freqs, weights, i, scaling * I_ref, output[I])
+        utils.trapz_step_inplace(
+            freqs, weights, i, scaling * I_ref * pol_frac * np.cos(pol_angle), output[Q]
         )
-    return outputs
+        utils.trapz_step_inplace(
+            freqs, weights, i, scaling * I_ref * pol_frac * np.sin(pol_angle), output[U]
+        )
+    return output

@@ -16,7 +16,7 @@ def test_model(model, freq):
         64,
         unit=pysm.units.uK_RJ,
         field=(0, 1, 2),
-    ).reshape((1, 3, -1))
+    )
 
     assert_quantity_allclose(
         expected_map, model.get_emission(freq << pysm.units.GHz), rtol=1e-3

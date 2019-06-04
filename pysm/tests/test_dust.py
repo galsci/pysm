@@ -29,7 +29,7 @@ def test_dust_model(model_tag, freq):
         64,
         unit="uK_RJ",
         field=(0, 1, 2),
-    ).reshape((1, 3, -1))
+    )
 
     assert_quantity_allclose(
         expected_output, model.get_emission(freq * units.GHz), rtol=1e-5

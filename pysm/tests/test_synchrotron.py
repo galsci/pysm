@@ -17,7 +17,7 @@ def test_synchrotron_model(model, freq):
         64,
         unit=pysm.units.uK_RJ,
         field=(0, 1, 2),
-    ).reshape((1, 3, -1))
+    )
 
     assert_quantity_allclose(
         synch, synchrotron.get_emission(freq << pysm.units.GHz), rtol=1e-5

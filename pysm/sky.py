@@ -10,7 +10,14 @@ from astropy.utils import data
 from . import units as u
 
 from .constants import DATAURL
-from .models import Model, ModifiedBlackBody, DecorrelatedModifiedBlackBody, PowerLaw, SpDust, SpDustPol
+from .models import (
+    Model,
+    ModifiedBlackBody,
+    DecorrelatedModifiedBlackBody,
+    PowerLaw,
+    SpDust,
+    SpDustPol,
+)
 
 
 def remove_class_from_dict(d):
@@ -18,7 +25,7 @@ def remove_class_from_dict(d):
     return {k: d[k] for k in d.keys() if k != "class"}
 
 
-def create_components_from_config(config, nside, pixel_indices=None, mpi_comm=None):
+def create_components_from_config(config, nside, map_dist=None):
     output_components = []
     for model_name, model_config in config.items():
         try:
@@ -32,23 +39,16 @@ def create_components_from_config(config, nside, pixel_indices=None, mpi_comm=No
                     component_class(
                         **remove_class_from_dict(each_config),
                         nside=nside,
-                        pixel_indices=pixel_indices,
-                        mpi_comm=mpi_comm
+                        map_dist=map_dist
                     )
                 )
             output_component = Sky(
-                component_objects=partial_components,
-                nside=nside,
-                pixel_indices=pixel_indices,
-                mpi_comm=mpi_comm,
+                component_objects=partial_components, nside=nside, map_dist=map_dist
             )
         else:
             component_class = globals()[class_name]
             output_component = component_class(
-                **remove_class_from_dict(model_config),
-                nside=nside,
-                pixel_indices=pixel_indices,
-                mpi_comm=mpi_comm
+                **remove_class_from_dict(model_config), nside=nside, map_dist=map_dist
             )
         output_components.append(output_component)
     return output_components
@@ -76,19 +76,20 @@ class Sky(Model):
         component_objects=None,
         component_config=None,
         preset_strings=None,
-        pixel_indices=None,
         output_unit=u.uK_RJ,
-        mpi_comm=None,
+        map_dist=None,
     ):
-        if nside is None and not component_objects: # not None and not []
+        if nside is None and not component_objects:  # not None and not []
             raise Exception("Need to specify nside in Sky")
         elif nside is None:
             nside = component_objects[0].nside
         elif component_objects:
             for comp in component_objects:
-                assert nside == comp.nside, "Component objects should have same NSIDE of Sky"
+                assert (
+                    nside == comp.nside
+                ), "Component objects should have same NSIDE of Sky"
 
-        super().__init__(nside=nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
+        super().__init__(nside=nside, map_dist=None)
         self.components = component_objects if component_objects is not None else []
         # otherwise instantiate the sky object from list of predefined models,
         # identified by their strings. These are defined in `pysm.presets`.
@@ -102,18 +103,15 @@ class Sky(Model):
                 component_config[string] = PRESET_MODELS[string]
         if len(component_config) > 0:
             self.components += create_components_from_config(
-                component_config,
-                nside=nside,
-                pixel_indices=self.pixel_indices,
-                mpi_comm=self.mpi_comm,
+                component_config, nside=nside, map_dist=map_dist
             )
         self.output_unit = output_unit
 
-    def get_emission(self, freq):
+    def get_emission(self, freq, weights=None):
         """ This function returns the emission at a frequency, set of
         frequencies, or over a bandpass.
         """
-        output = self.components[0].get_emission(freq)
+        output = self.components[0].get_emission(freq, weights=weights)
         for comp in self.components[1:]:
-            output += comp.get_emission(freq)
+            output += comp.get_emission(freq, weights=weights)
         return output.to(self.output_unit, equivalencies=u.cmb_equivalencies(freq))

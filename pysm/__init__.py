@@ -32,3 +32,4 @@ if not _ASTROPY_SETUP_:
 from .models import *
 from .sky import Sky
 from . import units
+from .distribution import MapDistribution

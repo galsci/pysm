@@ -36,7 +36,7 @@ class Model:
     If libsharp is not available, pixels are distributed uniformly across
     processes, see :py:func:`pysm.mpi.distribute_pixels_uniformly`"""
 
-    def __init__(self, nside, smoothing_lmax=None, pixel_indices=None, mpi_comm=None):
+    def __init__(self, nside, map_dist=None):
         """
         Parameters
         ----------
@@ -49,68 +49,24 @@ class Model:
         """
         self.nside = nside
         assert nside is not None
-        self.mpi_comm = mpi_comm
-        self.smoothing_lmax = (
-            (3 * self.nside - 1) if smoothing_lmax is None else smoothing_lmax
-        )
-
-        self.pixel_indices = pixel_indices
-        if self.mpi_comm is not None and pixel_indices is None:
-            if mpi.libsharp is None:
-                self.pixel_indices = mpi.distribute_pixels_uniformly(
-                    self.mpi_comm, self.nside
-                )
-            else:
-                self.pixel_indices, self.libsharp_grid, self.libsharp_order = mpi.distribute_rings_libsharp(
-                    self.mpi_comm, self.nside, lmax=self.smoothing_lmax
-                )
+        self.map_dist = map_dist
 
     def read_map(self, path, unit=None, field=0):
         """Wrapper of the PySM read_map function that automatically
         uses nside, pixel_indices and mpi_comm defined in this Model
         """
         return read_map(
-            path,
-            self.nside,
-            unit=unit,
-            field=field,
-            pixel_indices=self.pixel_indices,
-            mpi_comm=self.mpi_comm,
+            path, self.nside, unit=unit, field=field, map_dist=self.map_dist
         )
 
     def read_txt(self, path, **kwargs):
-        return read_txt(path, mpi_comm=self.mpi_comm, **kwargs)
+        mpi_comm = None if self.map_dist is None else self.map_dist.mpi_comm
+        return read_txt(path, mpi_comm=mpi_comm, **kwargs)
 
-    def apply_bandpass(self, bpasses):
-        """ Method to calculate the emission averaged over a bandpass.
 
-        Note: this method may be overridden by child classes which require more
-        complicated implementations of bandpass integration, as long as they are
-        compatible with the input and output of this template.
-
-        Parameters
-        ----------
-        bandpass: list(dict)
-            List of dictionaries. Each dictionary contains 'freqs' and 'weights'
-            which give the range of frequencies over which the bandpass is
-            sensitive, and the correpsonding weight.
-
-        Returns
-        -------
-        list(dict)
-            The same list of dictionaries, updated with a 'response' keyword,
-            containing the sky response to this bandpass.
-        """
-        out = []
-        for (freqs, weights) in bpasses:
-            freqs, weights = apply_normalization(freqs, weights)
-            weight_emission = self.get_emission(freqs) * weights[:, None, None]
-            # NOTE THIS CURRENTLY ASSUMES THAT THE BANDPASS IS GIVEN IN UNITS OF
-            # UKRJ. THIS SHOULD BE MADE EXPLICIT.
-            out.append(np.trapz(weight_emission, freqs, axis=0))
-        return np.array(out)
-
-def apply_smoothing(skies, fwhms, coord="G", lmax=None, mpi_comm=None):
+def apply_smoothing_and_coord_transform(
+    input_map, fwhm=None, coord="G", lmax=None, map_dist=None
+):
     """ Method to apply smoothing to a set of simulations. This currently
     applies only the `healpy.smoothing` Gaussian smoothing kernel, but will
     be updated with a more general functionality.
@@ -136,96 +92,76 @@ def apply_smoothing(skies, fwhms, coord="G", lmax=None, mpi_comm=None):
         Array containing the smoothed skies.
     """
 
-    if isinstance(fwhms, list):
-        fwhms = np.array(fwhms) * u.arcmin
-    elif isinstance(fwhms, np.ndarray):
-        fwhms *= u.arcmin
-    else:
-        fwhms = np.array([fwhms]) * u.arcmin
-        try:
-            assert fwhms.ndim < 2
-        except AssertionError:
-            print(
-                """Check that FWHMs is given as a 1D list, 1D array.
-            of float"""
-            )
-
-    nside = hp.get_nside(skies[0])
-    out = []
-    for sky, fwhm in zip(skies, fwhms):
-        if mpi_comm is None:
-            alm = hp.map2alm(
-                sky, lmax=lmax, use_pixel_weights=True, iter=1
-            )
+    if map_dist is None:
+        nside = hp.get_nside(input_map)
+        alm = hp.map2alm(input_map, lmax=lmax, use_pixel_weights=True if nside > 16 else False)
+        if fwhm is not None:
             hp.smoothalm(
-                alm,
-                fwhm=fwhm.to_value(u.rad),
-                verbose=False,
-                inplace=True,
-                pol=True,
+                alm, fwhm=fwhm.to_value(u.rad), verbose=False, inplace=True, pol=True
             )
-            if coord != "G":
-                rot = hp.Rotator(coord=["G", coord])
-                rot.rotate_alm(alm, inplace=True)
-            smoothed_sky = hp.alm2map(
-                alm, nside=nside, verbose=False, pixwin=False
-            )
+        if coord != "G":
+            rot = hp.Rotator(coord=["G", coord])
+            rot.rotate_alm(alm, inplace=True)
+        smoothed_map = hp.alm2map(alm, nside=nside, verbose=False, pixwin=False)
 
-        else:
-            smoothed_sky = mpi_smoothing(sky)
-        out.append(smoothed_sky)
-    return np.array(out)
+    else:
+        smoothed_map = mpi_smoothing(input_map, fwhm, map_dist)
 
-def mpi_smoothing(self, sky, fwhm):
+    if hasattr(input_map, "unit"):
+        smoothed_map <<= input_map.unit
+    return smoothed_map
+
+
+def mpi_smoothing(input_map, fwhm, map_dist):
     import libsharp
 
     beam = hp.gauss_beam(
-        fwhm=fwhm.to(u.rad).value, lmax=self.smoothing_lmax, pol=True
+        fwhm=fwhm.to(u.rad).value, lmax=map_dist.smoothing_lmax, pol=True
     )
 
-    sky_I = sky if sky.ndim == 1 else sky[0]
-    sky_I_contig = np.ascontiguousarray(sky_I.reshape((1, 1, -1))).astype(
+    input_map_I = input_map if input_map.ndim == 1 else input_map[0]
+    input_map_I_contig = np.ascontiguousarray(input_map_I.reshape((1, 1, -1))).astype(
         np.float64, copy=False
     )
 
     alm_sharp_I = libsharp.analysis(
-        self.libsharp_grid,
-        self.libsharp_order,
-        sky_I_contig,
+        map_dist.libsharp_grid,
+        map_dist.libsharp_order,
+        input_map_I_contig,
         spin=0,
-        comm=self.mpi_comm,
+        comm=map_dist.mpi_comm,
     )
-    self.libsharp_order.almxfl(alm_sharp_I, np.ascontiguousarray(beam[:, 0:1]))
+    map_dist.libsharp_order.almxfl(alm_sharp_I, np.ascontiguousarray(beam[:, 0:1]))
     out = libsharp.synthesis(
-        self.libsharp_grid,
-        self.libsharp_order,
+        map_dist.libsharp_grid,
+        map_dist.libsharp_order,
         alm_sharp_I,
         spin=0,
-        comm=self.mpi_comm,
+        comm=map_dist.mpi_comm,
     )[0]
     assert np.isnan(out).sum() == 0
 
-    if utils.has_polarization(sky):
+    if utils.has_polarization(input_map):
         alm_sharp_P = libsharp.analysis(
-            self.libsharp_grid,
-            self.libsharp_order,
-            np.ascontiguousarray(sky[1:3, :].reshape((1, 2, -1))).astype(
+            map_dist.libsharp_grid,
+            map_dist.libsharp_order,
+            np.ascontiguousarray(input_map[1:3, :].reshape((1, 2, -1))).astype(
                 np.float64, copy=False
             ),
             spin=2,
-            comm=self.mpi_comm,
+            comm=map_dist.mpi_comm,
         )
 
-        self.libsharp_order.almxfl(
+        map_dist.libsharp_order.almxfl(
             alm_sharp_P, np.ascontiguousarray(beam[:, (1, 2)])
         )
 
         signal_map_P = libsharp.synthesis(
-            self.libsharp_grid,
-            self.libsharp_order,
+            map_dist.libsharp_grid,
+            map_dist.libsharp_order,
             alm_sharp_P,
             spin=2,
-            comm=self.mpi_comm,
+            comm=map_dist.mpi_comm,
         )[0]
         out = np.vstack((out, signal_map_P))
     return out
@@ -309,15 +245,7 @@ def extract_hdu_unit(path):
     return unit
 
 
-def read_map(
-    path,
-    nside,
-    unit=None,
-    field=0,
-    pixel_indices=None,
-    mpi_comm=None,
-    distribute_rings_libsharp=None,
-):
+def read_map(path, nside, unit=None, field=0, map_dist=None):
     """Wrapper of `healpy.read_map` for PySM data. This function also extracts
     the units from the fits HDU and applies them to the data array to form an
     `astropy.units.Quantity` object.
@@ -337,6 +265,8 @@ def read_map(
     map : ndarray
         Numpy array containing HEALPix map in RING ordering.
     """
+    mpi_comm = None if map_dist is None else map_dist.mpi_comm
+    pixel_indices = None if map_dist is None else map_dist.pixel_indices
     # read map. Add `str()` operator in case dealing with `Path` object.
     if os.path.exists(str(path)):  # Python 3.5 requires turning a Path object to str
         filename = str(path)
@@ -379,7 +309,7 @@ def read_map(
         dtype = mpi_comm.bcast(dtype, root=0)
         if mpi_comm.rank > 0:
             output_map = np.empty(shape, dtype=dtype)
-        mpi_comm.Bcast(output_map.astype(np.float32), root=0)
+        mpi_comm.Bcast(output_map, root=0)
         unit = mpi_comm.bcast(unit, root=0)
 
     if pixel_indices is not None:

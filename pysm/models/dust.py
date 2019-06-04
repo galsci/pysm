@@ -3,6 +3,7 @@ import warnings
 from .. import units as u
 from pathlib import Path
 from .template import Model, check_freq_input
+from .. import utils
 
 from numba import njit
 from astropy import constants as const
@@ -33,8 +34,7 @@ class ModifiedBlackBody(Model):
         unit_Q=None,
         unit_U=None,
         unit_mbb_temperature=None,
-        pixel_indices=None,
-        mpi_comm=None,
+        map_dist=None,
     ):
         """ This function initializes the modified black body model.
 
@@ -64,7 +64,7 @@ class ModifiedBlackBody(Model):
         nside: int
             Resolution parameter at which this model is to be calculated.
         """
-        super().__init__(nside=nside, pixel_indices=pixel_indices, mpi_comm=mpi_comm)
+        super().__init__(nside=nside, map_dist=map_dist)
         # do model setup
         self.I_ref = self.read_map(map_I, unit=unit_I)
         # This does unit conversion in place so we do not copy the data
@@ -79,15 +79,21 @@ class ModifiedBlackBody(Model):
             self.U_ref = self.read_map(map_U, unit=unit_U)
             self.U_ref <<= u.uK_RJ
             self.freq_ref_P = u.Quantity(freq_ref_P).to(u.GHz)
-        self.mbb_index = self.read_map(map_mbb_index, unit="") if isinstance(map_mbb_index, (str, Path)) else u.Quantity(map_mbb_index, unit="")
-        self.mbb_temperature = self.read_map(
-            map_mbb_temperature, unit=unit_mbb_temperature
-        ) if isinstance(map_mbb_index, (str, Path)) else map_mbb_temperature
+        self.mbb_index = (
+            self.read_map(map_mbb_index, unit="")
+            if isinstance(map_mbb_index, (str, Path))
+            else u.Quantity(map_mbb_index, unit="")
+        )
+        self.mbb_temperature = (
+            self.read_map(map_mbb_temperature, unit=unit_mbb_temperature)
+            if isinstance(map_mbb_index, (str, Path))
+            else map_mbb_temperature
+        )
         self.mbb_temperature <<= u.K
         self.nside = int(nside)
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz) -> u.uK_RJ:
+    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
         """ This function evaluates the component model at a either
         a single frequency, an array of frequencies, or over a bandpass.
 
@@ -105,8 +111,10 @@ class ModifiedBlackBody(Model):
         """
         # freqs must be given in GHz.
         freqs = check_freq_input(freqs)
+        weights = utils.normalize_weights(freqs, weights)
         outputs = get_emission_numba(
             freqs.value,
+            weights,
             self.I_ref.value,
             self.Q_ref.value,
             self.U_ref.value,
@@ -120,19 +128,35 @@ class ModifiedBlackBody(Model):
 
 @njit(parallel=True)
 def get_emission_numba(
-    freqs, I_ref, Q_ref, U_ref, freq_ref_I, freq_ref_P, mbb_index, mbb_temperature
+    freqs,
+    weights,
+    I_ref,
+    Q_ref,
+    U_ref,
+    freq_ref_I,
+    freq_ref_P,
+    mbb_index,
+    mbb_temperature,
 ):
-    outputs = np.empty((len(freqs), 3, len(I_ref)), dtype=I_ref.dtype)
+    output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
+    if len(freqs) > 1:
+        temp = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
+    else:
+        temp = output
+
     I, Q, U = 0, 1, 2
-    for i_freq, freq in enumerate(freqs):
-        outputs[i_freq, I, :] = I_ref
-        outputs[i_freq, Q, :] = Q_ref
-        outputs[i_freq, U, :] = U_ref
-        outputs[i_freq, I] *= (freq / freq_ref_I) ** (mbb_index - 2.0)
-        outputs[i_freq, Q:] *= (freq / freq_ref_P) ** (mbb_index - 2.0)
-        outputs[i_freq, I] *= blackbody_ratio(freq, freq_ref_I, mbb_temperature)
-        outputs[i_freq, Q:] *= blackbody_ratio(freq, freq_ref_P, mbb_temperature)
-    return outputs
+    for i, (freq, weight) in enumerate(zip(freqs, weights)):
+        temp[I, :] = I_ref
+        temp[Q, :] = Q_ref
+        temp[U, :] = U_ref
+        temp[I] *= (freq / freq_ref_I) ** (mbb_index - 2.0)
+        temp[Q:] *= (freq / freq_ref_P) ** (mbb_index - 2.0)
+        temp[I] *= blackbody_ratio(freq, freq_ref_I, mbb_temperature)
+        temp[Q:] *= blackbody_ratio(freq, freq_ref_P, mbb_temperature)
+        if len(freqs) > 1:
+            utils.trapz_step_inplace(freqs, weights, i, temp, output)
+    return output
+
 
 
 class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
