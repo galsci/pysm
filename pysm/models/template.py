@@ -17,6 +17,7 @@ from astropy.utils import data
 from .. import utils
 from ..constants import DATAURL
 from .. import mpi
+from numba import njit
 
 from unittest.mock import Mock
 
@@ -57,8 +58,12 @@ class Model:
         uses nside, pixel_indices and mpi_comm defined in this Model
         """
         return read_map(
-            path, self.nside, unit=unit, field=field, map_dist=self.map_dist,
-            dataurl=self.dataurl
+            path,
+            self.nside,
+            unit=unit,
+            field=field,
+            map_dist=self.map_dist,
+            dataurl=self.dataurl,
         )
 
     def read_txt(self, path, **kwargs):
@@ -100,7 +105,9 @@ def apply_smoothing_and_coord_transform(
 
     if map_dist is None:
         nside = hp.get_nside(input_map)
-        alm = hp.map2alm(input_map, lmax=lmax, use_pixel_weights=True if nside > 16 else False)
+        alm = hp.map2alm(
+            input_map, lmax=lmax, use_pixel_weights=True if nside > 16 else False
+        )
         if fwhm is not None:
             hp.smoothalm(
                 alm, fwhm=fwhm.to_value(u.rad), verbose=False, inplace=True, pol=True
@@ -196,7 +203,64 @@ def extract_hdu_unit(path):
     return unit
 
 
-def read_map(path, nside, unit=None, field=0, map_dist=None,dataurl=None):
+def read_alm(path, has_polarization=True, map_dist=None, dataurl=None):
+    mpi_comm = None if map_dist is None else map_dist.mpi_comm
+
+    if dataurl is None:
+        dataurl = DATAURL
+    # read map. Add `str()` operator in case dealing with `Path` object.
+    if os.path.exists(str(path)):  # Python 3.5 requires turning a Path object to str
+        filename = str(path)
+    else:
+        with data.conf.set_temp("dataurl", dataurl), data.conf.set_temp(
+            "remote_timeout", 30
+        ):
+            filename = data.get_pkg_data_filename(path)
+
+    if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
+
+        alm = np.complex64(
+            hp.read_alm(filename, hdu=(1, 2, 3) if has_polarization else 1)
+        )
+        lmax = hp.Alm.getlmax(len(alm))
+
+    if mpi_comm is not None:
+        shape = mpi_comm.bcast(alm.shape, root=0)
+        lmax = mpi_comm.bcast(lmax, root=0)
+        if mpi_comm.rank > 0:
+            alm = np.empty(shape, dtype=dtype)
+        mpi_comm.Bcast(alm, root=0)
+        local_alm = reorder_alm(
+            shape[0],
+            alm=alm,
+            local_alm_size=map_dist.libsharp_order.local_size(),
+            local_m=map_dist.libsharp_order.mval(),
+            lmax=lmax,
+        )
+        print(local_alm)
+
+
+@njit(parallel=True)
+def reorder_alm(num_pol, alm, local_alm_size, local_m, lmax):
+    local_alm = np.complex64((1, num_pol, local_alm_size))
+    mvstart = 0
+    for i_pol in range(num_pol):
+        for m in local_m:
+            f = 1 if (m == 0) else 2
+            num_ells = lmax + 1 - m
+            for i_l in range(num_ells):
+                l = m + i_l
+                healpix_index = m * (2 * lmax + 1 - m) // 2 + l
+                local_alm[0, i_pol, mvstart + f * i_l] = alm[i_pol, healpix_index].real
+                if m != 0:
+                    local_alm[0, i_pol, mvstart + f * i_l + 1] = alm[
+                        i_pol, healpix_index
+                    ].imag
+            mvstart += f * num_ells
+    return local_alm
+
+
+def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
     """Wrapper of `healpy.read_map` for PySM data. This function also extracts
     the units from the fits HDU and applies them to the data array to form an
     `astropy.units.Quantity` object.
