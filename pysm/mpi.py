@@ -113,3 +113,57 @@ def assemble_map_on_rank0(comm, local_map, pixel_indices, n_components, npix):
     local_map_buffer[:, pixel_indices] = local_map
     comm.Reduce(local_map_buffer, full_maps_rank0, root=0, op=MPI.SUM)
     return full_maps_rank0
+
+def mpi_smoothing(input_map, fwhm, map_dist):
+    import libsharp
+
+    beam = hp.gauss_beam(
+        fwhm=fwhm.to(u.rad).value, lmax=map_dist.smoothing_lmax, pol=True
+    )
+
+    input_map_I = input_map if input_map.ndim == 1 else input_map[0]
+    input_map_I_contig = np.ascontiguousarray(input_map_I.reshape((1, 1, -1))).astype(
+        np.float64, copy=False
+    )
+
+    alm_sharp_I = libsharp.analysis(
+        map_dist.libsharp_grid,
+        map_dist.libsharp_order,
+        input_map_I_contig,
+        spin=0,
+        comm=map_dist.mpi_comm,
+    )
+    map_dist.libsharp_order.almxfl(alm_sharp_I, np.ascontiguousarray(beam[:, 0:1]))
+    out = libsharp.synthesis(
+        map_dist.libsharp_grid,
+        map_dist.libsharp_order,
+        alm_sharp_I,
+        spin=0,
+        comm=map_dist.mpi_comm,
+    )[0]
+    assert np.isnan(out).sum() == 0
+
+    if utils.has_polarization(input_map):
+        alm_sharp_P = libsharp.analysis(
+            map_dist.libsharp_grid,
+            map_dist.libsharp_order,
+            np.ascontiguousarray(input_map[1:3, :].reshape((1, 2, -1))).astype(
+                np.float64, copy=False
+            ),
+            spin=2,
+            comm=map_dist.mpi_comm,
+        )
+
+        map_dist.libsharp_order.almxfl(
+            alm_sharp_P, np.ascontiguousarray(beam[:, (1, 2)])
+        )
+
+        signal_map_P = libsharp.synthesis(
+            map_dist.libsharp_grid,
+            map_dist.libsharp_order,
+            alm_sharp_P,
+            spin=2,
+            comm=map_dist.mpi_comm,
+        )[0]
+        out = np.vstack((out, signal_map_P))
+    return out
