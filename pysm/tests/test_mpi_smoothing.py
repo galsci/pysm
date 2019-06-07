@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import healpy as hp
 import pysm
-import astropy.units as u
+import pysm.units as u
 
 try:
     from mpi4py import MPI
