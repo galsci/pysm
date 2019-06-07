@@ -222,41 +222,47 @@ def read_alm(path, has_polarization=True, map_dist=None, dataurl=None):
         alm = np.complex64(
             hp.read_alm(filename, hdu=(1, 2, 3) if has_polarization else 1)
         )
-        lmax = hp.Alm.getlmax(len(alm))
+        lmax = hp.Alm.getlmax(alm.shape[-1])
 
     if mpi_comm is not None:
         shape = mpi_comm.bcast(alm.shape, root=0)
         lmax = mpi_comm.bcast(lmax, root=0)
         if mpi_comm.rank > 0:
-            alm = np.empty(shape, dtype=dtype)
+            alm = np.empty(shape, dtype=np.complex64)
         mpi_comm.Bcast(alm, root=0)
         local_alm = reorder_alm(
             shape[0],
             alm=alm,
-            local_alm_size=map_dist.libsharp_order.local_size(),
-            local_m=map_dist.libsharp_order.mval(),
+            local_alm_size=int(map_dist.libsharp_order.local_size()),
+            local_m=np.array(map_dist.libsharp_order.mval()),
             lmax=lmax,
         )
-        print(local_alm)
+    else:
+        local_alm = alm
+
+    return local_alm
 
 
-@njit(parallel=True)
+#@njit(parallel=False)
 def reorder_alm(num_pol, alm, local_alm_size, local_m, lmax):
-    local_alm = np.complex64((1, num_pol, local_alm_size))
+    local_alm = np.zeros((1, num_pol, local_alm_size), dtype=np.float64)
     mvstart = 0
-    for i_pol in range(num_pol):
-        for m in local_m:
-            f = 1 if (m == 0) else 2
-            num_ells = lmax + 1 - m
-            for i_l in range(num_ells):
-                l = m + i_l
+    for m in local_m:
+        print("m loop", m)
+        f = 1 if (m == 0) else 2
+        num_ells = lmax + 1 - m
+        print(lmax, "num_ells", num_ells)
+        for i_l in range(num_ells):
+            l = m + i_l
+            for i_pol in range(num_pol):
                 healpix_index = m * (2 * lmax + 1 - m) // 2 + l
+                print(m, l, i_pol, mvstart, mvstart + f * i_l, healpix_index)
                 local_alm[0, i_pol, mvstart + f * i_l] = alm[i_pol, healpix_index].real
                 if m != 0:
                     local_alm[0, i_pol, mvstart + f * i_l + 1] = alm[
                         i_pol, healpix_index
                     ].imag
-            mvstart += f * num_ells
+        mvstart += f * num_ells
     return local_alm
 
 
