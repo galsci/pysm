@@ -206,26 +206,31 @@ def extract_hdu_unit(path):
 def read_alm(path, has_polarization=True, map_dist=None, dataurl=None):
     mpi_comm = None if map_dist is None else map_dist.mpi_comm
 
-    if dataurl is None:
-        dataurl = DATAURL
-    # read map. Add `str()` operator in case dealing with `Path` object.
-    if os.path.exists(str(path)):  # Python 3.5 requires turning a Path object to str
-        filename = str(path)
-    else:
-        with data.conf.set_temp("dataurl", dataurl), data.conf.set_temp(
-            "remote_timeout", 30
-        ):
-            filename = data.get_pkg_data_filename(path)
-
     if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
 
+        if dataurl is None:
+            dataurl = DATAURL
+        # read map. Add `str()` operator in case dealing with `Path` object.
+        if os.path.exists(
+            str(path)
+        ):  # Python 3.5 requires turning a Path object to str
+            filename = str(path)
+        else:
+            with data.conf.set_temp("dataurl", dataurl), data.conf.set_temp(
+                "remote_timeout", 30
+            ):
+                filename = data.get_pkg_data_filename(path)
         alm = np.complex64(
             hp.read_alm(filename, hdu=(1, 2, 3) if has_polarization else 1)
         )
         lmax = hp.Alm.getlmax(alm.shape[-1])
+        shape = alm.shape
+    else:
+        shape = None
+        lmax = None
 
     if mpi_comm is not None:
-        shape = mpi_comm.bcast(alm.shape, root=0)
+        shape = mpi_comm.bcast(shape, root=0)
         lmax = mpi_comm.bcast(lmax, root=0)
         if mpi_comm.rank > 0:
             alm = np.empty(shape, dtype=np.complex64)
@@ -243,20 +248,17 @@ def read_alm(path, has_polarization=True, map_dist=None, dataurl=None):
     return local_alm
 
 
-#@njit(parallel=False)
+@njit(parallel=True)
 def reorder_alm(num_pol, alm, local_alm_size, local_m, lmax):
     local_alm = np.zeros((1, num_pol, local_alm_size), dtype=np.float64)
     mvstart = 0
     for m in local_m:
-        print("m loop", m)
         f = 1 if (m == 0) else 2
         num_ells = lmax + 1 - m
-        print(lmax, "num_ells", num_ells)
         for i_l in range(num_ells):
-            l = m + i_l
+            ell = m + i_l
             for i_pol in range(num_pol):
-                healpix_index = m * (2 * lmax + 1 - m) // 2 + l
-                print(m, l, i_pol, mvstart, mvstart + f * i_l, healpix_index)
+                healpix_index = m * (2 * lmax + 1 - m) // 2 + ell
                 local_alm[0, i_pol, mvstart + f * i_l] = alm[i_pol, healpix_index].real
                 if m != 0:
                     local_alm[0, i_pol, mvstart + f * i_l + 1] = alm[
