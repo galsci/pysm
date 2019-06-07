@@ -15,7 +15,9 @@ alm = np.arange(alm_size*3, dtype=np.complex64).reshape((3, alm_size))
 alm += 1j * (np.arange(alm_size*3, dtype=np.complex64).reshape((3, alm_size)))/10
 alm[:, :lmax] = alm[:, :lmax].real
 
-hp.write_alm(filename, alm, overwrite=True)
+if mpi_comm.rank == 0:
+    hp.write_alm(filename, alm, overwrite=True)
+mpi_comm.Barrier()
 
 print(mpi_comm.rank)
 local_alm = pysm.models.template.read_alm(filename, map_dist=map_dist)
