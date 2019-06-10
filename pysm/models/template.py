@@ -66,6 +66,11 @@ class Model:
             dataurl=self.dataurl,
         )
 
+    def read_alm(self, path, has_polarization=True):
+        """See `pysm.read_alm`, this is a convenience wrapper that
+        passes `map_dist` and `dataurl` along"""
+        return read_alm(path, has_polarization=has_polarization, map_dist=self.map_dist, dataurl=self.dataurl)
+
     def read_txt(self, path, **kwargs):
         mpi_comm = None if self.map_dist is None else self.map_dist.mpi_comm
         return read_txt(path, mpi_comm=mpi_comm, **kwargs)
@@ -204,6 +209,25 @@ def extract_hdu_unit(path):
 
 
 def read_alm(path, has_polarization=True, map_dist=None, dataurl=None):
+    """Read :math:`a_{\ell m}` from a FITS file
+
+    If running with MPI, read on the first process and then broadcasts to all,
+    then only keep the :math:`m` in a round-robin fashion as expected by
+    Libsharp. I.e. with 4 processes, the first gets :math:`m=0,4,8...`, the
+    second :math:`m=1,5,9...` and so on.
+
+    path : str
+        absolute or relative path to local file or file available remotely.
+    has_polarization : bool
+        read only temperature alm from file or also polarization
+    map_dist : pysm.MapDistribution
+        :math:`\ell_{max}` should be the same of the :math:`\ell_{max}` in the file
+        and :math:`m_{max}=\ell_{max}`.
+    dataurl : str
+        URL of the remote server holding the data, if None, the standard PySM
+        location is going to be used.
+    """
+
     mpi_comm = None if map_dist is None else map_dist.mpi_comm
 
     if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
