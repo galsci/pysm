@@ -8,3 +8,4 @@ from .template import (
 )
 from .spdust import SpDust, SpDustPol
 from .interpolating import InterpolatingComponent
+from .cmb import CMBMap
