@@ -86,7 +86,7 @@ class ModifiedBlackBody(Model):
         )
         self.mbb_temperature = (
             self.read_map(map_mbb_temperature, unit=unit_mbb_temperature)
-            if isinstance(map_mbb_index, (str, Path))
+            if isinstance(map_mbb_temperature, (str, Path))
             else map_mbb_temperature
         )
         self.mbb_temperature <<= u.K
