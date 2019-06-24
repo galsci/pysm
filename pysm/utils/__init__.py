@@ -6,7 +6,7 @@
 import numpy as np
 from numba import njit
 
-from .exceptions import IllegalArgumentError
+from .. import units as u
 
 
 def has_polarization(m):
@@ -33,6 +33,7 @@ def normalize_weights(freqs, weights):
     else:
         if weights is None:
             weights = np.ones(len(freqs), dtype=np.float)
+        weights = (weights * u.uK_RJ).to_value((u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs))
         return weights / np.trapz(weights, freqs.value)
 
 
