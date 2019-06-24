@@ -112,14 +112,12 @@ def compute_spdust_scaling_numba(freq, freq_ref_I, freq_peak, emissivity):
 def compute_spdust_emission_numba(
     freqs, weights, I_ref, freq_ref_I, freq_peak, emissivity
 ):
-    outputs = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
-    for freq, weight in zip(freqs, weights):
-        outputs[0] += (
-            weight
-            * I_ref
-            * compute_spdust_scaling_numba(freq, freq_ref_I, freq_peak, emissivity)
-        )
-    return outputs
+    output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
+    I = 0
+    for i, (freq, weight) in enumerate(zip(freqs, weights)):
+        scaling = compute_spdust_scaling_numba(freq, freq_ref_I, freq_peak, emissivity)
+        utils.trapz_step_inplace(freqs, weights, i, scaling * I_ref, output[I])
+    return output
 
 
 class SpDustPol(SpDust):
