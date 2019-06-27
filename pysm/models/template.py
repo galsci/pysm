@@ -67,7 +67,7 @@ class Model:
 
 
 def apply_smoothing_and_coord_transform(
-    input_map, fwhm=None, coord="G", lmax=None, map_dist=None
+    input_map, fwhm=None, rot=None, lmax=None, map_dist=None
 ):
     """ Method to apply smoothing to a set of simulations. This currently
     applies only the `healpy.smoothing` Gaussian smoothing kernel, but will
@@ -87,6 +87,10 @@ def apply_smoothing_and_coord_transform(
     fwhms: list(float)
         List of full width at half-maixima in arcminutes, defining the
         Gaussian kernels to be applied.
+    rot: hp.Rotator
+        Apply a coordinate rotation give a healpy `Rotator`, e.g. if the
+        inputs are in Galactic, `hp.Rotator(coord=("G", "Q")) rotates
+        to Equatorial
 
     Returns
     -------
@@ -101,12 +105,12 @@ def apply_smoothing_and_coord_transform(
             hp.smoothalm(
                 alm, fwhm=fwhm.to_value(u.rad), verbose=False, inplace=True, pol=True
             )
-        if coord != "G":
-            rot = hp.Rotator(coord=["G", coord])
+        if rot is not None:
             rot.rotate_alm(alm, inplace=True)
         smoothed_map = hp.alm2map(alm, nside=nside, verbose=False, pixwin=False)
 
     else:
+        assert rot is None, "No rotation supported in distributed smoothing"
         smoothed_map = mpi.mpi_smoothing(input_map, fwhm, map_dist)
 
     if hasattr(input_map, "unit"):
