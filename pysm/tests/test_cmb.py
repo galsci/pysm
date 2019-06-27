@@ -52,7 +52,7 @@ def test_cmb_map_bandpass():
         (1 * u.K_CMB).to_value(u.K_RJ, equivalencies=u.cmb_equivalencies(freq)),
     )
 
-    freqs = np.array([90, 95, 100, 105, 110]) * u.GHz
+    freqs = np.array([98, 99, 100, 101, 102]) * u.GHz
     weights = np.ones(len(freqs))
 
     # just checking that the result is reasonably close to the delta frequency at the center frequency
