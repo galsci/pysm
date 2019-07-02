@@ -6,6 +6,7 @@ Objects:
     Sky
 """
 import toml
+import numpy as np
 from astropy.utils import data
 from . import units as u
 
@@ -117,4 +118,7 @@ class Sky(Model):
         output = self.components[0].get_emission(freq, weights=weights)
         for comp in self.components[1:]:
             output += comp.get_emission(freq, weights=weights)
-        return output.to(self.output_unit, equivalencies=u.cmb_equivalencies(freq))
+        return output.to(
+            self.output_unit,
+            equivalencies=u.cmb_equivalencies(np.average(freq, weights=weights)),
+        )
