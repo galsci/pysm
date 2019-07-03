@@ -69,33 +69,31 @@ class Model:
 def apply_smoothing_and_coord_transform(
     input_map, fwhm=None, rot=None, lmax=None, map_dist=None
 ):
-    """ Method to apply smoothing to a set of simulations. This currently
-    applies only the `healpy.smoothing` Gaussian smoothing kernel, but will
-    be updated with a more general functionality.
+    """Apply smoothing and coordinate rotation to an input map
 
-    Note: this method may be overridden by child classes which require more
-    complicated implementations of smoothing, as long as they are compatible
-    with the input and output of this template.
+    it applies the `healpy.smoothing` Gaussian smoothing kernel if `map_dist`
+    is None, otherwise applies distributed smoothing with `libsharp`.
+    In the distributed case, no rotation is supported.
 
     Parameters
     ----------
-    skies: ndarray
-        Numpy array of shape (nchannels, 3, npix), containing the unsmoothed
-        skies. This is assumed to have no beam at this point, as the
-        simulated small scale tempalte on which the simulations are based
+    input_map : ndarray
+        Input map, of shape `(3, npix)`
+        This is assumed to have no beam at this point, as the
+        simulated small scale tempatle on which the simulations are based
         have no beam.
-    fwhms: list(float)
-        List of full width at half-maixima in arcminutes, defining the
+    fwhm : astropy.units.Quantity
+        Full width at half-maximum, defining the
         Gaussian kernels to be applied.
     rot: hp.Rotator
         Apply a coordinate rotation give a healpy `Rotator`, e.g. if the
-        inputs are in Galactic, `hp.Rotator(coord=("G", "Q")) rotates
+        inputs are in Galactic, `hp.Rotator(coord=("G", "C")) rotates
         to Equatorial
 
     Returns
     -------
-    ndarray
-        Array containing the smoothed skies.
+    smoothed_map : np.ndarray
+        Array containing the smoothed sky
     """
 
     if map_dist is None:
