@@ -36,6 +36,18 @@ def normalize_weights(freqs, weights):
         weights = (weights * u.uK_RJ).to_value((u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs))
         return weights / np.trapz(weights, freqs.value)
 
+def bandpass_unit_conversion(freqs, weights, output_unit):
+    """Unit conversion from uK_RJ to output unit given a bandpass
+
+    Parameters
+    ----------
+    freqs : astropy.units.Quantity
+        Frequency array in a unit compatible with GHz
+    """
+    w = normalize_weights(freqs, weights)
+    factors = (np.ones(len(freqs), dtype=np.float) * u.uK_RJ).to_value(output_unit, equivalencies=u.cmb_equivalencies(freqs))
+    return np.trapz(factors * w, freqs.value) * u.Unit(u.Unit(output_unit) / u.uK_RJ)
+
 
 @njit
 def trapz_step_inplace(freqs, weights, i, m, output):

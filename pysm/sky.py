@@ -9,6 +9,7 @@ import toml
 import numpy as np
 from astropy.utils import data
 from . import units as u
+from .utils import normalize_weights, bandpass_unit_conversion
 
 from .constants import DATAURL
 from .models import (
@@ -106,7 +107,7 @@ class Sky(Model):
             self.components += create_components_from_config(
                 component_config, nside=nside, map_dist=map_dist
             )
-        self.output_unit = output_unit
+        self.output_unit = u.Unit(output_unit)
 
     def add_component(self, component):
         self.components.append(component)
@@ -118,7 +119,4 @@ class Sky(Model):
         output = self.components[0].get_emission(freq, weights=weights)
         for comp in self.components[1:]:
             output += comp.get_emission(freq, weights=weights)
-        return output.to(
-            self.output_unit,
-            equivalencies=u.cmb_equivalencies(np.average(freq, weights=weights)),
-        )
+        return output * bandpass_unit_conversion(freq, weights, self.output_unit)
