@@ -2,7 +2,7 @@ import os
 from numba import njit
 import numpy as np
 from scipy.interpolate import interp1d
-from .template import Model, check_freq_input
+from .template import Model
 from .. import units as u
 from .. import utils
 from pysm.utils import trapz_step_inplace

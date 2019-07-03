@@ -44,6 +44,7 @@ def bandpass_unit_conversion(freqs, weights, output_unit):
     freqs : astropy.units.Quantity
         Frequency array in a unit compatible with GHz
     """
+    freqs = check_freq_input(freqs)
     w = normalize_weights(freqs, weights)
     factors = (np.ones(len(freqs), dtype=np.float) * u.uK_RJ).to_value(output_unit, equivalencies=u.cmb_equivalencies(freqs))
     return np.trapz(factors * w, freqs.value) * u.Unit(u.Unit(output_unit) / u.uK_RJ)
