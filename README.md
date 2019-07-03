@@ -1,6 +1,8 @@
 [![Build Status](https://travis-ci.org/healpy/pysm.svg?branch=master)](https://travis-ci.org/healpy/pysm)
 [![Documentation Status](https://readthedocs.org/projects/pysm3/badge/?version=latest)](https://pysm3.readthedocs.io/en/latest/?badge=latest)
 
+No documentation yet, see the [tutorial](https://github.com/zonca/pysm_tutorial)
+
 
 # Models
 
