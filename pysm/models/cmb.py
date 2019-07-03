@@ -2,7 +2,7 @@ import numpy as np
 
 from .. import utils
 from .. import units as u
-from .template import Model, check_freq_input
+from .template import Model
 
 class CMBMap(Model):
 
@@ -14,7 +14,7 @@ class CMBMap(Model):
 
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
-        freqs = check_freq_input(freqs)
+        freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         convert_to_uK_RJ = (np.ones(len(freqs), dtype=np.double) * u.uK_CMB).to_value(
             u.uK_RJ, equivalencies=u.cmb_equivalencies(freqs)

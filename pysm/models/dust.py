@@ -2,7 +2,7 @@ import numpy as np
 import warnings
 from .. import units as u
 from pathlib import Path
-from .template import Model, check_freq_input
+from .template import Model
 from .. import utils
 
 from numba import njit
@@ -110,7 +110,7 @@ class ModifiedBlackBody(Model):
             shape (nfreq, 3, npix).
         """
         # freqs must be given in GHz.
-        freqs = check_freq_input(freqs)
+        freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         outputs = get_emission_numba(
             freqs.value,
@@ -175,7 +175,7 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
         correlation_length=None,
     ):
         """ See parent class for other documentation.
-        
+
         Parameters
         ----------
         correlation_length: float
@@ -202,7 +202,7 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
         """ Function to calculate the emission of a decorrelated modified black
         body model.
         """
-        freqs = check_freq_input(freqs)
+        freqs = utils.check_freq_input(freqs)
         # calculate the decorrelation
         (rho_cov_I, rho_mean_I) = get_decorrelation_matrix(
             self.freq_ref_I, freqs, self.correlation_length
@@ -264,7 +264,7 @@ def get_decorrelation_matrix(
     """
     assert correlation_length >= 0
     assert isinstance(freqs_unconstrained, np.ndarray)
-    freq_constrained = check_freq_input(freq_constrained)
+    freq_constrained = utils.check_freq_input(freq_constrained)
     freqs_all = np.insert(freqs_unconstrained, 0, freq_constrained)
     indref = np.where(freqs_all == freq_constrained)
     corrmatrix = frequency_decorr_model(freqs_all, correlation_length)

@@ -139,42 +139,6 @@ def apply_normalization(freqs, weights):
     return freqs, weights / np.trapz(weights, freqs)
 
 
-def check_freq_input(freqs):
-    """ Function to check that the input to `Model.get_emission` is a
-    np.ndarray.
-
-    This function will convet input integers or arrays to a single element
-    numpy array.
-
-    Parameters
-    ----------
-    freqs: int, float, list, ndarray
-
-    Returns
-    -------
-    ndarray
-        Frequencies in numpy array form.
-    """
-    if isinstance(freqs, np.ndarray):
-        freqs = freqs
-    elif isinstance(freqs, list):
-        freqs = np.array(freqs)
-    else:
-        try:
-            freqs = np.array([freqs])
-        except:
-            print(
-                """Could not make freqs into an ndarray, check
-            input."""
-            )
-            raise
-    if isinstance(freqs, u.Quantity):
-        if freqs.isscalar:
-            return freqs[None]
-        return freqs
-    return freqs * u.GHz
-
-
 def extract_hdu_unit(path):
     """ Function to extract unit from an hdu.
     Parameters

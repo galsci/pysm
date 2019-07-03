@@ -3,7 +3,7 @@ from .. import units as u
 from numba import njit
 from .. import utils
 
-from .template import Model, check_freq_input
+from .template import Model
 
 
 class PowerLaw(Model):
@@ -85,7 +85,7 @@ class PowerLaw(Model):
             Set of maps at the given frequency or frequencies. This will have
             shape (nfreq, 3, npix).
         """
-        freqs = check_freq_input(freqs)
+        freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         if not self.has_polarization:
             outputs = (

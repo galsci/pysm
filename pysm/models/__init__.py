@@ -4,7 +4,6 @@ from .template import (
     Model,
     read_map,
     apply_smoothing_and_coord_transform,
-    check_freq_input,
 )
 from .spdust import SpDust, SpDustPol
 from .interpolating import InterpolatingComponent

@@ -66,3 +66,38 @@ def trapz_step_inplace(freqs, weights, i, m, output):
     else:
         delta_freq = freqs[i + 1] - freqs[i - 1]
     output += 0.5 * m * weights[i] * delta_freq
+
+def check_freq_input(freqs):
+    """ Function to check that the input to `Model.get_emission` is a
+    np.ndarray.
+
+    This function will convet input integers or arrays to a single element
+    numpy array.
+
+    Parameters
+    ----------
+    freqs: int, float, list, ndarray
+
+    Returns
+    -------
+    ndarray
+        Frequencies in numpy array form.
+    """
+    if isinstance(freqs, np.ndarray):
+        freqs = freqs
+    elif isinstance(freqs, list):
+        freqs = np.array(freqs)
+    else:
+        try:
+            freqs = np.array([freqs])
+        except:
+            print(
+                """Could not make freqs into an ndarray, check
+            input."""
+            )
+            raise
+    if isinstance(freqs, u.Quantity):
+        if freqs.isscalar:
+            return freqs[None]
+        return freqs
+    return freqs * u.GHz
