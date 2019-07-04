@@ -108,7 +108,7 @@ def apply_smoothing_and_coord_transform(
         smoothed_map = hp.alm2map(alm, nside=nside, verbose=False, pixwin=False)
 
     else:
-        assert rot is None, "No rotation supported in distributed smoothing"
+        assert (rot is None) or (rot.coordin == rot.coordout), "No rotation supported in distributed smoothing"
         smoothed_map = mpi.mpi_smoothing(input_map, fwhm, map_dist)
 
     if hasattr(input_map, "unit"):
