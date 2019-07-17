@@ -25,6 +25,4 @@ class CMBMap(Model):
         else:
             scaling_factor = np.trapz(convert_to_uK_RJ * weights, x=freqs.value)
 
-        print("scaling_factor", scaling_factor)
-
         return (np.array([self.map_I, self.map_Q, self.map_U]) * scaling_factor) << u.uK_RJ
