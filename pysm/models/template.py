@@ -57,8 +57,12 @@ class Model:
         uses nside, pixel_indices and mpi_comm defined in this Model
         """
         return read_map(
-            path, self.nside, unit=unit, field=field, map_dist=self.map_dist,
-            dataurl=self.dataurl
+            path,
+            self.nside,
+            unit=unit,
+            field=field,
+            map_dist=self.map_dist,
+            dataurl=self.dataurl,
         )
 
     def read_txt(self, path, **kwargs):
@@ -87,7 +91,7 @@ def apply_smoothing_and_coord_transform(
         Gaussian kernels to be applied.
     rot: hp.Rotator
         Apply a coordinate rotation give a healpy `Rotator`, e.g. if the
-        inputs are in Galactic, `hp.Rotator(coord=("G", "C")) rotates
+        inputs are in Galactic, `hp.Rotator(coord=("G", "C"))` rotates
         to Equatorial
 
     Returns
@@ -98,7 +102,9 @@ def apply_smoothing_and_coord_transform(
 
     if map_dist is None:
         nside = hp.get_nside(input_map)
-        alm = hp.map2alm(input_map, lmax=lmax, use_pixel_weights=True if nside > 16 else False)
+        alm = hp.map2alm(
+            input_map, lmax=lmax, use_pixel_weights=True if nside > 16 else False
+        )
         if fwhm is not None:
             hp.smoothalm(
                 alm, fwhm=fwhm.to_value(u.rad), verbose=False, inplace=True, pol=True
@@ -108,7 +114,9 @@ def apply_smoothing_and_coord_transform(
         smoothed_map = hp.alm2map(alm, nside=nside, verbose=False, pixwin=False)
 
     else:
-        assert (rot is None) or (rot.coordin == rot.coordout), "No rotation supported in distributed smoothing"
+        assert (rot is None) or (
+            rot.coordin == rot.coordout
+        ), "No rotation supported in distributed smoothing"
         smoothed_map = mpi.mpi_smoothing(input_map, fwhm, map_dist)
 
     if hasattr(input_map, "unit"):
@@ -158,7 +166,7 @@ def extract_hdu_unit(path):
     return unit
 
 
-def read_map(path, nside, unit=None, field=0, map_dist=None,dataurl=None):
+def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
     """Wrapper of `healpy.read_map` for PySM data. This function also extracts
     the units from the fits HDU and applies them to the data array to form an
     `astropy.units.Quantity` object.
