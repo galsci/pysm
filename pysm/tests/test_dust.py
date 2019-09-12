@@ -12,7 +12,7 @@ def test_blackbody_ratio():
     temp = np.array([20.0])
 
     np.testing.assert_allclose(
-        dust.blackbody_ratio(nu_to, nu_from, temp), np.array([10.77195547])
+        dust.blackbody_ratio(nu_to, nu_from, temp), np.array([10.77195547]), rtol=1e-5
     )
 
 
