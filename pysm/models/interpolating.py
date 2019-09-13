@@ -1,5 +1,6 @@
 import os
-from numba import njit
+from numba import njit, types
+from numba.typed import Dict
 import numpy as np
 from scipy.interpolate import interp1d
 from .template import Model
@@ -23,6 +24,9 @@ class InterpolatingComponent(Model):
     ):
         """PySM component interpolating between precomputed maps
 
+        In order to save memory, maps are converted to float32, if this is not acceptable, please
+        open an issue on the PySM repository.
+
         Parameters
         ----------
         path : str
@@ -44,6 +48,11 @@ class InterpolatingComponent(Model):
         super().__init__(nside=nside, map_dist=map_dist)
         self.maps = {}
         self.maps = self.get_filenames(path)
+
+        # use a numba typed Dict so we can used in JIT compiled code
+        self.cached_maps = Dict.empty(
+            key_type=types.float32, value_type=types.float32[:, :]
+        )
 
         self.freqs = np.array(list(self.maps.keys()))
         self.freqs.sort()
@@ -130,27 +139,25 @@ class InterpolatingComponent(Model):
         else:
             npix = len(self.map_dist.pixel_indices)
 
-        # allocate a single array for all maps to be used by the interpolator
-        # always use size 3 for polarization because PySM always expects IQU maps
-
-        all_maps = np.zeros(
-            (len(freq_range), 3 if self.has_polarization else 1, npix), dtype=np.double
-        )
-
-        for i, freq in enumerate(freq_range):
-            if self.has_polarization:
-                all_maps[i] = self.read_map_by_frequency(freq)
+        for freq in freq_range:
+            if freq not in self.cached_maps:
+                m = self.read_map_by_frequency(freq)
+                if not self.has_polarization:
+                    m = m.reshape((1, -1))
+                self.cached_maps[freq] = m.astype(np.float32)
                 if self.verbose:
-                    for i_pol, pol in enumerate("IQU"):
+                    for i_pol, pol in enumerate(
+                        "IQU" if self.has_polarization else "I"
+                    ):
                         print(
                             "Mean emission at {} GHz in {}: {:.4g} uK_RJ".format(
-                                freq, pol, all_maps[i][i_pol].mean()
+                                freq, pol, self.cached_maps[freq][i_pol].mean()
                             )
                         )
-            else:
-                all_maps[i][0] = self.read_map_by_frequency(freq)
 
-        out = compute_interpolated_emission_numba(nu, weights, freq_range, all_maps)
+        out = compute_interpolated_emission_numba(
+            nu, weights, freq_range, self.cached_maps
+        )
 
         # the output of out is always 2D, (IQU, npix)
         return out << u.uK_RJ
@@ -167,21 +174,23 @@ class InterpolatingComponent(Model):
             field=(0, 1, 2) if self.has_polarization else 0,
             unit=self.input_units,
         )
-        return m.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq*u.GHz)).value
+        return m.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz)).value
 
 
 @njit(parallel=False)
 def compute_interpolated_emission_numba(freqs, weights, freq_range, all_maps):
-    output = np.zeros(all_maps[0].shape, dtype=all_maps.dtype)
+    output = np.zeros(
+        all_maps[freq_range[0]].shape, dtype=all_maps[freq_range[0]].dtype
+    )
     index_range = np.arange(len(freq_range))
     for i in range(len(freqs)):
         interpolation_weight = np.interp(freqs[i], freq_range, index_range)
         int_interpolation_weight = int(interpolation_weight)
         m = (interpolation_weight - int_interpolation_weight) * all_maps[
-            int_interpolation_weight
+            freq_range[int_interpolation_weight]
         ]
         m += (int_interpolation_weight + 1 - interpolation_weight) * all_maps[
-            int_interpolation_weight + 1
+            freq_range[int_interpolation_weight + 1]
         ]
 
         trapz_step_inplace(freqs, weights, i, m, output)
