@@ -26,6 +26,11 @@ class InterpolatingComponent(Model):
 
         In order to save memory, maps are converted to float32, if this is not acceptable, please
         open an issue on the PySM repository.
+        When you create the model, PySM checks the folder of the templates and stores a list of 
+        available frequencies. Once you call `get_emission`, maps are read, ud_graded to the target
+        nside and stored for future use. This is useful if you are running many channels with a similar
+        bandpass.
+        If not, you can call `cached_maps.clear()` to remove the cached maps.
 
         Parameters
         ----------
