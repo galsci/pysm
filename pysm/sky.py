@@ -12,14 +12,7 @@ from . import units as u
 from .utils import normalize_weights, bandpass_unit_conversion
 
 from .constants import DATAURL
-from .models import (
-    Model,
-    ModifiedBlackBody,
-    DecorrelatedModifiedBlackBody,
-    PowerLaw,
-    SpDust,
-    SpDustPol,
-)
+from .models import *
 
 
 def remove_class_from_dict(d):
