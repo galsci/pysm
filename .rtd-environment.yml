@@ -6,6 +6,8 @@ channels:
 
 dependencies:
     - python>=3.5
+    - numba
+    - h5py
     - astropy
     - Cython
     - matplotlib
