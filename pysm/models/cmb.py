@@ -6,9 +6,19 @@ from .template import Model
 
 
 class CMBMap(Model):
-    def __init__(self, map_IQU, nside, map_dist=None):
+    def __init__(self, nside, map_IQU=None, map_I=None, map_Q=None, map_U=None, map_dist=None):
         super().__init__(nside=nside, map_dist=map_dist)
-        self.map = self.read_map(map_IQU, unit=u.uK_CMB, field=(0, 1, 2))
+        if map_IQU is not None:
+            self.map = self.read_map(map_IQU, unit=u.uK_CMB, field=(0, 1, 2))
+        elif map_I is not None:
+            self.map = self.read_map(map_I, unit=u.uK_CMB, field=0)
+            if map_Q is not None:
+                self.map = [self.map]
+                for m in [map_Q, map_U]:
+                    self.map.append(self.read_map(m, unit=u.uK_CMB))
+                self.map = u.Quantity(self.map, unit=u.uK_CMB)
+        else:
+            raise(ValueError("No input map provided"))
 
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
