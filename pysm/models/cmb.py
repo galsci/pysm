@@ -249,7 +249,10 @@ class CMBLensed(CMBMap):
             Space delimited file with ells in the first columns and suppression
             factor (1 for no suppression) in the second column
         """
-        super().__init__(nside=nside, map_dist=map_dist)
+        try:
+            super().__init__(nside=nside, map_dist=map_dist)
+        except ValueError:
+            pass  # suppress exception about not providing any input map
         self.cmb_spectra = self.read_txt(cmb_spectra, unpack=True)
         self.cmb_seed = cmb_seed
         self.apply_delens = apply_delens
