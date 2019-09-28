@@ -2,6 +2,7 @@ import numpy as np
 import pysm
 import pysm.units as u
 from astropy.tests.helper import assert_quantity_allclose
+import pytest
 
 
 def test_cmb_map():
@@ -47,4 +48,26 @@ def test_cmb_map_bandpass():
 
     assert_quantity_allclose(
         expected_map, model.get_emission(freqs, weights)[0], rtol=1e-3
+    )
+
+
+@pytest.mark.parametrize("freq", [30, 100, 353])
+@pytest.mark.parametrize("model_tag", ["c1"])
+def test_cmb_lensed(model_tag, freq):
+
+    # The PySM test was done with a different seed than the one
+    # baked into the preset models
+    pysm.sky.PRESET_MODELS["c1"]["cmb_seed"] = 1234
+    model = pysm.Sky(preset_strings=[model_tag], nside=64)
+
+    model_number = 5
+    expected_output = pysm.read_map(
+        "pysm_2_test_data/check{}cmb_{}p0_64.fits".format(model_number, freq),
+        64,
+        unit="uK_RJ",
+        field=(0, 1, 2),
+    )
+
+    assert_quantity_allclose(
+        expected_output, model.get_emission(freq * u.GHz), rtol=1e-5
     )
