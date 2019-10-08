@@ -61,7 +61,7 @@ memreport.run("Created Sky")
 
 for each in range(10):
     m = sky.get_emission(
-        freq=np.arange(50, 55) * u.GHz, weights=np.array([0.1, 0.3, 0.5, 0.3, 0.1])
+        freq=np.linspace(31, 47, 10) * u.GHz, weights=np.ones(10)
     )
 
     memreport.run(f"Ran bandpass integration channel {each}")
