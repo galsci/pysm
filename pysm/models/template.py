@@ -230,10 +230,24 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
 
     if mpi_comm is not None:
         dtype = mpi_comm.bcast(dtype, root=0)
-        if mpi_comm.rank > 0:
-            output_map = np.empty(shape, dtype=dtype)
-        mpi_comm.Bcast(output_map, root=0)
         unit = mpi_comm.bcast(unit, root=0)
+
+        node_comm  = mpi_comm.Split_type(MPI.COMM_TYPE_SHARED)
+        mpi_type = MPI._typedict[dtype.char]
+        mpi_type_size = mpi_type.Get_Size()
+        win = MPI.Win.Allocate_shared(np.prod(shape) * mpi_type_size if node_comm.rank == 0 else 0,
+                        mpi_type_size, comm = node_comm)
+        shared_buffer, item_size = win.Shared_query(0)
+        assert item_size == mpi_type_size
+        shared_buffer = np.array(shared_buffer, dtype='B', copy=False)
+        node_shared_map = np.ndarray(buffer=shared_buffer, dtype=dtype, shape=shape)
+
+        # communicate output_map from proc 0 of mpi_comm to rank 0 of each node comm
+
+        # code with broadcast to whole communicator
+        # if mpi_comm.rank > 0:
+        #     output_map = np.empty(shape, dtype=dtype)
+        # mpi_comm.Bcast(output_map, root=0)
 
     if pixel_indices is not None:
         # make copies so that Python can release the full array
