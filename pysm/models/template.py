@@ -7,7 +7,6 @@ this template, ensuring that the new subclass has the required
 Objects:
     Model
 """
-import sys
 import warnings
 import os.path
 import numpy as np
