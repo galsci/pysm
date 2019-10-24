@@ -246,14 +246,16 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
         node_shared_map = np.ndarray(buffer=shared_buffer, dtype=dtype, shape=shape)
 
         # communicate output_map from proc 0 of mpi_comm to rank 0 of each node comm
-        # rank_comm = mpi_comm.Split(node_comm.rank, self._mynode)
-        # rank_comm.Bcast(nodedata, root=fromnode)
+        procs_per_node = node_comm.size
+        my_node = mpi_comm.rank // procs_per_node
+        from_node = mpi_comm.bcast(my_node, root=0)
+        rank_comm = mpi_comm.Split(node_comm.rank, my_node)
         if mpi_comm.rank == 0:
             node_shared_map[:] = output_map
             print(output_map[:3])
+        rank_comm.Bcast(node_shared_map, root=from_node)
         mpi_comm.barrier()
-        if mpi_comm.rank == 1:
-            print(node_shared_map[:3])
+        print("rank", mpi_comm.rank, node_shared_map[:3])
 
         # code with broadcast to whole communicator
         # if mpi_comm.rank > 0:
