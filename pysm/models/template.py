@@ -247,15 +247,14 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
         shared_buffer = np.array(shared_buffer, dtype="B", copy=False)
         node_shared_map = np.ndarray(buffer=shared_buffer, dtype=dtype, shape=shape)
 
-        # communicate output_map from proc 0 of mpi_comm to rank 0 of each node comm
-        procs_per_node = node_comm.size
-        my_node = mpi_comm.rank // procs_per_node
-        from_node = mpi_comm.bcast(my_node, root=0)
-        rank_comm = mpi_comm.Split(node_comm.rank, my_node)
+        # only the first MPI process in each node is in this communicator
+        rank_comm = mpi_comm.Split(0 if node_comm.rank == 0 else MPI.UNDEFINED)
         if mpi_comm.rank == 0:
             node_shared_map[:] = output_map
-        rank_comm.Bcast(node_shared_map, root=from_node)
+        if node_comm.rank == 0:
+            rank_comm.Bcast(node_shared_map, root=0)
 
+        mpi_comm.barrier()
         # code with broadcast to whole communicator
         # if mpi_comm.rank > 0:
         #     output_map = np.empty(shape, dtype=dtype)
