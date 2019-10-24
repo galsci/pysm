@@ -234,14 +234,17 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
         dtype = mpi_comm.bcast(dtype, root=0)
         unit = mpi_comm.bcast(unit, root=0)
 
-        node_comm  = mpi_comm.Split_type(MPI.COMM_TYPE_SHARED)
+        node_comm = mpi_comm.Split_type(MPI.COMM_TYPE_SHARED)
         mpi_type = MPI._typedict[dtype.char]
         mpi_type_size = mpi_type.Get_size()
-        win = MPI.Win.Allocate_shared(np.prod(shape) * mpi_type_size if node_comm.rank == 0 else 0,
-                        mpi_type_size, comm = node_comm)
+        win = MPI.Win.Allocate_shared(
+            np.prod(shape) * mpi_type_size if node_comm.rank == 0 else 0,
+            mpi_type_size,
+            comm=node_comm,
+        )
         shared_buffer, item_size = win.Shared_query(0)
         assert item_size == mpi_type_size
-        shared_buffer = np.array(shared_buffer, dtype='B', copy=False)
+        shared_buffer = np.array(shared_buffer, dtype="B", copy=False)
         node_shared_map = np.ndarray(buffer=shared_buffer, dtype=dtype, shape=shape)
 
         # communicate output_map from proc 0 of mpi_comm to rank 0 of each node comm
@@ -260,13 +263,15 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
         # if mpi_comm.rank > 0:
         #     output_map = np.empty(shape, dtype=dtype)
         # mpi_comm.Bcast(output_map, root=0)
-    else: # without MPI node_shared_map is just another reference to output_map
+    else:  # without MPI node_shared_map is just another reference to output_map
         node_shared_map = output_map
 
     if pixel_indices is not None:
         # make copies so that Python can release the full array
         try:  # multiple components
-            output_map = np.array([each[pixel_indices].copy() for each in node_shared_map])
+            output_map = np.array(
+                [each[pixel_indices].copy() for each in node_shared_map]
+            )
         except IndexError:  # single component
             output_map = node_shared_map[pixel_indices].copy()
 
