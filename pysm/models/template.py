@@ -17,6 +17,7 @@ from astropy.utils import data
 from .. import utils
 from ..constants import DATAURL
 from .. import mpi
+from mpi4py import MPI
 
 from unittest.mock import Mock
 
@@ -218,6 +219,7 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
         output_map = output_map.astype(dtype, copy=False)
         if unit is None:
             unit = extract_hdu_unit(filename)
+        shape = output_map.shape
     elif mpi_comm is not None and mpi_comm.rank > 0:
         npix = hp.nside2npix(nside)
         try:
@@ -230,17 +232,44 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
 
     if mpi_comm is not None:
         dtype = mpi_comm.bcast(dtype, root=0)
-        if mpi_comm.rank > 0:
-            output_map = np.empty(shape, dtype=dtype)
-        mpi_comm.Bcast(output_map, root=0)
         unit = mpi_comm.bcast(unit, root=0)
+
+        node_comm = mpi_comm.Split_type(MPI.COMM_TYPE_SHARED)
+        mpi_type = MPI._typedict[dtype.char]
+        mpi_type_size = mpi_type.Get_size()
+        win = MPI.Win.Allocate_shared(
+            np.prod(shape) * mpi_type_size if node_comm.rank == 0 else 0,
+            mpi_type_size,
+            comm=node_comm,
+        )
+        shared_buffer, item_size = win.Shared_query(0)
+        assert item_size == mpi_type_size
+        shared_buffer = np.array(shared_buffer, dtype="B", copy=False)
+        node_shared_map = np.ndarray(buffer=shared_buffer, dtype=dtype, shape=shape)
+
+        # only the first MPI process in each node is in this communicator
+        rank_comm = mpi_comm.Split(0 if node_comm.rank == 0 else MPI.UNDEFINED)
+        if mpi_comm.rank == 0:
+            node_shared_map[:] = output_map
+        if node_comm.rank == 0:
+            rank_comm.Bcast(node_shared_map, root=0)
+
+        mpi_comm.barrier()
+        # code with broadcast to whole communicator
+        # if mpi_comm.rank > 0:
+        #     output_map = np.empty(shape, dtype=dtype)
+        # mpi_comm.Bcast(output_map, root=0)
+    else:  # without MPI node_shared_map is just another reference to output_map
+        node_shared_map = output_map
 
     if pixel_indices is not None:
         # make copies so that Python can release the full array
         try:  # multiple components
-            output_map = np.array([each[pixel_indices].copy() for each in output_map])
+            output_map = np.array(
+                [each[pixel_indices].copy() for each in node_shared_map]
+            )
         except IndexError:  # single component
-            output_map = output_map[pixel_indices].copy()
+            output_map = node_shared_map[pixel_indices].copy()
 
     return u.Quantity(output_map, unit, copy=False)
 

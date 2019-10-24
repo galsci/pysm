@@ -39,7 +39,14 @@ def test_read_map_mpi_uniform_distribution(mpi_comm):
     ), "This test requires the size of the communicator to divide the number of pixels {}".format(
         npix
     )
-    assert len(m) == npix / mpi_comm.size
+    num_local_pix = len(m)
+    assert num_local_pix == npix / mpi_comm.size
+
+    complete_m = pysm.read_map("pysm_2/dust_temp.fits", nside=8, field=0)
+    np.testing.assert_allclose(
+        m,
+        complete_m[num_local_pix * mpi_comm.rank : num_local_pix * (mpi_comm.rank + 1)],
+    )
 
 
 def test_distribute_rings_libsharp(mpi_comm):

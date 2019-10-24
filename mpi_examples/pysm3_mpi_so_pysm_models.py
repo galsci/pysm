@@ -16,11 +16,16 @@ map_dist = pysm.MapDistribution(
     pixel_indices=None, nside=nside, mpi_comm=MPI.COMM_WORLD
 )
 
+import warnings
+if map_dist.mpi_comm.rank > 0:
+    warnings.filterwarnings("ignore")
+
+
 memreport = MemReporter(map_dist.mpi_comm)
 memreport.run("After imports")
 
 components = []
-for comp in ["SO_d0", "SO_s0", "SO_f0", "SO_a0"]:
+for comp in ["SO_d0s", "SO_s0s", "SO_f0s", "SO_a0s"]:
     components.append(get_so_models(comp, nside, map_dist=map_dist))
 
 components.append(
