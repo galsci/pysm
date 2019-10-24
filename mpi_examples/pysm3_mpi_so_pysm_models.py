@@ -16,6 +16,11 @@ map_dist = pysm.MapDistribution(
     pixel_indices=None, nside=nside, mpi_comm=MPI.COMM_WORLD
 )
 
+import warnings
+if map_dist.mpi_comm.rank > 0:
+    warnings.filterwarnings("ignore")
+
+
 memreport = MemReporter(map_dist.mpi_comm)
 memreport.run("After imports")
 
