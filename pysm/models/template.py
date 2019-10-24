@@ -254,10 +254,7 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
         rank_comm = mpi_comm.Split(node_comm.rank, my_node)
         if mpi_comm.rank == 0:
             node_shared_map[:] = output_map
-            print(output_map[:3])
         rank_comm.Bcast(node_shared_map, root=from_node)
-        mpi_comm.barrier()
-        print("rank", mpi_comm.rank, node_shared_map[:3])
 
         # code with broadcast to whole communicator
         # if mpi_comm.rank > 0:
