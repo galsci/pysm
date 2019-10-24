@@ -261,15 +261,15 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
         # if mpi_comm.rank > 0:
         #     output_map = np.empty(shape, dtype=dtype)
         # mpi_comm.Bcast(output_map, root=0)
-
-        sys.exit(0)
+    else: # without MPI node_shared_map is just another reference to output_map
+        node_shared_map = output_map
 
     if pixel_indices is not None:
         # make copies so that Python can release the full array
         try:  # multiple components
-            output_map = np.array([each[pixel_indices].copy() for each in output_map])
+            output_map = np.array([each[pixel_indices].copy() for each in node_shared_map])
         except IndexError:  # single component
-            output_map = output_map[pixel_indices].copy()
+            output_map = node_shared_map[pixel_indices].copy()
 
     return u.Quantity(output_map, unit, copy=False)
 
