@@ -7,6 +7,7 @@ this template, ensuring that the new subclass has the required
 Objects:
     Model
 """
+import sys
 import warnings
 import os.path
 import numpy as np
@@ -17,6 +18,7 @@ from astropy.utils import data
 from .. import utils
 from ..constants import DATAURL
 from .. import mpi
+from mpi4py import MPI
 
 from unittest.mock import Mock
 
@@ -218,6 +220,7 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
         output_map = output_map.astype(dtype, copy=False)
         if unit is None:
             unit = extract_hdu_unit(filename)
+        shape = output_map.shape
     elif mpi_comm is not None and mpi_comm.rank > 0:
         npix = hp.nside2npix(nside)
         try:
@@ -234,7 +237,7 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
 
         node_comm  = mpi_comm.Split_type(MPI.COMM_TYPE_SHARED)
         mpi_type = MPI._typedict[dtype.char]
-        mpi_type_size = mpi_type.Get_Size()
+        mpi_type_size = mpi_type.Get_size()
         win = MPI.Win.Allocate_shared(np.prod(shape) * mpi_type_size if node_comm.rank == 0 else 0,
                         mpi_type_size, comm = node_comm)
         shared_buffer, item_size = win.Shared_query(0)
@@ -243,11 +246,21 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
         node_shared_map = np.ndarray(buffer=shared_buffer, dtype=dtype, shape=shape)
 
         # communicate output_map from proc 0 of mpi_comm to rank 0 of each node comm
+        # rank_comm = mpi_comm.Split(node_comm.rank, self._mynode)
+        # rank_comm.Bcast(nodedata, root=fromnode)
+        if mpi_comm.rank == 0:
+            node_shared_map[:] = output_map
+            print(output_map[:3])
+        mpi_comm.barrier()
+        if mpi_comm.rank == 1:
+            print(node_shared_map[:3])
 
         # code with broadcast to whole communicator
         # if mpi_comm.rank > 0:
         #     output_map = np.empty(shape, dtype=dtype)
         # mpi_comm.Bcast(output_map, root=0)
+
+        sys.exit(0)
 
     if pixel_indices is not None:
         # make copies so that Python can release the full array
