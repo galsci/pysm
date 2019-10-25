@@ -17,7 +17,6 @@ from astropy.utils import data
 from .. import utils
 from ..constants import DATAURL
 from .. import mpi
-from mpi4py import MPI
 
 from unittest.mock import Mock
 
@@ -231,6 +230,7 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
         dtype = None
 
     if mpi_comm is not None:
+        from mpi4py import MPI
         dtype = mpi_comm.bcast(dtype, root=0)
         unit = mpi_comm.bcast(unit, root=0)
 
