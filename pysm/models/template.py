@@ -271,6 +271,11 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
         except IndexError:  # single component
             output_map = node_shared_map[pixel_indices].copy()
 
+    if mpi_comm is not None:
+        del node_shared_map
+        del shared_buffer
+        win.Free()
+
     return u.Quantity(output_map, unit, copy=False)
 
 
