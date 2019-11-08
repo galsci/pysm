@@ -17,6 +17,7 @@ from astropy.utils import data
 from .. import utils
 from ..constants import DATAURL
 from .. import mpi
+import gc
 
 from unittest.mock import Mock
 
@@ -275,6 +276,7 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
         del node_shared_map
         del shared_buffer
         win.Free()
+        gc.collect()
 
     return u.Quantity(output_map, unit, copy=False)
 
