@@ -24,6 +24,14 @@ if map_dist.mpi_comm.rank > 0:
 memreport = MemReporter(map_dist.mpi_comm)
 memreport.run("After imports")
 
+timelines_size_GB = 10
+GB_to_bytes = 1024**3
+num_elements = timelines_size_GB * GB_to_bytes//np.dtype(np.double).itemsize
+
+timelines = np.ones(num_elements, dtype=np.double)
+
+memreport.run("Created fake timelines of {:.2f} GB per process".format(timelines.nbytes/GB_to_bytes))
+
 components = []
 for comp in ["SO_d0s", "SO_s0s", "SO_f0s", "SO_a0s"]:
     components.append(get_so_models(comp, nside, map_dist=map_dist))
