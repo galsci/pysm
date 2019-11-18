@@ -3,7 +3,7 @@ PySM Documentation
 
 This code generates full-sky simulations of Galactic foregrounds in intensity and polarization relevant for CMB experiments. The components simulated are: thermal dust, synchrotron, AME, free-free, and CMB at a given Nside, with an option to integrate over a top hat bandpass, to add white instrument noise, and to smooth with a given beam.
 
-There is scope for a few options for the model for each component, attempting to be consistent with current data. The current v-1.0 version has typically two-three options for each component.
+There is scope for a few options for the model for each component, attempting to be consistent with current data.
 
 Currently much of the available data is limited in resolution at degree-scale. We therefore make efforts to provide reasonable small-scale simulations to extend the data to higher multipoles. The details of the procedures developed can be found in the accompanying paper.
 
