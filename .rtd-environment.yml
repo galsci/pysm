@@ -8,6 +8,8 @@ dependencies:
     - numba
     - astropy
     - healpy
+    - matplotlib
     - toml
     - pip:
         - sphinx-astropy
+        - nbsphinx

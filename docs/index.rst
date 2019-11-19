@@ -18,8 +18,13 @@ For example free-free:
 
     **f1**: We model the free-free emission using the analytic model assumed in the Commander fit to the Planck 2015 data (Draine 2011 Physics of the Interstellar and Intergalactic Medium) to produce a degree-scale map of free-free emission at 30 GHz. We add small scales to this using a procedure outlined in the accompanying paper. This map is then scaled in frequency by applying a spatially constant power law index of -2.14.
 
-* See the documentation about :ref:`models`
 * See the PySM 2 paper `Thorne at al <https://arxiv.org/abs/1608.02841>`_
+* See the documentation about :ref:`models`
+
+.. toctree::
+  :maxdepth: 2
+
+  models
 
 Dependencies
 ============
@@ -37,11 +42,17 @@ for a development installation, instead run::
 
     pip install -e .
 
+Tutorials
+=========
+
 .. toctree::
   :maxdepth: 2
 
-  use
-  models
+  basic_use
+  model_data
+  bandpass_integration
+  smoothing_coord_rotation
+  customize_components
 
 Reference/API
 =============
