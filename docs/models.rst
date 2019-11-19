@@ -3,6 +3,8 @@
 Summary of Models
 *****************
 
+**Work in progress**: Some of the models below are still being implemented, check the `presets.cfg file <https://github.com/healpy/pysm/blob/master/pysm/data/presets.cfg>`_ for the actual models currently available.
+
 Dust
 ====
 
