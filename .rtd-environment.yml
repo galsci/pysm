@@ -4,7 +4,7 @@ channels:
     - conda-forge
 
 dependencies:
-    - python>=3.5
+    - python>=3.6
     - numba
     - astropy
     - healpy
@@ -12,6 +12,7 @@ dependencies:
     - toml
     - pandoc
     - ipykernel
+    - pip
     - pip:
         - sphinx-astropy
         - nbsphinx
