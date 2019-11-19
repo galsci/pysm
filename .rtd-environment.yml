@@ -10,6 +10,8 @@ dependencies:
     - healpy
     - matplotlib
     - toml
+    - pandoc
+    - ipykernel
     - pip:
         - sphinx-astropy
         - nbsphinx
