@@ -60,6 +60,8 @@ for a development installation, instead run::
 Tutorials
 =========
 
+All the tutorials are Jupyter Notebooks and can be accessed `from the repository <https://github.com/healpy/pysm/tree/master/docs>`_:
+
 .. toctree::
   :maxdepth: 2
 
