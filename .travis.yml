@@ -81,12 +81,6 @@ matrix:
         - os: linux
           env: SETUP_CMD='test --coverage'
 
-        # Check for sphinx doc build warnings - we do this first because it
-        # may run for a long time
-        - os: linux
-          env: SETUP_CMD='build_docs -w'
-               CONDA_DEPENDENCIES=$CONDA_DEPENDENCIES_DOC
-
         # Now try Astropy dev with the latest Python and LTS with Python 2.7 and 3.x.
         - os: linux
           env: ASTROPY_VERSION=development
