@@ -53,6 +53,7 @@ Tutorials
   bandpass_integration
   smoothing_coord_rotation
   customize_components
+  mpi
 
 Reference/API
 =============
