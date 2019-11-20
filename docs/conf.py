@@ -201,3 +201,4 @@ github_issues_url = "https://github.com/{0}/issues/".format(setup_cfg["github_pr
 
 extensions += ["nbsphinx", "sphinx.ext.mathjax"]
 exclude_patterns = ["_build", "**.ipynb_checkpoints"]
+nbsphinx_kernel_name = "python3"
