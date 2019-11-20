@@ -29,7 +29,22 @@ For example free-free:
 Dependencies
 ============
 
-PySM is written in Python and uses the healpy, numpy, scipy, numba and astropy packages. Optionally, it supports mpi4py.
+PySM is written in Python and requires:
+
+* `healpy`
+* `numpy`
+* `scipy`
+* `numba`
+* `astropy`
+* `toml`
+
+In order to run in parallel with MPI, it also needs:
+
+* `mpi4py`
+
+To support distributed smoothing, it also requires:
+
+* `libsharp`, see the `ci/install_libsharp.sh script <https://github.com/healpy/pysm/blob/master/ci/install_libsharp.sh>`_
 
 Installation
 ============
