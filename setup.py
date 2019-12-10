@@ -144,7 +144,7 @@ package_info["package_data"][PACKAGENAME].extend(c_files)
 # https://groups.google.com/forum/#!topic/astropy-dev/urYO8ckB2uM
 
 setup(
-    name=PACKAGENAME,
+    name="pysm3",
     version=VERSION,
     description=DESCRIPTION,
     scripts=scripts,
