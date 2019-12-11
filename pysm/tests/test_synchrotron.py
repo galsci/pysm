@@ -5,7 +5,7 @@ from astropy.tests.helper import assert_quantity_allclose
 
 
 @pytest.mark.parametrize("freq", [30, 100, 353])
-@pytest.mark.parametrize("model", ["s0", "s1"])
+@pytest.mark.parametrize("model", ["s0", "s1", "s2"])
 def test_synchrotron_model(model, freq):
 
     synchrotron = pysm.Sky(preset_strings=[model], nside=64)
