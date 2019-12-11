@@ -10,6 +10,8 @@ Dust
 
 - **d1**: Thermal dust is modelled as a single-component modified black body (mbb). We use dust templates for emission at 545 GHz in intensity and 353 GHz in polarisation from the Planck-2015 analysis, and scale these to different frequencies with a mbb spectrum using the spatially varying temperature and spectral index obtained from the Planck data using the Commander code (Planck Collaboration 2015, arXiv:1502.01588). Note that it therefore assumes the same spectral index for polarization as for intensity. The input intensity template at 545 GHz is simply the available 2048 product degraded to nside 512. The polarization templates have been smoothed with a Gaussian kernel of FWHM 2.6 degrees, and had small scales added via the procedure described in the accompanying paper.
 
+- **d0**: Simplified version of the **d1** model with a fixed spectral index of 1.54 and a black body temperature of 20 K.
+
 - **d2** (**d3**): emissivity that varies spatially on degree scales, drawn from a Gaussian with beta=1.59 \pm 0.2 (0.3). A Gaussian variation is not physically motivated, but amount of variation consistent with Planck.
 
 - **d4**: a generalization of model 1 to multiple dust populations. It has been found that a two component model is still a good fit to the Planck data. This option uses the two component model from Finkbeiner, D. P., Davis, M., & Schlegel, D. J. 1999, Astrophysical Journal, 524, 867.
