@@ -87,7 +87,7 @@ class ModifiedBlackBody(Model):
         self.mbb_temperature = (
             self.read_map(map_mbb_temperature, unit=unit_mbb_temperature)
             if isinstance(map_mbb_temperature, (str, Path))
-            else map_mbb_temperature
+            else u.Quantity(map_mbb_temperature, unit=unit_mbb_temperature)
         )
         self.mbb_temperature <<= u.K
         self.nside = int(nside)
@@ -156,7 +156,6 @@ def get_emission_numba(
         if len(freqs) > 1:
             utils.trapz_step_inplace(freqs, weights, i, temp, output)
     return output
-
 
 
 class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
