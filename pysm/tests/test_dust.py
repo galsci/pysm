@@ -17,8 +17,7 @@ def test_blackbody_ratio():
 
 
 @pytest.mark.parametrize("freq", [30, 100, 353])
-@pytest.mark.parametrize("model_tag", ["d0", "d1"])
-# @pytest.mark.parametrize("model_tag", ["d1", "d2", "d3"]) # FIXME activate testing for other models
+@pytest.mark.parametrize("model_tag", ["d0", "d1", "d2"])
 def test_dust_model(model_tag, freq):
 
     model = pysm.Sky(preset_strings=[model_tag], nside=64)
