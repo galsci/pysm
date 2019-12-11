@@ -17,13 +17,13 @@ def test_blackbody_ratio():
 
 
 @pytest.mark.parametrize("freq", [30, 100, 353])
-@pytest.mark.parametrize("model_tag", ["d1"])
+@pytest.mark.parametrize("model_tag", ["d0", "d1"])
 # @pytest.mark.parametrize("model_tag", ["d1", "d2", "d3"]) # FIXME activate testing for other models
 def test_dust_model(model_tag, freq):
 
     model = pysm.Sky(preset_strings=[model_tag], nside=64)
 
-    model_number = {"d1": 1, "d2": 6, "d3": 9}[model_tag]
+    model_number = {"d0": 1, "d1": 1, "d2": 6, "d3": 9}[model_tag]
     expected_output = pysm.read_map(
         "pysm_2_test_data/check{}therm_{}p0_64.fits".format(model_number, freq),
         64,
@@ -31,6 +31,10 @@ def test_dust_model(model_tag, freq):
         field=(0, 1, 2),
     )
 
+    # for some models we do not have tests, we compare with output from a simular model
+    # and we increase tolerance, mostly just to exercise the code.
+    rtol = {"d0": 0.9}.get(model_tag, 1e-5)
+
     assert_quantity_allclose(
-        expected_output, model.get_emission(freq * units.GHz), rtol=1e-5
+        expected_output, model.get_emission(freq * units.GHz), rtol=rtol
     )
