@@ -199,6 +199,6 @@ github_issues_url = "https://github.com/{0}/issues/".format(setup_cfg["github_pr
 #     target = target.strip()
 #     nitpick_ignore.append((dtype, six.u(target)))
 
-extensions += ["nbsphinx", "sphinx.ext.mathjax"]
+extensions += ["nbsphinx", "sphinx_math_dollar", "sphinx.ext.mathjax"]
 exclude_patterns = ["_build", "**.ipynb_checkpoints"]
 nbsphinx_kernel_name = "python3"

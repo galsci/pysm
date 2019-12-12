@@ -13,6 +13,7 @@ dependencies:
     - pandoc
     - ipykernel
     - pip
+    - sphinx-math-dollar
     - pip:
         - sphinx-astropy
         - nbsphinx
