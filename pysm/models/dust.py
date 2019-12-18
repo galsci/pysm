@@ -569,7 +569,21 @@ class HensleyDraine2017(Model):
 
     @u.quantity_input
     def evaluate_hd17_model_scaling(self, freqs: u.GHz):
-        """ Method to 
+        """ Method to evaluate the frequency scaling in the HG17 model. This caluculate
+        the scaling factor to be applied to a set of T, Q, U maps in uK_RJ at some
+        reference frequencies `self.freq_ref_I`, `self.freq_ref_P`, in order to scale them to
+        frequencies `freqs`.
+
+        Parameters
+        ----------
+        freqs: float
+            Frequencies, convertible to microns, at which scaling factor is to be
+            calculated.
+
+        Returns
+        -------
+        ndarray
+            Scaling factor, with shape (number of frequencies, number of pixels).
         """
         # interpolation over pre-computed model is done in microns, so first convert
         # to microns.
