@@ -1,4 +1,4 @@
-from .dust import ModifiedBlackBody, DecorrelatedModifiedBlackBody
+from .dust import ModifiedBlackBody, DecorrelatedModifiedBlackBody, HensleyDraine2017
 from .power_law import PowerLaw, CurvedPowerLaw
 from .template import Model, read_map, apply_smoothing_and_coord_transform
 from .spdust import SpDust, SpDustPol
