@@ -587,7 +587,6 @@ class HensleyDraine2017(Model):
         """
         # interpolation over pre-computed model is done in microns, so first convert
         # to microns.
-        print(freqs)
         lambdas = freqs.to(u.um, equivalencies=u.spectral())[:, None]
         # evaluate the SED, which is currently does the scaling assuming Jy/sr.
         # uval is unitless, and lambdas are un microns.
