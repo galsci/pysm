@@ -602,7 +602,7 @@ class HensleyDraine2017(Model):
         return scaling_i, scaling_p
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz, **kwargs) -> u.uK_RJ:
+    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
         """
         This function calculates the model of Hensley and Draine 2017 for
         the emission of a mixture of silicate, cabonaceous, and silicate
@@ -619,21 +619,24 @@ class HensleyDraine2017(Model):
             Maps of T, Q, U at frequencies `freqs`.
 
         """
-        if ('use_bandpass' in kwargs) and (kwargs['use_bandpass']):
-            return np.zeros((3, len(self.I_ref)))
-
+        freqs = utils.check_freq_input(freqs)
+        weights = utils.normalize_weights(freqs, weights)
         # The HD17 model relies on interpolated data, which is only valid
         # above frequencies around 10 GHz. Therefore, if a frequency below
         # this is requrested, we use a simple MBB law with beta=1.54. 
         # The higher end of the interpolation is well above what would be
         # required in a CMB experiment.
-        nfreqs = len(freqs)
-        idx = freqs > self.__freq_break
-        freqs_below_cutoff = freqs[np.invert(idx)]
-        freqs  = freqs[idx]
+        try:
+            idx = freqs > self.__freq_break
+            freqs_below_cutoff = freqs[np.invert(idx)]
+            freqs_above_cutoff  = freqs[idx]
+            assert len(freqs_above_cutoff) > 0
+            assert len(freqs_below_cutoff) + len(freqs_above_cutoff) == len(freqs) 
+        except AssertionError:
+            raise AssertionError("At least one frequency must be above 10 GHz in the HD17 model.")
 
         # Evaluate the model scaling, this is returned in uK_RJ
-        scaling_i, scaling_p = self.evaluate_hd17_model_scaling(freqs)
+        scaling_i, scaling_p = self.evaluate_hd17_model_scaling(freqs_above_cutoff)
 
         # Handle the frequencies below the 10 GHz cutoff.
         if freqs_below_cutoff.size != 0:
@@ -653,8 +656,14 @@ class HensleyDraine2017(Model):
             scaling_i = np.concatenate((scaling_i_below_cutoff, scaling_i))
             scaling_p = np.concatenate((scaling_p_below_cutoff, scaling_p))
 
-        outputs = np.zeros((nfreqs, 3, len(self.I_ref)))
+        outputs = np.zeros((len(freqs), 3, len(self.I_ref)), dtype=self.I_ref.dtype)
         outputs[:, 0, :] = scaling_i * self.I_ref.value
         outputs[:, 1, :] = scaling_p * self.Q_ref.value
         outputs[:, 2, :] = scaling_p * self.U_ref.value 
+
+        if len(freqs) > 1:
+            integrated_output = np.zeros((3, len(self.I_ref)), dtype=self.I_ref.dtype)
+            for i, (_, _, temp) in enumerate(zip(freqs, weights, outputs)):
+                utils.trapz_step_inplace(freqs.value, weights, i, temp, integrated_output)
+            return integrated_output << u.uK_RJ
         return outputs << u.uK_RJ
