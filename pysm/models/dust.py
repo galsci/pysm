@@ -568,102 +568,125 @@ class HensleyDraine2017(Model):
                 self.f_fe * self.silfe_p.ev(self.uval, lambda_ref_p)) * u.Jy / u.sr
 
     @u.quantity_input
-    def evaluate_hd17_model_scaling(self, freqs: u.GHz):
-        """ Method to evaluate the frequency scaling in the HG17 model. This caluculate
-        the scaling factor to be applied to a set of T, Q, U maps in uK_RJ at some
-        reference frequencies `self.freq_ref_I`, `self.freq_ref_P`, in order to scale them to
-        frequencies `freqs`.
+    def evaluate_hd17_model_scaling(self, freq: u.GHz):
+        """ Method to evaluate the frequency scaling in the HD17 model. This 
+        caluculates the scaling factor to be applied to a set of T, Q, U maps 
+        in uK_RJ at some reference frequencies `self.freq_ref_I`, 
+        `self.freq_ref_P`, in order to scale them to frequencies `freqs`.
 
         Parameters
         ----------
-        freqs: float
-            Frequencies, convertible to microns, at which scaling factor is to be
-            calculated.
+        freq: float
+            Frequency, convertible to microns, at which scaling factor is to
+            be calculated.
 
         Returns
         -------
-        ndarray
-            Scaling factor, with shape (number of frequencies, number of pixels).
+        tuple(ndarray)
+            Scaling factor for intensity and polarization, at frequency 
+            `freq`. Tuple contains two arrays, each with shape (number of pixels).
         """
+        freq = utils.check_freq_input(freq)
         # interpolation over pre-computed model is done in microns, so first convert
         # to microns.
-        lambdas = freqs.to(u.um, equivalencies=u.spectral())[:, None]
+        wav = freq.to(u.um, equivalencies=u.spectral())
         # evaluate the SED, which is currently does the scaling assuming Jy/sr.
         # uval is unitless, and lambdas are un microns.
-        scaling_i = (self.f_sil * self.sil_i.ev(self.uval, lambdas) + self.f_car * self.car_i.ev(self.uval, lambdas) + self.f_fe * self.silfe_i.ev(self.uval, lambdas)) / self.i_sed_at_nu0
-        scaling_p = (self.f_sil * self.sil_p.ev(self.uval, lambdas) + self.f_car * self.car_p.ev(self.uval, lambdas) + self.f_fe * self.silfe_p.ev(self.uval, lambdas) ) / self.p_sed_at_nu0
+        scaling_i = (self.f_sil * self.sil_i.ev(self.uval, wav) + self.f_car * self.car_i.ev(self.uval, wav) + self.f_fe * self.silfe_i.ev(self.uval, wav)) / self.i_sed_at_nu0
+        scaling_p = (self.f_sil * self.sil_p.ev(self.uval, wav) + self.f_car * self.car_p.ev(self.uval, wav) + self.f_fe * self.silfe_p.ev(self.uval, wav) ) / self.p_sed_at_nu0
         # scaling_i, and scaling_p are unitless scaling factors. However the scaling
         # does have the assumption of Jy / sr in the output map. We now account for
         # this by multiplying by the ratio of unit conversions from Jy / sr to uK_RJ
         # at the observed frequencies compared to the reference frequencies in
         # temperature and polarization.
-        scaling_i *= ((u.Jy / u.sr).to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freqs)) / (u.Jy / u.sr).to(u.uK_RJ, equivalencies=u.cmb_equivalencies(self.freq_ref_I)))[:, None]
-        scaling_p *= ((u.Jy / u.sr).to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freqs)) / (u.Jy / u.sr).to(u.uK_RJ, equivalencies=u.cmb_equivalencies(self.freq_ref_P)))[:, None]
-        return scaling_i, scaling_p
+        scaling_i *= ((u.Jy / u.sr).to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq)) / (u.Jy / u.sr).to(u.uK_RJ, equivalencies=u.cmb_equivalencies(self.freq_ref_I)))
+        scaling_p *= ((u.Jy / u.sr).to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq)) / (u.Jy / u.sr).to(u.uK_RJ, equivalencies=u.cmb_equivalencies(self.freq_ref_P)))
+        return scaling_i.value, scaling_p.value
+
+    @u.quantity_input
+    def evaluate_mbb_scaling(self, freq: u.GHz):
+        """ Method to evaluate a simple MBB scaling model with a constant 
+        index of 1.54. This method is used for frequencies below the break 
+        frequency (nominally 10 GHz), as the data the HD17 model relies upon 
+        stops at 10 GHz. 
+
+        At these frequencies, dust emission is largely irrelevant compared to
+        other low frequency foregrounds, and so we do not expect the modeling 
+        assumptions to be significant. We therefore use a Rayleigh Jeans model 
+        for simplicity, and fix scale it from the SED at the break frequency.
+
+        Parameters
+        ----------
+        freq: float
+            Frequency at which to evaluate model (convertible to GHz).
+
+        Returns
+        -------
+        tuple(ndarray)
+            Scaling factor for intensity and polarization, at frequency 
+            `freq`. Tuple contains two arrays, each with shape (number of pixels).
+        """
+        # At these frequencies dust is largely irrelevant, and so we just 
+        # use a Rayleigh-Jeans model with constant spectral index of 1.54 
+        # for simplicity.
+        RJ_factor = (freq / self.__freq_break) ** 1.54
+        #calculate the HD17  model at the break frequency.
+        scaling_i_at_cutoff, scaling_p_at_cutoff = self.evaluate_hd17_model_scaling(self.__freq_break)
+        # rescale the HD17 model at the break frequency using MBB for freqs < 10 GHz.
+        return scaling_i_at_cutoff * RJ_factor.value, scaling_p_at_cutoff * RJ_factor.value
 
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
-        """
-        This function calculates the model of Hensley and Draine 2017 for
+        """ This function calculates the model of Hensley and Draine 2017 for
         the emission of a mixture of silicate, cabonaceous, and silicate
         grains with iron inclusions.
 
         Parameters
         ----------
         freqs: float
-            Frequencies in GHz at which to evaluate the model.
+            Frequencies in GHz. When an array is passed, this is treated
+            as a specification of a bandpass, and the bandpass average is
+            calculated. For a single frequency, the emission at that
+            frequency is returned (delta bandpass assumption).
 
         Returns
         -------
         ndarray
-            Maps of T, Q, U at frequencies `freqs`.
+            Maps of T, Q, U for the given frequency specification.
 
+        Notes
+        -----
+        If `weights` is not given, a flat bandpass is assumed. If `weights`        
+        is specified, it is automatically normalized.
         """
         freqs = utils.check_freq_input(freqs)
+        # if `weights` is None, then this evenly weights all frequencies.
         weights = utils.normalize_weights(freqs, weights)
-        # The HD17 model relies on interpolated data, which is only valid
-        # above frequencies around 10 GHz. Therefore, if a frequency below
-        # this is requrested, we use a simple MBB law with beta=1.54. 
-        # The higher end of the interpolation is well above what would be
-        # required in a CMB experiment.
-        try:
-            idx = freqs > self.__freq_break
-            freqs_below_cutoff = freqs[np.invert(idx)]
-            freqs_above_cutoff  = freqs[idx]
-            assert len(freqs_above_cutoff) > 0
-            assert len(freqs_below_cutoff) + len(freqs_above_cutoff) == len(freqs) 
-        except AssertionError:
-            raise AssertionError("At least one frequency must be above 10 GHz in the HD17 model.")
-
-        # Evaluate the model scaling, this is returned in uK_RJ
-        scaling_i, scaling_p = self.evaluate_hd17_model_scaling(freqs_above_cutoff)
-
-        # Handle the frequencies below the 10 GHz cutoff.
-        if freqs_below_cutoff.size != 0:
-            # At these frequencies dust is largely irrelevant, and so we just 
-            # use a Rayleigh-Jeans model with constant spectral index of 1.54 
-            # for simplicity.
-            RJ_factor = (freqs_below_cutoff / self.__freq_break) ** 1.54
-
-            #calculate the HD17  model at the break frequency.
-            scaling_i_at_cutoff, scaling_p_at_cutoff = self.evaluate_hd17_model_scaling(np.array([self.__freq_break.value]) * u.GHz)
-
-            # rescale the HD17 model at the break frequency using MBB for freqs < 10 GHz.
-            scaling_i_below_cutoff = RJ_factor[:, None] * scaling_i_at_cutoff
-            scaling_p_below_cutoff = RJ_factor[:, None] * scaling_p_at_cutoff
-
-            # concatenate with models evaluated at frequencies above 10 GHz. 
-            scaling_i = np.concatenate((scaling_i_below_cutoff, scaling_i))
-            scaling_p = np.concatenate((scaling_p_below_cutoff, scaling_p))
-
-        outputs = np.zeros((len(freqs), 3, len(self.I_ref)), dtype=self.I_ref.dtype)
-        outputs[:, 0, :] = scaling_i * self.I_ref.value
-        outputs[:, 1, :] = scaling_p * self.Q_ref.value
-        outputs[:, 2, :] = scaling_p * self.U_ref.value 
-
+        output = np.zeros((3, len(self.I_ref)), dtype=self.I_ref.dtype)
         if len(freqs) > 1:
-            integrated_output = np.zeros((3, len(self.I_ref)), dtype=self.I_ref.dtype)
-            for i, (_, _, temp) in enumerate(zip(freqs, weights, outputs)):
-                utils.trapz_step_inplace(freqs.value, weights, i, temp, integrated_output)
-            return integrated_output << u.uK_RJ
-        return outputs << u.uK_RJ
+            # when `freqs` is an array, this is treated as an specification
+            # of a bandpass. Definte `temp` to be an array in which the 
+            # average over the bandpass is accumulated.
+            temp = np.zeros((3, len(self.I_ref)), dtype=self.I_ref.dtype)
+        else:
+            # when a single frequency is requested, `output` is just the
+            # result of a single iteration of the loop below, so `temp`
+            # and `output` are the same. 
+            temp = output
+        # loop over frequencies. In each iteration evaluate the emission
+        # in T, Q, U, at that frequency, and accumulate it in `temp`.
+        I, Q, U = 0, 1, 2
+        for i, (freq, _) in enumerate(zip(freqs, weights)):   
+            # apply the break frequency  
+            if freq < self.__freq_break:
+                scaling_i, scaling_p = self.evaluate_mbb_scaling(freq)
+            else:
+                scaling_i, scaling_p = self.evaluate_hd17_model_scaling(freq)
+            temp[I, :] = self.I_ref.value 
+            temp[Q, :] = self.Q_ref.value
+            temp[U, :] = self.U_ref.value
+            temp[I] *= scaling_i
+            temp[Q:] *= scaling_p
+            if len(freqs) > 1:
+                utils.trapz_step_inplace(freqs, weights, i, temp, output)
+        return output << u.uK_RJ
