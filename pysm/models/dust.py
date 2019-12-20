@@ -627,6 +627,7 @@ class HensleyDraine2017(Model):
         # this is requrested, we use a simple MBB law with beta=1.54. 
         # The higher end of the interpolation is well above what would be
         # required in a CMB experiment.
+        nfreqs = len(freqs)
         idx = freqs > self.__freq_break
         freqs_below_cutoff = freqs[np.invert(idx)]
         freqs  = freqs[idx]
@@ -652,4 +653,8 @@ class HensleyDraine2017(Model):
             scaling_i = np.concatenate((scaling_i_below_cutoff, scaling_i))
             scaling_p = np.concatenate((scaling_p_below_cutoff, scaling_p))
 
-        return np.array([scaling_i * self.I_ref.value, scaling_p * self.Q_ref.value, scaling_p * self.U_ref.value]) * u.uK_RJ
+        outputs = np.zeros((nfreqs, 3, len(self.I_ref)))
+        outputs[:, 0, :] = scaling_i * self.I_ref.value
+        outputs[:, 1, :] = scaling_p * self.Q_ref.value
+        outputs[:, 2, :] = scaling_p * self.U_ref.value 
+        return outputs << u.uK_RJ
