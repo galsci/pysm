@@ -632,7 +632,6 @@ class HensleyDraine2017(Model):
         RJ_factor = (freq / self.__freq_break) ** 1.54
         #calculate the HD17  model at the break frequency.
         scaling_i_at_cutoff, scaling_p_at_cutoff = self.evaluate_hd17_model_scaling(self.__freq_break)
-        # rescale the HD17 model at the break frequency using MBB for freqs < 10 GHz.
         return scaling_i_at_cutoff * RJ_factor.value, scaling_p_at_cutoff * RJ_factor.value
 
     @u.quantity_input
@@ -679,6 +678,9 @@ class HensleyDraine2017(Model):
         for i, (freq, _) in enumerate(zip(freqs, weights)):   
             # apply the break frequency  
             if freq < self.__freq_break:
+                # TODO: this will calculate the HD17 scaling at the break
+                # frequency each time a frequency below 10 GHz is requested.
+                # Could store this to save recalculating it each time.
                 scaling_i, scaling_p = self.evaluate_mbb_scaling(freq)
             else:
                 scaling_i, scaling_p = self.evaluate_hd17_model_scaling(freq)
