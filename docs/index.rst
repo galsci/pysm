@@ -51,7 +51,17 @@ To support distributed smoothing, it also requires:
 Installation
 ============
 
-Clone the `GitHub repository <https://github.com/healpy/pysm>`_ and run::
+PySM is a pure Python package, the easiest way to install the last release is to use `conda`::
+
+    conda install -c conda-forge pysm3
+
+or `pip`::
+
+    pip install pysm3
+
+
+The development version is available in the `master` branch of the `GitHub repository <https://github.com/healpy/pysm>`_,
+you can clone and install it with::
 
     pip install .
 
