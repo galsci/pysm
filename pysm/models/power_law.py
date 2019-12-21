@@ -70,21 +70,6 @@ class PowerLaw(Model):
 
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None):
-        """ This function evaluates the component model at a either
-        a single frequency, an array of frequencies, or over a bandpass.
-
-        Parameters
-        ----------
-        freqs: float
-            Frequency at which the model should be evaluated, assumed to be
-            given in GHz.
-
-        Returns
-        -------
-        ndarray
-            Set of maps at the given frequency or frequencies. This will have
-            shape (nfreq, 3, npix).
-        """
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         if not self.has_polarization:
@@ -174,21 +159,6 @@ class CurvedPowerLaw(PowerLaw):
 
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None):
-        """ This function evaluates the component model at a either
-        a single frequency, an array of frequencies, or over a bandpass.
-
-        Parameters
-        ----------
-        freqs: float
-            Frequency at which the model should be evaluated, assumed to be
-            given in GHz.
-
-        Returns
-        -------
-        ndarray
-            Set of maps at the given frequency or frequencies. This will have
-            shape (nfreq, 3, npix).
-        """
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         if not self.has_polarization:

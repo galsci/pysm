@@ -77,22 +77,6 @@ class InterpolatingComponent(Model):
 
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
-        """ This function evaluates the component model at a either
-        a single frequency, an array of frequencies, or over a bandpass.
-
-        Parameters
-        ----------
-        freqs: float
-            Frequency at which the model should be evaluated, assumed to be
-            given in GHz.
-
-        Returns
-        -------
-        ndarray
-            Set of maps at the given frequency or frequencies. This will have
-            shape (nfreq, 3, npix).
-        """
-
         nu = freqs.to(u.GHz).value
         weights = utils.normalize_weights(freqs, weights)
 

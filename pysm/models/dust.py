@@ -57,7 +57,7 @@ class ModifiedBlackBody(Model):
             Path to the map to be used as the power law index for the dust
             opacity in a modified blackbody model, for a constant value use
             a float or an integer
-        map_mbb_temperature: `pathlib.Path` object
+        map_mbb_temperature: `pathlib.Path` object or scalar
             Path to the map to be used as the temperature of the dust in a
             modified blackbody model. For a constant value use a float or an
             integer
@@ -94,22 +94,6 @@ class ModifiedBlackBody(Model):
 
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
-        """ This function evaluates the component model at a either
-        a single frequency, an array of frequencies, or over a bandpass.
-
-        Parameters
-        ----------
-        freqs: float
-            Frequency at which the model should be evaluated, assumed to be
-            given in GHz.
-
-        Returns
-        -------
-        ndarray
-            Set of maps at the given frequency or frequencies. This will have
-            shape (nfreq, 3, npix).
-        """
-        # freqs must be given in GHz.
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         outputs = get_emission_numba(
