@@ -11,10 +11,10 @@ import warnings
 import os.path
 import numpy as np
 import healpy as hp
-import astropy.units as u
 from astropy.io import fits
 from astropy.utils import data
 from .. import utils
+from .. import units as u
 from ..constants import DATAURL
 from .. import mpi
 import gc
@@ -69,6 +69,34 @@ class Model:
     def read_txt(self, path, **kwargs):
         mpi_comm = None if self.map_dist is None else self.map_dist.mpi_comm
         return read_txt(path, mpi_comm=mpi_comm, **kwargs)
+
+    @u.quantity_input
+    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
+        """ This function evaluates the component model at a either
+        a single frequency, an array of frequencies, or over a bandpass.
+
+        Parameters
+        ----------
+        freqs: scalar or array astropy.units.Quantity
+            Frequency at which the model should be evaluated, in a frequency
+            which can be converted to GHz using astropy.units.
+            If an array of frequencies is provided, integrate using trapz
+            with a equal weighting, i.e. simulate a top-hat bandpass.
+        weights: np.array, optional
+            Array of weights describing the frequency response of the instrument,
+            i.e. the bandpass. Weights are normalized and applied in Jy/sr.
+
+        Returns
+        -------
+        output : astropy.units.Quantity
+            Simulated map at the given frequency or integrated over the given
+            bandpass. The shape of the output is (3,npix) for polarized components,
+            (1,npix) for temperature-only components. Output is in `uK_RJ`.
+        """
+        freqs = utils.check_freq_input(freqs)
+        weights = utils.normalize_weights(freqs, weights)
+        outputs = np.zeros((3, hp.nside2npix(self.nside)), dtype=np.float32)
+        return outputs << u.uK_RJ
 
 
 def apply_smoothing_and_coord_transform(
@@ -232,6 +260,7 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
 
     if mpi_comm is not None:
         from mpi4py import MPI
+
         dtype = mpi_comm.bcast(dtype, root=0)
         unit = mpi_comm.bcast(unit, root=0)
 
