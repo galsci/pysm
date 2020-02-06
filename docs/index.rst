@@ -59,6 +59,24 @@ or `pip`::
 
     pip install pysm3
 
+Requirements
+------------
+
+See the `requirements.txt` file in the repository.
+
+Libsharp
+--------
+
+MPI-Distributed smoothing (optional) requires `libsharp`, it is easiest to install the conda package::
+
+    conda install -c conda-forge libsharp=*=*openmpi*
+
+It also has a `mpich` version::
+
+    conda install -c conda-forge libsharp=*=*mpich*
+
+Development install
+-------------------
 
 The development version is available in the `master` branch of the `GitHub repository <https://github.com/healpy/pysm>`_,
 you can clone and install it with::
