@@ -153,8 +153,11 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
         map_mbb_index=None,
         map_mbb_temperature=None,
         nside=None,
-        pixel_indices=None,
-        mpi_comm=None,
+        unit_I=None,
+        unit_Q=None,
+        unit_U=None,
+        unit_mbb_temperature=None,
+        map_dist=None,
         correlation_length=None,
     ):
         """ See parent class for other documentation.
@@ -176,8 +179,11 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
             map_mbb_index,
             map_mbb_temperature,
             nside,
-            pixel_indices=pixel_indices,
-            mpi_comm=mpi_comm,
+            unit_I=unit_I,
+            unit_Q=unit_Q,
+            unit_U=unit_U,
+            unit_mbb_temperature=unit_mbb_temperature,
+            map_dist=map_dist
         )
         self.correlation_length = correlation_length
 
