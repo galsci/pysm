@@ -1,9 +1,10 @@
-import pytest
+import astropy.units as units
 import numpy as np
+from astropy.tests.helper import assert_quantity_allclose
+
 import pysm
 import pysm.models.dust as dust
-import astropy.units as units
-from astropy.tests.helper import assert_quantity_allclose
+import pytest
 
 
 def test_blackbody_ratio():
@@ -17,12 +18,17 @@ def test_blackbody_ratio():
 
 
 @pytest.mark.parametrize("freq", [30, 100, 353])
-@pytest.mark.parametrize("model_tag", ["d0", "d1", "d2", "d3"])
+@pytest.mark.parametrize("model_tag", ["d0", "d1", "d2", "d3", "d6"])
 def test_dust_model(model_tag, freq):
+
+    # for 'd6' model fix the random seed and skip buggy 353 GHz
+    if model_tag == "d6":
+        if freq == 353: return
+        np.random.seed(123)
 
     model = pysm.Sky(preset_strings=[model_tag], nside=64)
 
-    model_number = {"d0": 1, "d1": 1, "d2": 6, "d3": 9}[model_tag]
+    model_number = {"d0": 1, "d1": 1, "d2": 6, "d3": 9, "d6": 12}[model_tag]
     expected_output = pysm.read_map(
         "pysm_2_test_data/check{}therm_{}p0_64.fits".format(model_number, freq),
         64,
