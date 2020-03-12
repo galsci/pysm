@@ -88,7 +88,7 @@ def check_freq_input(freqs):
     """ Function to check that the input to `Model.get_emission` is a
     np.ndarray.
 
-    This function will convet input integers or arrays to a single element
+    This function will convert input integers or arrays to a single element
     numpy array.
 
     Parameters
