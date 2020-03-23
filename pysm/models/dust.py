@@ -153,8 +153,11 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
         map_mbb_index=None,
         map_mbb_temperature=None,
         nside=None,
-        pixel_indices=None,
-        mpi_comm=None,
+        unit_I=None,
+        unit_Q=None,
+        unit_U=None,
+        unit_mbb_temperature=None,
+        map_dist=None,
         correlation_length=None,
     ):
         """ See parent class for other documentation.
@@ -176,36 +179,53 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
             map_mbb_index,
             map_mbb_temperature,
             nside,
-            pixel_indices=pixel_indices,
-            mpi_comm=mpi_comm,
+            unit_I=unit_I,
+            unit_Q=unit_Q,
+            unit_U=unit_U,
+            unit_mbb_temperature=unit_mbb_temperature,
+            map_dist=map_dist
         )
-        self.correlation_length = correlation_length
+        self.correlation_length = correlation_length * u.dimensionless_unscaled
 
-    def get_emission(self, freqs):
+    @u.quantity_input
+    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
         """ Function to calculate the emission of a decorrelated modified black
         body model.
         """
         freqs = utils.check_freq_input(freqs)
+        weights = utils.normalize_weights(freqs, weights)
         # calculate the decorrelation
-        (rho_cov_I, rho_mean_I) = get_decorrelation_matrix(
+        rho_cov_I, rho_mean_I = get_decorrelation_matrix(
             self.freq_ref_I, freqs, self.correlation_length
         )
-        (rho_cov_P, rho_mean_P) = get_decorrelation_matrix(
+        rho_cov_P, rho_mean_P = get_decorrelation_matrix(
             self.freq_ref_P, freqs, self.correlation_length
         )
         nfreqs = freqs.shape[-1]
         extra_I = np.dot(rho_cov_I, np.random.randn(nfreqs))
         extra_P = np.dot(rho_cov_P, np.random.randn(nfreqs))
+
         decorr = np.zeros((nfreqs, 3))
         decorr[:, 0, None] = rho_mean_I + extra_I[:, None]
         decorr[:, 1, None] = rho_mean_P + extra_P[:, None]
         decorr[:, 2, None] = rho_mean_P + extra_P[:, None]
-        # apply the decorrelation to the mbb_emission
-        return decorr[..., None] * super().get_emission(freqs)
+
+        output = np.zeros((3, len(self.I_ref)), dtype=self.I_ref.dtype)
+        # apply the decorrelation to the mbb_emission for each frequencies before integrating
+        for i, (freq, weight) in enumerate(zip(freqs, weights)):
+            temp = decorr[..., None][i] * super().get_emission(freq)
+            if len(freqs) > 1:
+                utils.trapz_step_inplace(freqs, weights, i, temp, output)
+            else:
+                output = temp
+        return output << u.uK_RJ
 
 
-@u.quantity_input(freqs=u.GHz, correlation_length=u.dimensionless_unscaled)
-def frequency_decorr_model(freqs, correlation_length) -> u.dimensionless_unscaled:
+@u.quantity_input
+def frequency_decorr_model(
+        freqs: u.GHz,
+        correlation_length: u.dimensionless_unscaled
+):
     """ Function to calculate the frequency decorrelation method of
     Vansyngel+17.
     """
@@ -213,17 +233,15 @@ def frequency_decorr_model(freqs, correlation_length) -> u.dimensionless_unscale
     return np.exp(-0.5 * (log_dep / correlation_length) ** 2)
 
 
-@u.quantity_input(
-    freq_constrained=u.GHz,
-    freqs_constrained=u.GHz,
-    correlation_length=u.dimensionless_unscaled,
-)
+@u.quantity_input
 def get_decorrelation_matrix(
-    freq_constrained, freqs_unconstrained, correlation_length
-) -> u.dimensionless_unscaled:
+        freq_constrained: u.GHz,
+        freqs_unconstrained: u.GHz,
+        correlation_length: u.dimensionless_unscaled
+):
     """ Function to calculate the correlation matrix between observed
     frequencies. This model is based on the proposed model for decorrelation
-    of Vanyngel+17. The proposed frequency covariance matrix in this paper
+    of Vansyngel+17. The proposed frequency covariance matrix in this paper
     is implemented, and a constrained Gaussian realization for the unobserved
     frequencies is calculated.
 
@@ -263,7 +281,7 @@ def get_decorrelation_matrix(
     evals = np.diag(np.sqrt(np.maximum(rho_uu_w, np.zeros_like(rho_uu_w))))
     rho_covar = np.dot(rho_uu_v, np.dot(evals, np.transpose(rho_uu_v)))
     rho_mean = -np.dot(rho_uu, rho_inv_cu)
-    return (rho_covar, rho_mean)
+    return rho_covar, rho_mean
 
 
 def invert_safe(matrix):
