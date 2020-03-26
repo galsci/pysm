@@ -77,7 +77,7 @@ class InterpolatingComponent(Model):
 
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
-        nu = freqs.to(u.GHz).value
+        nu = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
 
         if not np.isscalar(nu) and len(nu) == 1:
