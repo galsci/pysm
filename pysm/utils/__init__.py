@@ -28,13 +28,16 @@ def has_polarization(m):
 
 
 def normalize_weights(freqs, weights):
-    if freqs.isscalar or len(freqs) == 1:
+    if len(freqs) == 1:
         return np.array([1.0])
     else:
         if weights is None:
             weights = np.ones(len(freqs), dtype=np.float)
-        weights = (weights * u.uK_RJ).to_value((u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs))
-        return weights / np.trapz(weights, freqs.value)
+        weights = (weights * u.uK_RJ).to_value(
+            (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
+        )
+        return weights / np.trapz(weights, freqs)
+
 
 def bandpass_unit_conversion(freqs, weights, output_unit):
     """Unit conversion from uK_RJ to output unit given a bandpass
@@ -45,13 +48,15 @@ def bandpass_unit_conversion(freqs, weights, output_unit):
         Frequency array in a unit compatible with GHz
     """
     freqs = check_freq_input(freqs)
-    factors = (np.ones(len(freqs), dtype=np.float) * u.uK_RJ).to_value(output_unit, equivalencies=u.cmb_equivalencies(freqs))
+    factors = (np.ones(len(freqs), dtype=np.float) * u.uK_RJ).to_value(
+        output_unit, equivalencies=u.cmb_equivalencies(freqs * u.GHz)
+    )
     if len(freqs) > 1:
         w = normalize_weights(freqs, weights)
-        factor = np.trapz(factors * w, freqs.value)
+        factor = np.trapz(factors * w, freqs)
     else:
         factor = factors[0]
-    return factor  * u.Unit(u.Unit(output_unit) / u.uK_RJ)
+    return factor * u.Unit(u.Unit(output_unit) / u.uK_RJ)
 
 
 @njit
@@ -84,37 +89,24 @@ def trapz_step_inplace(freqs, weights, i, m, output):
         delta_freq = freqs[i + 1] - freqs[i - 1]
     output += 0.5 * m * weights[i] * delta_freq
 
+
 def check_freq_input(freqs):
     """ Function to check that the input to `Model.get_emission` is a
     np.ndarray.
 
-    This function will convert input integers or arrays to a single element
-    numpy array.
+    This function will convert input scalar frequencies
+    to a Quantity array in GHz
 
     Parameters
     ----------
-    freqs: int, float, list, ndarray
+    freqs: astropy.units.Quantity
+        Input frequency array
 
     Returns
     -------
-    ndarray
-        Frequencies in numpy array form.
+    freqs : np.array
+        Frequencies in GHz in a numpy array
     """
-    if isinstance(freqs, np.ndarray):
-        freqs = freqs
-    elif isinstance(freqs, list):
-        freqs = np.array(freqs)
-    else:
-        try:
-            freqs = np.array([freqs])
-        except:
-            print(
-                """Could not make freqs into an ndarray, check
-            input."""
-            )
-            raise
-    if isinstance(freqs, u.Quantity):
-        if freqs.isscalar:
-            return freqs[None]
-        return freqs
-    return freqs * u.GHz
+    if freqs.isscalar:
+        freqs = freqs[None]
+    return freqs.to_value(u.GHz)

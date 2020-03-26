@@ -29,13 +29,13 @@ class CMBMap(Model):
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         convert_to_uK_RJ = (np.ones(len(freqs), dtype=np.double) * u.uK_CMB).to_value(
-            u.uK_RJ, equivalencies=u.cmb_equivalencies(freqs)
+            u.uK_RJ, equivalencies=u.cmb_equivalencies(freqs * u.GHz)
         )
 
         if len(freqs) == 1:
             scaling_factor = convert_to_uK_RJ[0]
         else:
-            scaling_factor = np.trapz(convert_to_uK_RJ * weights, x=freqs.value)
+            scaling_factor = np.trapz(convert_to_uK_RJ * weights, x=freqs)
 
         return u.Quantity(self.map.value * scaling_factor, unit=u.uK_RJ, copy=False)
 
