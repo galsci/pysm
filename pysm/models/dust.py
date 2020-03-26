@@ -8,7 +8,8 @@ import sys
 from numba import njit
 from astropy import constants as const
 from scipy.interpolate import RectBivariateSpline
-import healpy as hp 
+import healpy as hp
+
 
 class ModifiedBlackBody(Model):
     """ This is a model for modified black body emission.
@@ -386,20 +387,17 @@ class HensleyDraine2017(Model):
         map_U,
         freq_ref_I,
         freq_ref_P,
-        map_mbb_index,
-        map_mbb_temperature,
         nside,
         has_polarization=True,
         unit_I=None,
         unit_Q=None,
         unit_U=None,
-        unit_mbb_temperature=None,
         map_dist=None,
         mpi_comm=None,
         f_fe=None,
         f_car=None,
         rnd_uval=True,
-        seed=None
+        seed=None,
     ):
         """ This function initializes the Hensley-Draine 2017 model.
 
@@ -427,12 +425,6 @@ class HensleyDraine2017(Model):
             Reference frequencies at which the intensity and polarization
             templates are defined. They should be a astropy Quantity object
             or a string (e.g. "1500 MHz") compatible with GHz.
-        map_mbb_index: `pathlib.Path` object
-            Path to the map to be used as the power law index for the dust
-            opacity in a modified blackbody model.
-        map_mbb_temperature: `pathlib.Path` object
-            Path to the map to be used as the temperature of the dust in a
-            modified blackbody model.
         nside: int
             Resolution parameter at which this model is to be calculated.
         f_fe: float
@@ -459,19 +451,14 @@ class HensleyDraine2017(Model):
             self.U_ref = self.read_map(map_U, unit=unit_U)
             self.U_ref <<= u.uK_RJ
             self.freq_ref_P = u.Quantity(freq_ref_P).to(u.GHz)
-        self.mbb_index = self.read_map(map_mbb_index, unit="")
-        self.mbb_temperature = self.read_map(
-            map_mbb_temperature, unit=unit_mbb_temperature
-        )
-        self.mbb_temperature <<= u.K
         self.nside = int(nside)
 
         self.f_fe = f_fe
         self.f_car = f_car
-        self.f_sil = 1. - f_fe
+        self.f_sil = 1.0 - f_fe
 
         # break frequency below which model is not valid.
-        self.__freq_break = 10. * u.GHz
+        self.__freq_break = 10.0 * u.GHz
 
         # data_sil contains the emission properties for silicon grains
         # with no iron inclusions.
@@ -483,22 +470,58 @@ class HensleyDraine2017(Model):
         # grains.
         car_data = self.read_txt("pysm_2/car_1.0.dat")
 
-        # get the wavelengt (in microns) and dimensionless field 
+        # get the wavelengt (in microns) and dimensionless field
         # strengths over which these values were calculated.
         wav = sil_data[:, 0] * u.um
 
-        uvec = np.arange(-3., 5.01, 0.1) * u.dimensionless_unscaled
+        uvec = np.arange(-3.0, 5.01, 0.1) * u.dimensionless_unscaled
 
         # The tabulated data is nu * I_nu / N_H, where N_H is the
         # number of hydrogen atoms per cm^2. Therefore the units of
-        # the tabulated data are erg / s / sr. 
-        sil_data_i = (sil_data[:, 3 : 84] * u.erg / u.s / u.sr / wav[:, None].to(u.Hz, equivalencies=u.spectral())).to(u.Jy / u.sr * u.cm ** 2)
-        silfe_data_i = (silfe_data[:, 3 : 84] * u.erg / u.s / u.sr / wav[:, None].to(u.Hz, equivalencies=u.spectral())).to(u.Jy / u.sr * u.cm ** 2)
-        car_data_i = (car_data[:, 3 : 84] * u.erg / u.s / u.sr / wav[:, None].to(u.Hz, equivalencies=u.spectral())).to(u.Jy / u.sr * u.cm ** 2)
+        # the tabulated data are erg / s / sr.
+        sil_data_i = (
+            sil_data[:, 3:84]
+            * u.erg
+            / u.s
+            / u.sr
+            / wav[:, None].to(u.Hz, equivalencies=u.spectral())
+        ).to(u.Jy / u.sr * u.cm ** 2)
+        silfe_data_i = (
+            silfe_data[:, 3:84]
+            * u.erg
+            / u.s
+            / u.sr
+            / wav[:, None].to(u.Hz, equivalencies=u.spectral())
+        ).to(u.Jy / u.sr * u.cm ** 2)
+        car_data_i = (
+            car_data[:, 3:84]
+            * u.erg
+            / u.s
+            / u.sr
+            / wav[:, None].to(u.Hz, equivalencies=u.spectral())
+        ).to(u.Jy / u.sr * u.cm ** 2)
 
-        sil_data_p = (sil_data[:, 84 : 165] * u.erg / u.s / u.sr / wav[:, None].to(u.Hz, equivalencies=u.spectral())).to(u.Jy / u.sr * u.cm ** 2)
-        silfe_data_p = (silfe_data[:, 84 : 165] * u.erg / u.s / u.sr / wav[:, None].to(u.Hz, equivalencies=u.spectral())).to(u.Jy / u.sr * u.cm ** 2)
-        car_data_p = (car_data[:, 84 : 165] * u.erg / u.s / u.sr / wav[:, None].to(u.Hz, equivalencies=u.spectral())).to(u.Jy / u.sr * u.cm ** 2)
+        sil_data_p = (
+            sil_data[:, 84:165]
+            * u.erg
+            / u.s
+            / u.sr
+            / wav[:, None].to(u.Hz, equivalencies=u.spectral())
+        ).to(u.Jy / u.sr * u.cm ** 2)
+        silfe_data_p = (
+            silfe_data[:, 84:165]
+            * u.erg
+            / u.s
+            / u.sr
+            / wav[:, None].to(u.Hz, equivalencies=u.spectral())
+        ).to(u.Jy / u.sr * u.cm ** 2)
+        car_data_p = (
+            car_data[:, 84:165]
+            * u.erg
+            / u.s
+            / u.sr
+            / wav[:, None].to(u.Hz, equivalencies=u.spectral())
+        ).to(u.Jy / u.sr * u.cm ** 2)
 
         # interpolate the pre-computed solutions for the emissivity as a
         # function of grain 4 composition F_fe, Fcar, and field strenth U,
@@ -525,13 +548,21 @@ class HensleyDraine2017(Model):
         assert silfe_data_p.unit == u.Jy / u.sr * u.cm ** 2
         self.silfe_p = RectBivariateSpline(uvec, wav, silfe_data_p.T)
 
-        #now draw the random realisation of uval if draw_uval = true
+        # now draw the random realisation of uval if draw_uval = true
         if rnd_uval:
-            T_mean = self.read_map("pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="K",  field=3)
-            T_std = self.read_map("pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="K", field=5)
-            beta_mean = self.read_map("pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="", field=6)
-            beta_std = self.read_map("pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="", field=8)
-            #draw the realisations
+            T_mean = self.read_map(
+                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="K", field=3
+            )
+            T_std = self.read_map(
+                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="K", field=5
+            )
+            beta_mean = self.read_map(
+                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="", field=6
+            )
+            beta_std = self.read_map(
+                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="", field=8
+            )
+            # draw the realisations
 
             np.random.seed(seed)
             T = T_mean + np.random.randn(len(T_mean)) * T_std
@@ -544,7 +575,10 @@ class HensleyDraine2017(Model):
             # udgrade the uval map to whatever nside is being considered.
             # Since nside is not a parameter Sky knows about we have to get
             # it from A_I, which is not ideal.
-            self.uval = hp.ud_grade(np.clip((4. + beta) * np.log10(T / np.mean(T)), -3., 5.), nside_out = nside)
+            self.uval = hp.ud_grade(
+                np.clip((4.0 + beta) * np.log10(T / np.mean(T)), -3.0, 5.0),
+                nside_out=nside,
+            )
         elif not rnd_uval:
             # I think this needs filling in for case when ISRF is not
             # a random realization. What should the default be? Could
@@ -559,13 +593,25 @@ class HensleyDraine2017(Model):
         # compute the SED at the reference frequencies of the input templates.
         lambda_ref_i = self.freq_ref_I.to(u.um, equivalencies=u.spectral())
         lambda_ref_p = self.freq_ref_P.to(u.um, equivalencies=u.spectral())
-        self.i_sed_at_nu0 = (self.f_sil * self.sil_i.ev(self.uval, lambda_ref_i) \
-            + self.f_car * self.car_i.ev(self.uval, lambda_ref_i) + \
-                self.f_fe * self.silfe_i.ev(self.uval, lambda_ref_i)) * u.Jy / u.sr
+        self.i_sed_at_nu0 = (
+            (
+                self.f_sil * self.sil_i.ev(self.uval, lambda_ref_i)
+                + self.f_car * self.car_i.ev(self.uval, lambda_ref_i)
+                + self.f_fe * self.silfe_i.ev(self.uval, lambda_ref_i)
+            )
+            * u.Jy
+            / u.sr
+        )
 
-        self.p_sed_at_nu0 = (self.f_sil * self.sil_p.ev(self.uval, lambda_ref_p) \
-            + self.f_car * self.car_p.ev(self.uval, lambda_ref_p) + \
-                self.f_fe * self.silfe_p.ev(self.uval, lambda_ref_p)) * u.Jy / u.sr
+        self.p_sed_at_nu0 = (
+            (
+                self.f_sil * self.sil_p.ev(self.uval, lambda_ref_p)
+                + self.f_car * self.car_p.ev(self.uval, lambda_ref_p)
+                + self.f_fe * self.silfe_p.ev(self.uval, lambda_ref_p)
+            )
+            * u.Jy
+            / u.sr
+        )
 
     @u.quantity_input
     def evaluate_hd17_model_scaling(self, freq: u.GHz):
@@ -592,15 +638,31 @@ class HensleyDraine2017(Model):
         wav = freq.to(u.um, equivalencies=u.spectral())
         # evaluate the SED, which is currently does the scaling assuming Jy/sr.
         # uval is unitless, and lambdas are un microns.
-        scaling_i = (self.f_sil * self.sil_i.ev(self.uval, wav) + self.f_car * self.car_i.ev(self.uval, wav) + self.f_fe * self.silfe_i.ev(self.uval, wav)) / self.i_sed_at_nu0
-        scaling_p = (self.f_sil * self.sil_p.ev(self.uval, wav) + self.f_car * self.car_p.ev(self.uval, wav) + self.f_fe * self.silfe_p.ev(self.uval, wav) ) / self.p_sed_at_nu0
+        scaling_i = (
+            self.f_sil * self.sil_i.ev(self.uval, wav)
+            + self.f_car * self.car_i.ev(self.uval, wav)
+            + self.f_fe * self.silfe_i.ev(self.uval, wav)
+        ) / self.i_sed_at_nu0
+        scaling_p = (
+            self.f_sil * self.sil_p.ev(self.uval, wav)
+            + self.f_car * self.car_p.ev(self.uval, wav)
+            + self.f_fe * self.silfe_p.ev(self.uval, wav)
+        ) / self.p_sed_at_nu0
         # scaling_i, and scaling_p are unitless scaling factors. However the scaling
         # does have the assumption of Jy / sr in the output map. We now account for
         # this by multiplying by the ratio of unit conversions from Jy / sr to uK_RJ
         # at the observed frequencies compared to the reference frequencies in
         # temperature and polarization.
-        scaling_i *= ((u.Jy / u.sr).to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq)) / (u.Jy / u.sr).to(u.uK_RJ, equivalencies=u.cmb_equivalencies(self.freq_ref_I)))
-        scaling_p *= ((u.Jy / u.sr).to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq)) / (u.Jy / u.sr).to(u.uK_RJ, equivalencies=u.cmb_equivalencies(self.freq_ref_P)))
+        scaling_i *= (u.Jy / u.sr).to(
+            u.uK_RJ, equivalencies=u.cmb_equivalencies(freq)
+        ) / (u.Jy / u.sr).to(
+            u.uK_RJ, equivalencies=u.cmb_equivalencies(self.freq_ref_I)
+        )
+        scaling_p *= (u.Jy / u.sr).to(
+            u.uK_RJ, equivalencies=u.cmb_equivalencies(freq)
+        ) / (u.Jy / u.sr).to(
+            u.uK_RJ, equivalencies=u.cmb_equivalencies(self.freq_ref_P)
+        )
         return scaling_i.value, scaling_p.value
 
     @u.quantity_input
@@ -626,13 +688,18 @@ class HensleyDraine2017(Model):
             Scaling factor for intensity and polarization, at frequency 
             `freq`. Tuple contains two arrays, each with shape (number of pixels).
         """
-        # At these frequencies dust is largely irrelevant, and so we just 
-        # use a Rayleigh-Jeans model with constant spectral index of 1.54 
+        # At these frequencies dust is largely irrelevant, and so we just
+        # use a Rayleigh-Jeans model with constant spectral index of 1.54
         # for simplicity.
         RJ_factor = (freq / self.__freq_break) ** 1.54
-        #calculate the HD17  model at the break frequency.
-        scaling_i_at_cutoff, scaling_p_at_cutoff = self.evaluate_hd17_model_scaling(self.__freq_break)
-        return scaling_i_at_cutoff * RJ_factor.value, scaling_p_at_cutoff * RJ_factor.value
+        # calculate the HD17  model at the break frequency.
+        scaling_i_at_cutoff, scaling_p_at_cutoff = self.evaluate_hd17_model_scaling(
+            self.__freq_break
+        )
+        return (
+            scaling_i_at_cutoff * RJ_factor.value,
+            scaling_p_at_cutoff * RJ_factor.value,
+        )
 
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
@@ -664,19 +731,19 @@ class HensleyDraine2017(Model):
         output = np.zeros((3, len(self.I_ref)), dtype=self.I_ref.dtype)
         if len(freqs) > 1:
             # when `freqs` is an array, this is treated as an specification
-            # of a bandpass. Definte `temp` to be an array in which the 
+            # of a bandpass. Definte `temp` to be an array in which the
             # average over the bandpass is accumulated.
             temp = np.zeros((3, len(self.I_ref)), dtype=self.I_ref.dtype)
         else:
             # when a single frequency is requested, `output` is just the
             # result of a single iteration of the loop below, so `temp`
-            # and `output` are the same. 
+            # and `output` are the same.
             temp = output
         # loop over frequencies. In each iteration evaluate the emission
         # in T, Q, U, at that frequency, and accumulate it in `temp`.
         I, Q, U = 0, 1, 2
-        for i, (freq, _) in enumerate(zip(freqs, weights)):   
-            # apply the break frequency  
+        for i, (freq, _) in enumerate(zip(freqs, weights)):
+            # apply the break frequency
             if freq < self.__freq_break:
                 # TODO: this will calculate the HD17 scaling at the break
                 # frequency each time a frequency below 10 GHz is requested.
@@ -684,7 +751,7 @@ class HensleyDraine2017(Model):
                 scaling_i, scaling_p = self.evaluate_mbb_scaling(freq)
             else:
                 scaling_i, scaling_p = self.evaluate_hd17_model_scaling(freq)
-            temp[I, :] = self.I_ref.value 
+            temp[I, :] = self.I_ref.value
             temp[Q, :] = self.Q_ref.value
             temp[U, :] = self.U_ref.value
             temp[I] *= scaling_i
