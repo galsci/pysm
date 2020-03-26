@@ -70,7 +70,7 @@ class SpDust(Model):
         weights = utils.normalize_weights(freqs, weights)
         outputs = (
             compute_spdust_emission_numba(
-                freqs.value,
+                freqs,
                 weights,
                 self.I_ref.value,
                 self.freq_ref_I.value,
@@ -141,7 +141,7 @@ class SpDustPol(SpDust):
         weights = utils.normalize_weights(freqs, weights)
         outputs = (
             compute_spdust_emission_pol_numba(
-                freqs.value,
+                freqs,
                 weights,
                 self.I_ref.value,
                 self.freq_ref_I.value,

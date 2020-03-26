@@ -97,7 +97,7 @@ class ModifiedBlackBody(Model):
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         outputs = get_emission_numba(
-            freqs.value,
+            freqs,
             weights,
             self.I_ref.value,
             self.Q_ref.value,
@@ -183,7 +183,7 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
             unit_Q=unit_Q,
             unit_U=unit_U,
             unit_mbb_temperature=unit_mbb_temperature,
-            map_dist=map_dist
+            map_dist=map_dist,
         )
         self.correlation_length = correlation_length * u.dimensionless_unscaled
 
@@ -196,10 +196,10 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
         weights = utils.normalize_weights(freqs, weights)
         # calculate the decorrelation
         rho_cov_I, rho_mean_I = get_decorrelation_matrix(
-            self.freq_ref_I, freqs, self.correlation_length
+            self.freq_ref_I, freqs * u.GHz, self.correlation_length
         )
         rho_cov_P, rho_mean_P = get_decorrelation_matrix(
-            self.freq_ref_P, freqs, self.correlation_length
+            self.freq_ref_P, freqs * u.GHz, self.correlation_length
         )
         nfreqs = freqs.shape[-1]
         extra_I = np.dot(rho_cov_I, np.random.randn(nfreqs))
@@ -213,7 +213,7 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
         output = np.zeros((3, len(self.I_ref)), dtype=self.I_ref.dtype)
         # apply the decorrelation to the mbb_emission for each frequencies before integrating
         for i, (freq, weight) in enumerate(zip(freqs, weights)):
-            temp = decorr[..., None][i] * super().get_emission(freq)
+            temp = decorr[..., None][i] * super().get_emission(freq * u.GHz)
             if len(freqs) > 1:
                 utils.trapz_step_inplace(freqs, weights, i, temp, output)
             else:
@@ -222,10 +222,7 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
 
 
 @u.quantity_input
-def frequency_decorr_model(
-        freqs: u.GHz,
-        correlation_length: u.dimensionless_unscaled
-):
+def frequency_decorr_model(freqs: u.GHz, correlation_length: u.dimensionless_unscaled):
     """ Function to calculate the frequency decorrelation method of
     Vansyngel+17.
     """
@@ -235,9 +232,9 @@ def frequency_decorr_model(
 
 @u.quantity_input
 def get_decorrelation_matrix(
-        freq_constrained: u.GHz,
-        freqs_unconstrained: u.GHz,
-        correlation_length: u.dimensionless_unscaled
+    freq_constrained: u.GHz,
+    freqs_unconstrained: u.GHz,
+    correlation_length: u.dimensionless_unscaled,
 ):
     """ Function to calculate the correlation matrix between observed
     frequencies. This model is based on the proposed model for decorrelation
@@ -265,7 +262,7 @@ def get_decorrelation_matrix(
     """
     assert correlation_length >= 0
     assert isinstance(freqs_unconstrained, np.ndarray)
-    freq_constrained = utils.check_freq_input(freq_constrained)
+    freq_constrained = utils.check_freq_input(freq_constrained) * u.GHz
     freqs_all = np.insert(freqs_unconstrained, 0, freq_constrained)
     indref = np.where(freqs_all == freq_constrained)
     corrmatrix = frequency_decorr_model(freqs_all, correlation_length)

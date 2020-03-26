@@ -2,13 +2,10 @@ import os
 from numba import njit, types
 from numba.typed import Dict
 import numpy as np
-from scipy.interpolate import interp1d
 from .template import Model
 from .. import units as u
 from .. import utils
 from pysm.utils import trapz_step_inplace
-
-import healpy as hp
 
 
 class InterpolatingComponent(Model):
@@ -78,16 +75,13 @@ class InterpolatingComponent(Model):
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
         nu = utils.check_freq_input(freqs)
-        weights = utils.normalize_weights(freqs, weights)
+        weights = utils.normalize_weights(nu, weights)
 
-        if not np.isscalar(nu) and len(nu) == 1:
-            nu = nu[0]
-
-        if np.isscalar(nu):
+        if len(nu) == 1:
 
             # special case: we request only 1 frequency and that is among the ones
             # available as input
-            check_isclose = np.isclose(self.freqs, nu)
+            check_isclose = np.isclose(self.freqs, nu[0])
             if np.any(check_isclose):
 
                 freq = self.freqs[check_isclose][0]
@@ -98,15 +92,10 @@ class InterpolatingComponent(Model):
                     zeros = np.zeros_like(out)
                     return np.array([out, zeros, zeros]) << u.uK_RJ
 
-            else:  # continue with interpolation as with an array of nus
-                nu = np.array([nu])
-        else:
-            nu = np.asarray(nu)
-
         assert (
             nu[0] >= self.freqs[0]
         ), "Frequency not supported, requested {} Ghz < lower bound {} GHz".format(
-            nu[0], self.freqs[0]
+            nu[0].value, self.freqs[0]
         )
         assert (
             nu[-1] <= self.freqs[-1]
@@ -122,11 +111,6 @@ class InterpolatingComponent(Model):
 
         if self.verbose:
             print("Frequencies considered:", freq_range)
-
-        if self.map_dist is None or self.map_dist.pixel_indices is None:
-            npix = hp.nside2npix(self.nside)
-        else:
-            npix = len(self.map_dist.pixel_indices)
 
         for freq in freq_range:
             if freq not in self.cached_maps:

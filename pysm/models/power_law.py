@@ -75,7 +75,7 @@ class PowerLaw(Model):
         if not self.has_polarization:
             outputs = (
                 get_emission_numba_IQU(
-                    freqs.value,
+                    freqs,
                     weights,
                     self.I_ref.value,
                     None,
@@ -89,7 +89,7 @@ class PowerLaw(Model):
         else:
             outputs = (
                 get_emission_numba_IQU(
-                    freqs.value,
+                    freqs,
                     weights,
                     self.I_ref.value,
                     self.Q_ref.value,
@@ -164,7 +164,7 @@ class CurvedPowerLaw(PowerLaw):
         if not self.has_polarization:
             outputs = (
                 get_emission_numba_IQU_curved(
-                    freqs.value,
+                    freqs,
                     weights,
                     self.I_ref.value,
                     None,
@@ -180,7 +180,7 @@ class CurvedPowerLaw(PowerLaw):
         else:
             outputs = (
                 get_emission_numba_IQU_curved(
-                    freqs.value,
+                    freqs,
                     weights,
                     self.I_ref.value,
                     self.Q_ref.value,
