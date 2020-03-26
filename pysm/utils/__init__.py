@@ -98,7 +98,7 @@ def check_freq_input(freqs):
     Returns
     -------
     ndarray
-        Frequencies in numpy array form.
+        Frequencies in numpy array form. Always in GHz
     """
     if isinstance(freqs, np.ndarray):
         freqs = freqs
@@ -115,6 +115,6 @@ def check_freq_input(freqs):
             raise
     if isinstance(freqs, u.Quantity):
         if freqs.isscalar:
-            return freqs[None]
-        return freqs
+            return freqs[None].to(u.GHz)
+        return freqs.to(u.GHz)
     return freqs * u.GHz
