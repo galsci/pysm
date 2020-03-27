@@ -44,7 +44,8 @@ def test_cmb_map_bandpass():
     freqs = np.array([98, 99, 100, 101, 102]) * u.GHz
     weights = np.ones(len(freqs))
 
-    # just checking that the result is reasonably close to the delta frequency at the center frequency
+    # just checking that the result is reasonably close
+    # to the delta frequency at the center frequency
 
     assert_quantity_allclose(
         expected_map, model.get_emission(freqs, weights)[0], rtol=1e-3

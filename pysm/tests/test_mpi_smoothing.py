@@ -10,7 +10,7 @@ except ImportError:
     pytest.skip("mpi4py failed to import, skip MPI tests", allow_module_level=True)
 
 try:
-    import libsharp
+    import libsharp  # noqa: F401
 except ImportError:
     pytest.skip(
         "libsharp failed to import, skip MPI smoothing tests", allow_module_level=True
@@ -25,7 +25,6 @@ def mpi_comm():
 
 def test_mpi_assemble(mpi_comm):
     nside = 128
-    lmax = 2 * nside
     map_dist = pysm.MapDistribution(pixel_indices=None, mpi_comm=mpi_comm, nside=nside)
     model = pysm.Model(nside, map_dist=map_dist)
     distributed_map = model.read_map("pysm_2/dust_temp.fits")

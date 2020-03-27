@@ -23,7 +23,8 @@ def test_dust_model(model_tag, freq):
 
     # for 'd6' model fix the random seed and skip buggy 353 GHz
     if model_tag == "d6":
-        if freq == 353: return
+        if freq == 353:
+            return
         np.random.seed(123)
 
     model = pysm.Sky(preset_strings=[model_tag], nside=64)

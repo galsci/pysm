@@ -5,9 +5,9 @@ that are not already contained within `astropy.units`. These are
 - K_CMB: thermodynamic temperature
 
 We use the factory functions of `astropy.units` to define units
-that will work with the rest of astropy. 
+that will work with the rest of astropy.
 """
-from astropy.units import *
+from astropy.units import *  # noqa: F403
 
 # Define new thermodynamic and Rayleigh-Jeans units. This
 # is a little unsatisfying, as astropy.units.Quantity will
@@ -39,7 +39,7 @@ def cmb_equivalencies(spec: GHz):
     Parameters
     ----------
     spec: `astropy.Quantity`
-        Spectral quantity that may be converted to frequency. Frequency at which 
+        Spectral quantity that may be converted to frequency. Frequency at which
         the conversion is to be calculated.
 
     Returns

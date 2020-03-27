@@ -1,5 +1,4 @@
 import numpy as np
-import warnings
 from .. import units as u
 from pathlib import Path
 from .template import Model
