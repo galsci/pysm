@@ -1,165 +1,78 @@
 #!/usr/bin/env python
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-# Note: This file needs to be Python 2 / <3.6 compatible, so that the nice
-# "This package only supports Python 3.x+" error prints without syntax errors etc.
 
-import glob
+# NOTE: The configuration for the package, including the name, version, and
+# other information are set in the setup.cfg file.
+
 import os
 import sys
 
-try:
-    from configparser import ConfigParser
-except ImportError:
-    from ConfigParser import ConfigParser
-
-# Get some values from the setup.cfg
-conf = ConfigParser()
-conf.read(["setup.cfg"])
-metadata = dict(conf.items("metadata"))
-
-PACKAGENAME = metadata.get("package_name", "pysm")
-DESCRIPTION = metadata.get(
-    "description", "Python Sky Model for Microwave and Submm experiments"
-)
-AUTHOR = metadata.get(
-    "author", "Ben Thorne, David Alonso, Sigurd Naess, Jo Dunkley, Andrea Zonca"
-)
-AUTHOR_EMAIL = metadata.get("author_email", "")
-LICENSE = metadata.get("license", "unknown")
-URL = metadata.get("url", "https://github.com/healpy/pysm")
-__minimum_python_version__ = metadata.get("minimum_python_version", "3.5")
-
-# Enforce Python version check - this is the same check as in __init__.py but
-# this one has to happen before importing ah_bootstrap.
-if sys.version_info < tuple(
-    (int(val) for val in __minimum_python_version__.split("."))
-):
-    sys.stderr.write(
-        "ERROR: pysm requires Python {} or later\n".format(__minimum_python_version__)
-    )
-    sys.exit(1)
-
-# Import ah_bootstrap after the python version validation
-
-import ah_bootstrap
 from setuptools import setup
 
-import builtins
 
-builtins._ASTROPY_SETUP_ = True
+# First provide helpful messages if contributors try and run legacy commands
+# for tests or docs.
 
-from astropy_helpers.setup_helpers import (
-    register_commands,
-    get_debug_option,
-    get_package_info,
-)
-from astropy_helpers.git_helpers import get_git_devstr
-from astropy_helpers.version_helpers import generate_version_py
+TEST_HELP = """
+Note: running tests is no longer done using 'python setup.py test'. Instead
+you will need to run:
 
+    tox -e test
 
-# order of priority for long_description:
-#   (1) set in setup.cfg,
-#   (2) load LONG_DESCRIPTION.rst,
-#   (3) load README.rst,
-#   (4) package docstring
-readme_glob = "README*"
-_cfg_long_description = metadata.get("long_description", "")
-if _cfg_long_description:
-    LONG_DESCRIPTION = _cfg_long_description
+If you don't already have tox installed, you can install it with:
 
-elif os.path.exists("LONG_DESCRIPTION.rst"):
-    with open("LONG_DESCRIPTION.rst") as f:
-        LONG_DESCRIPTION = f.read()
+    pip install tox
 
-elif len(glob.glob(readme_glob)) > 0:
-    with open(glob.glob(readme_glob)[0]) as f:
-        LONG_DESCRIPTION = f.read()
+If you only want to run part of the test suite, you can also use pytest
+directly with::
 
-else:
-    # Get the long description from the package's docstring
-    __import__(PACKAGENAME)
-    package = sys.modules[PACKAGENAME]
-    LONG_DESCRIPTION = package.__doc__
+    pip install -e .[test]
+    pytest
 
-# Store the package name in a built-in variable so it's easy
-# to get from other parts of the setup infrastructure
-builtins._ASTROPY_PACKAGE_NAME_ = PACKAGENAME
+For more information, see:
 
-# VERSION should be PEP440 compatible (http://www.python.org/dev/peps/pep-0440)
-VERSION = metadata.get("version", "0.0.dev")
+  http://docs.astropy.org/en/latest/development/testguide.html#running-tests
+"""
 
-# Indicates if this version is a release version
-RELEASE = "dev" not in VERSION
+if 'test' in sys.argv:
+    print(TEST_HELP)
+    sys.exit(1)
 
-if not RELEASE:
-    VERSION += get_git_devstr(False)
+DOCS_HELP = """
+Note: building the documentation is no longer done using
+'python setup.py build_docs'. Instead you will need to run:
 
-# Populate the dict of setup command overrides; this should be done before
-# invoking any other functionality from distutils since it can potentially
-# modify distutils' behavior.
-cmdclassd = register_commands(PACKAGENAME, VERSION, RELEASE)
+    tox -e build_docs
 
-# Freeze build information in version.py
-generate_version_py(PACKAGENAME, VERSION, RELEASE, get_debug_option(PACKAGENAME))
+If you don't already have tox installed, you can install it with:
 
-# Treat everything in scripts except README* as a script to be installed
-scripts = [
-    fname
-    for fname in glob.glob(os.path.join("scripts", "*"))
-    if not os.path.basename(fname).startswith("README")
-]
+    pip install tox
 
+You can also build the documentation with Sphinx directly using::
 
-# Get configuration information from all of the various subpackages.
-# See the docstring for setup_helpers.update_package_files for more
-# details.
-package_info = get_package_info()
+    pip install -e .[docs]
+    cd docs
+    make html
 
-# Add the project-global data
-package_info["package_data"].setdefault(PACKAGENAME, [])
-package_info["package_data"][PACKAGENAME].append("data/*")
+For more information, see:
 
-# Define entry points for command-line scripts
-entry_points = {"console_scripts": []}
+  http://docs.astropy.org/en/latest/install.html#builddocs
+"""
 
-if conf.has_section("entry_points"):
-    entry_point_list = conf.items("entry_points")
-    for entry_point in entry_point_list:
-        entry_points["console_scripts"].append(
-            "{0} = {1}".format(entry_point[0], entry_point[1])
-        )
+if 'build_docs' in sys.argv or 'build_sphinx' in sys.argv:
+    print(DOCS_HELP)
+    sys.exit(1)
 
-# Include all .c files, recursively, including those generated by
-# Cython, since we can not do this in MANIFEST.in with a "dynamic"
-# directory name.
-c_files = []
-for root, dirs, files in os.walk(PACKAGENAME):
-    for filename in files:
-        if filename.endswith(".c"):
-            c_files.append(os.path.join(os.path.relpath(root, PACKAGENAME), filename))
-package_info["package_data"][PACKAGENAME].extend(c_files)
+VERSION_TEMPLATE = """
+# Note that we need to fall back to the hard-coded version if either
+# setuptools_scm can't be imported or setuptools_scm can't determine the
+# version, so we catch the generic 'Exception'.
+try:
+    from setuptools_scm import get_version
+    version = get_version(root='..', relative_to=__file__)
+except Exception:
+    version = '{version}'
+""".lstrip()
 
-# Note that requires and provides should not be included in the call to
-# ``setup``, since these are now deprecated. See this link for more details:
-# https://groups.google.com/forum/#!topic/astropy-dev/urYO8ckB2uM
-
-setup(
-    name="pysm3",
-    version=VERSION,
-    description=DESCRIPTION,
-    scripts=scripts,
-    install_requires=[
-        s.strip() for s in metadata.get("install_requires", "astropy").split(",")
-    ],
-    author=AUTHOR,
-    author_email=AUTHOR_EMAIL,
-    license=LICENSE,
-    url=URL,
-    long_description=LONG_DESCRIPTION,
-    cmdclass=cmdclassd,
-    zip_safe=False,
-    use_2to3=False,
-    entry_points=entry_points,
-    python_requires=">={}".format(__minimum_python_version__),
-    **package_info
-)
+setup(use_scm_version={'write_to': os.path.join('pysm', 'version.py'),
+                       'write_to_template': VERSION_TEMPLATE})
