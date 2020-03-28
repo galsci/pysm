@@ -12,6 +12,7 @@ from .utils import bandpass_unit_conversion
 
 from .constants import DATAURL
 from .models import Model
+from .models import *
 
 
 def remove_class_from_dict(d):
