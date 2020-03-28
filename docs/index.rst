@@ -87,6 +87,10 @@ for a development installation, instead run::
 
     pip install -e .
 
+Execute the unit tests with::
+
+    pytest
+
 Tutorials
 =========
 
