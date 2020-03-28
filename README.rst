@@ -17,7 +17,12 @@ Install
 Requirements
 ~~~~~~~~~~~~
 
-See ```requirements.txt`` <requirements.txt>`__
+::
+
+    astropy                                                                                         
+    healpy                                                                                          
+    numba                                                                                           
+    toml  
 
 Conda
 ~~~~~
