@@ -20,6 +20,7 @@ addons:
             - dvipng
             - libopenmpi-dev
             - openmpi-bin
+            - pandoc
 
 
 stages:
