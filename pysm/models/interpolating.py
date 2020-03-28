@@ -23,18 +23,19 @@ class InterpolatingComponent(Model):
 
         In order to save memory, maps are converted to float32, if this is not acceptable, please
         open an issue on the PySM repository.
-        When you create the model, PySM checks the folder of the templates and stores a list of 
+        When you create the model, PySM checks the folder of the templates and stores a list of
         available frequencies. Once you call `get_emission`, maps are read, ud_graded to the target
-        nside and stored for future use. This is useful if you are running many channels with a similar
-        bandpass.
+        nside and stored for future use. This is useful if you are running many channels
+        with a similar bandpass.
         If not, you can call `cached_maps.clear()` to remove the cached maps.
 
         Parameters
         ----------
         path : str
-            Path should contain maps named as the frequency in GHz e.g. 20.fits or 20.5.fits or 00100.fits
+            Path should contain maps named as the frequency in GHz
+            e.g. 20.fits or 20.5.fits or 00100.fits
         input_units : str
-            Any unit available in PySM (see `pysm.convert_units` e.g. `Jysr`, `MJsr`, `uK_RJ`, `K_CMB`).
+            Any unit available in PySM3 e.g. "uK_RJ", "uK_CMB"
         nside : int
             HEALPix NSIDE of the output maps
         interpolation_kind : string

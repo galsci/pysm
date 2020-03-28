@@ -1,3 +1,5 @@
+# flake8: noqa
+
 from .dust import ModifiedBlackBody, DecorrelatedModifiedBlackBody
 from .power_law import PowerLaw, CurvedPowerLaw
 from .template import Model, read_map, apply_smoothing_and_coord_transform

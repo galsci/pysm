@@ -19,8 +19,6 @@ from ..constants import DATAURL
 from .. import mpi
 import gc
 
-from unittest.mock import Mock
-
 
 class Model:
     """ This is the template object for PySM objects.

@@ -6,12 +6,12 @@ Objects:
     Sky
 """
 import toml
-import numpy as np
 from astropy.utils import data
 from . import units as u
-from .utils import normalize_weights, bandpass_unit_conversion
+from .utils import bandpass_unit_conversion
 
 from .constants import DATAURL
+from .models import Model
 from .models import *
 
 

@@ -45,14 +45,14 @@ class TestUnits(unittest.TestCase):
 
     def test_conversion(self):
         """ Here we test that the numerical value of the conversion is correct.
-        The mathematical form is 
+        The mathematical form is
 
         ..math::
         I_\nu = \frac{2 \nu^2 k T_{\rm RJ}}{c^2} \\
         I_\nu = T_{\rm CMB} B^\prime_\nu(T_{\rm CMB, 0})
-        
+
         so, eliminating the flux in this equation:
-        
+
         ..math::
         T_{\rm RJ} / T_{\rm CMB} = \frac{c^2}{2 \nu^2 k_B}B^\prime_\nu(T_{\rm CMB, 0})
 

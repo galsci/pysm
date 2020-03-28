@@ -1,4 +1,4 @@
-Copyright (c) 2018, Ben Thorne, David Alonso, Sigurd Naess, Jo Dunkley, Andrea Zonca
+Copyright (c) 2020, Astropy Developers
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
