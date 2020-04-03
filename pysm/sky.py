@@ -54,10 +54,19 @@ with data.conf.set_temp("dataurl", DATAURL):
 
 
 class Sky(Model):
-    """ This class is a convenience object that wraps together a group of
-    component models. It acts like a single `pysm.Model` object, in that it
-    is sub-classed from the `pysm.Model` template, and therefore has the same
-    functionality.
+    """Sky is the main interface to PySM
+
+    It accepts the configuration of the desired components in 3 different
+    ways: `preset_strings`, `component_config` or `component_objects`,
+    see details below.
+    Once a Sky object is created, all the sky components are initialized,
+    i.e. loading the input templates.
+    Then bandpass-integrated maps can be computed calling the
+    `get_emission` method.
+    Check the :func:`~pysm.apply_smoothing_and_coord_transform` function
+    for applying a beam and transform coordinates to the map arrays
+    from `get_emission`.
+    See the tutorials section of the documentation for examples.
 
     Attributes
     ----------
@@ -68,12 +77,38 @@ class Sky(Model):
     def __init__(
         self,
         nside=None,
-        component_objects=None,
-        component_config=None,
         preset_strings=None,
+        component_config=None,
+        component_objects=None,
         output_unit=u.uK_RJ,
         map_dist=None,
     ):
+        """Initialize Sky
+
+        Parameters
+        ----------
+        nside : int
+            Requested output NSIDE, inputs will be degraded
+            using :func:`healpy.ud_grade`
+        preset_strings : list of str
+            List of strings identifiers for the models included in PySM 3,
+            these are exactly the same models included in PySM 2, e.g.
+            `["d2", "s1", "a1"]`, see the documentation for details about the
+            available models.
+        component_config : dict or TOML filename
+            Modify the configuration of one of the included components or create
+            a new component based on a Python dictionary or a TOML filename,
+            see for example the TOML configuration file for the `presets`_
+        .. _presets: https://github.com/healpy/pysm/blob/master/pysm/data/presets.cfg
+        component_config : list of Model subclasses
+            List of component objects already initialized, typically subclasses of PySM.Model
+            This is the most flexible way to provide a custom model to PySM
+        output_unit : astropy Unit or string
+            Astropy unit, e.g. "K_CMB", "MJ/sr"
+        map_dist: pysm.MapDistribution
+            Distribution object used for parallel computing with MPI
+        """
+
         if nside is None and not component_objects:  # not None and not []
             raise Exception("Need to specify nside in Sky")
         elif nside is None:
