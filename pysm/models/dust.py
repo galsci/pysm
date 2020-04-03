@@ -3,7 +3,6 @@ from .. import units as u
 from pathlib import Path
 from .template import Model
 from .. import utils
-import sys
 from numba import njit
 from astropy import constants as const
 from scipy.interpolate import RectBivariateSpline
@@ -451,7 +450,7 @@ class HensleyDraine2017(Model):
             Decide whether to draw a random realization of the ISRF.
         nside_uval: int (optional, default=256)
             HEALPix nside at which to evaluate the ISRF before ud_grade is applied
-            to get the output scaling law. The default is the resolution at which 
+            to get the output scaling law. The default is the resolution at which
             the inputs available (COMMANDER dust beta and temperature).
         seed: int
             Number used to seed RNG for `uval`.
@@ -649,9 +648,9 @@ class HensleyDraine2017(Model):
 
     @u.quantity_input
     def evaluate_hd17_model_scaling(self, freq: u.GHz):
-        """ Method to evaluate the frequency scaling in the HD17 model. This 
-        caluculates the scaling factor to be applied to a set of T, Q, U maps 
-        in uK_RJ at some reference frequencies `self.freq_ref_I`, 
+        """ Method to evaluate the frequency scaling in the HD17 model. This
+        caluculates the scaling factor to be applied to a set of T, Q, U maps
+        in uK_RJ at some reference frequencies `self.freq_ref_I`,
         `self.freq_ref_P`, in order to scale them to frequencies `freqs`.
 
         Parameters
@@ -663,10 +662,10 @@ class HensleyDraine2017(Model):
         Returns
         -------
         tuple(ndarray)
-            Scaling factor for intensity and polarization, at frequency 
+            Scaling factor for intensity and polarization, at frequency
             `freq`. Tuple contains two arrays, each with shape (number of pixels).
         """
-        freq = utils.check_freq_input(freq)
+        freq = utils.check_freq_input(freq) * u.GHz
         # interpolation over pre-computed model is done in microns, so first convert
         # to microns.
         wav = freq.to(u.um, equivalencies=u.spectral())
@@ -701,14 +700,14 @@ class HensleyDraine2017(Model):
 
     @u.quantity_input
     def evaluate_mbb_scaling(self, freq: u.GHz):
-        """ Method to evaluate a simple MBB scaling model with a constant 
-        index of 1.54. This method is used for frequencies below the break 
-        frequency (nominally 10 GHz), as the data the HD17 model relies upon 
-        stops at 10 GHz. 
+        """ Method to evaluate a simple MBB scaling model with a constant
+        index of 1.54. This method is used for frequencies below the break
+        frequency (nominally 10 GHz), as the data the HD17 model relies upon
+        stops at 10 GHz.
 
         At these frequencies, dust emission is largely irrelevant compared to
-        other low frequency foregrounds, and so we do not expect the modeling 
-        assumptions to be significant. We therefore use a Rayleigh Jeans model 
+        other low frequency foregrounds, and so we do not expect the modeling
+        assumptions to be significant. We therefore use a Rayleigh Jeans model
         for simplicity, and fix scale it from the SED at the break frequency.
 
         Parameters
@@ -719,7 +718,7 @@ class HensleyDraine2017(Model):
         Returns
         -------
         tuple(ndarray)
-            Scaling factor for intensity and polarization, at frequency 
+            Scaling factor for intensity and polarization, at frequency
             `freq`. Tuple contains two arrays, each with shape (number of pixels).
         """
         # At these frequencies dust is largely irrelevant, and so we just
@@ -756,10 +755,10 @@ class HensleyDraine2017(Model):
 
         Notes
         -----
-        If `weights` is not given, a flat bandpass is assumed. If `weights`        
+        If `weights` is not given, a flat bandpass is assumed. If `weights`
         is specified, it is automatically normalized.
         """
-        freqs = utils.check_freq_input(freqs)
+        freqs = utils.check_freq_input(freqs) * u.GHz
         # if `weights` is None, then this evenly weights all frequencies.
         weights = utils.normalize_weights(freqs, weights)
         output = np.zeros((3, len(self.I_ref)), dtype=self.I_ref.dtype)
