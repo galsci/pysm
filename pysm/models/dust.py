@@ -434,6 +434,10 @@ class HensleyDraine2017(Model):
             Fractional composition of grain population in carbonaceous grains.
         rnd_uval: bool (optional, default=True)
             Decide whether to draw a random realization of the ISRF.
+        nside_uval: int (optional, default=256)
+            HEALPix nside at which to evaluate the ISRF before ud_grade is applied
+            to get the output scaling law. The default is the resolution at which 
+            the inputs available (COMMANDER dust beta and temperature).
         seed: int
             Number used to seed RNG for `uval`.
         """
