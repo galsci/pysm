@@ -551,19 +551,18 @@ class HensleyDraine2017(Model):
         # now draw the random realisation of uval if draw_uval = true
         if rnd_uval:
             T_mean = self.read_map(
-                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="K", field=3
+                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="K", field=3, nside=256
             )
             T_std = self.read_map(
-                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="K", field=5
+                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="K", field=5, nside=256
             )
             beta_mean = self.read_map(
-                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="", field=6
+                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="", field=6, nside=256
             )
             beta_std = self.read_map(
-                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="", field=8
+                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="", field=8, nside=256
             )
             # draw the realisations
-
             np.random.seed(seed)
             T = T_mean + np.random.randn(len(T_mean)) * T_std
             beta = beta_mean + np.random.randn(len(beta_mean)) * beta_std
@@ -576,7 +575,7 @@ class HensleyDraine2017(Model):
             # Since nside is not a parameter Sky knows about we have to get
             # it from A_I, which is not ideal.
             self.uval = hp.ud_grade(
-                np.clip((4.0 + beta) * np.log10(T / np.mean(T)), -3.0, 5.0),
+                np.clip((4.0 + beta.value) * np.log10(T.value / np.mean(T.value)), -3.0, 5.0),
                 nside_out=nside,
             )
         elif not rnd_uval:
