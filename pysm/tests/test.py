@@ -1,6 +1,4 @@
-from pathlib import Path
 import pysm
-import unittest
 import numpy as np
 import healpy as hp
 import matplotlib.pyplot as plt

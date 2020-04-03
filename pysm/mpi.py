@@ -116,6 +116,7 @@ def assemble_map_on_rank0(comm, local_map, pixel_indices, n_components, npix):
     comm.Reduce(local_map_buffer, full_maps_rank0, root=0, op=MPI.SUM)
     return full_maps_rank0
 
+
 def mpi_smoothing(input_map, fwhm, map_dist):
     import libsharp
 

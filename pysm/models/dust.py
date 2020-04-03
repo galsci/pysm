@@ -1,5 +1,4 @@
 import numpy as np
-import warnings
 from .. import units as u
 from pathlib import Path
 from .template import Model
@@ -99,7 +98,7 @@ class ModifiedBlackBody(Model):
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         outputs = get_emission_numba(
-            freqs.value,
+            freqs,
             weights,
             self.I_ref.value,
             self.Q_ref.value,
@@ -155,8 +154,12 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
         map_mbb_index=None,
         map_mbb_temperature=None,
         nside=None,
-        map_dist=None,
         mpi_comm=None,
+        map_dist=None,
+        unit_I=None,
+        unit_Q=None,
+        unit_U=None,
+        unit_mbb_temperature=None,
         correlation_length=None,
     ):
         """ See parent class for other documentation.
@@ -178,36 +181,50 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
             map_mbb_index,
             map_mbb_temperature,
             nside,
-            pixel_indices=pixel_indices,
-            mpi_comm=mpi_comm,
+            unit_I=unit_I,
+            unit_Q=unit_Q,
+            unit_U=unit_U,
+            unit_mbb_temperature=unit_mbb_temperature,
+            map_dist=map_dist,
         )
-        self.correlation_length = correlation_length
+        self.correlation_length = correlation_length * u.dimensionless_unscaled
 
-    def get_emission(self, freqs):
+    @u.quantity_input
+    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
         """ Function to calculate the emission of a decorrelated modified black
         body model.
         """
         freqs = utils.check_freq_input(freqs)
+        weights = utils.normalize_weights(freqs, weights)
         # calculate the decorrelation
-        (rho_cov_I, rho_mean_I) = get_decorrelation_matrix(
-            self.freq_ref_I, freqs, self.correlation_length
+        rho_cov_I, rho_mean_I = get_decorrelation_matrix(
+            self.freq_ref_I, freqs * u.GHz, self.correlation_length
         )
-        (rho_cov_P, rho_mean_P) = get_decorrelation_matrix(
-            self.freq_ref_P, freqs, self.correlation_length
+        rho_cov_P, rho_mean_P = get_decorrelation_matrix(
+            self.freq_ref_P, freqs * u.GHz, self.correlation_length
         )
         nfreqs = freqs.shape[-1]
         extra_I = np.dot(rho_cov_I, np.random.randn(nfreqs))
         extra_P = np.dot(rho_cov_P, np.random.randn(nfreqs))
+
         decorr = np.zeros((nfreqs, 3))
         decorr[:, 0, None] = rho_mean_I + extra_I[:, None]
         decorr[:, 1, None] = rho_mean_P + extra_P[:, None]
         decorr[:, 2, None] = rho_mean_P + extra_P[:, None]
-        # apply the decorrelation to the mbb_emission
-        return decorr[..., None] * super().get_emission(freqs)
+
+        output = np.zeros((3, len(self.I_ref)), dtype=self.I_ref.dtype)
+        # apply the decorrelation to the mbb_emission for each frequencies before integrating
+        for i, (freq, weight) in enumerate(zip(freqs, weights)):
+            temp = decorr[..., None][i] * super().get_emission(freq * u.GHz)
+            if len(freqs) > 1:
+                utils.trapz_step_inplace(freqs, weights, i, temp, output)
+            else:
+                output = temp
+        return output << u.uK_RJ
 
 
-@u.quantity_input(freqs=u.GHz, correlation_length=u.dimensionless_unscaled)
-def frequency_decorr_model(freqs, correlation_length) -> u.dimensionless_unscaled:
+@u.quantity_input
+def frequency_decorr_model(freqs: u.GHz, correlation_length: u.dimensionless_unscaled):
     """ Function to calculate the frequency decorrelation method of
     Vansyngel+17.
     """
@@ -215,17 +232,15 @@ def frequency_decorr_model(freqs, correlation_length) -> u.dimensionless_unscale
     return np.exp(-0.5 * (log_dep / correlation_length) ** 2)
 
 
-@u.quantity_input(
-    freq_constrained=u.GHz,
-    freqs_constrained=u.GHz,
-    correlation_length=u.dimensionless_unscaled,
-)
+@u.quantity_input
 def get_decorrelation_matrix(
-    freq_constrained, freqs_unconstrained, correlation_length
-) -> u.dimensionless_unscaled:
+    freq_constrained: u.GHz,
+    freqs_unconstrained: u.GHz,
+    correlation_length: u.dimensionless_unscaled,
+):
     """ Function to calculate the correlation matrix between observed
     frequencies. This model is based on the proposed model for decorrelation
-    of Vanyngel+17. The proposed frequency covariance matrix in this paper
+    of Vansyngel+17. The proposed frequency covariance matrix in this paper
     is implemented, and a constrained Gaussian realization for the unobserved
     frequencies is calculated.
 
@@ -249,7 +264,7 @@ def get_decorrelation_matrix(
     """
     assert correlation_length >= 0
     assert isinstance(freqs_unconstrained, np.ndarray)
-    freq_constrained = utils.check_freq_input(freq_constrained)
+    freq_constrained = utils.check_freq_input(freq_constrained) * u.GHz
     freqs_all = np.insert(freqs_unconstrained, 0, freq_constrained)
     indref = np.where(freqs_all == freq_constrained)
     corrmatrix = frequency_decorr_model(freqs_all, correlation_length)
@@ -265,7 +280,7 @@ def get_decorrelation_matrix(
     evals = np.diag(np.sqrt(np.maximum(rho_uu_w, np.zeros_like(rho_uu_w))))
     rho_covar = np.dot(rho_uu_v, np.dot(evals, np.transpose(rho_uu_v)))
     rho_mean = -np.dot(rho_uu, rho_inv_cu)
-    return (rho_covar, rho_mean)
+    return rho_covar, rho_mean
 
 
 def invert_safe(matrix):
@@ -557,16 +572,28 @@ class HensleyDraine2017(Model):
         # now draw the random realisation of uval if draw_uval = true
         if rnd_uval:
             T_mean = self.read_map(
-                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="K", field=3, nside=self.nside_uval
+                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits",
+                unit="K",
+                field=3,
+                nside=self.nside_uval,
             )
             T_std = self.read_map(
-                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="K", field=5, nside=self.nside_uval
+                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits",
+                unit="K",
+                field=5,
+                nside=self.nside_uval,
             )
             beta_mean = self.read_map(
-                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="", field=6, nside=self.nside_uval
+                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits",
+                unit="",
+                field=6,
+                nside=self.nside_uval,
             )
             beta_std = self.read_map(
-                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="", field=8, nside=self.nside_uval
+                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits",
+                unit="",
+                field=8,
+                nside=self.nside_uval,
             )
             # draw the realisations
             np.random.seed(seed)
@@ -581,7 +608,9 @@ class HensleyDraine2017(Model):
             # Since nside is not a parameter Sky knows about we have to get
             # it from A_I, which is not ideal.
             self.uval = hp.ud_grade(
-                np.clip((4.0 + beta.value) * np.log10(T.value / np.mean(T.value)), -3.0, 5.0),
+                np.clip(
+                    (4.0 + beta.value) * np.log10(T.value / np.mean(T.value)), -3.0, 5.0
+                ),
                 nside_out=nside,
             )
         elif not rnd_uval:

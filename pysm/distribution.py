@@ -42,6 +42,8 @@ class MapDistribution:
                     self.mpi_comm, self.nside
                 )
             else:
-                self.pixel_indices, self.libsharp_grid, self.libsharp_order = mpi.distribute_rings_libsharp(
+                self.pixel_indices, lg, lo = mpi.distribute_rings_libsharp(
                     self.mpi_comm, self.nside, lmax=self.smoothing_lmax
                 )
+                self.libsharp_grid = lg
+                self.libsharp_order = lo

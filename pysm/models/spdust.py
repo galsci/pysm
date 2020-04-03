@@ -70,7 +70,7 @@ class SpDust(Model):
         weights = utils.normalize_weights(freqs, weights)
         outputs = (
             compute_spdust_emission_numba(
-                freqs.value,
+                freqs,
                 weights,
                 self.I_ref.value,
                 self.freq_ref_I.value,
@@ -98,10 +98,9 @@ def compute_spdust_emission_numba(
     freqs, weights, I_ref, freq_ref_I, freq_peak, emissivity
 ):
     output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
-    I = 0
     for i, (freq, weight) in enumerate(zip(freqs, weights)):
         scaling = compute_spdust_scaling_numba(freq, freq_ref_I, freq_peak, emissivity)
-        utils.trapz_step_inplace(freqs, weights, i, scaling * I_ref, output[I])
+        utils.trapz_step_inplace(freqs, weights, i, scaling * I_ref, output[0])
     return output
 
 
@@ -141,7 +140,7 @@ class SpDustPol(SpDust):
         weights = utils.normalize_weights(freqs, weights)
         outputs = (
             compute_spdust_emission_pol_numba(
-                freqs.value,
+                freqs,
                 weights,
                 self.I_ref.value,
                 self.freq_ref_I.value,

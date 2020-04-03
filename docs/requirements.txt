@@ -1,0 +1,10 @@
+astropy
+toml
+numba
+numpy
+healpy
+ipykernel
+pandoc
+sphinx-astropy
+sphinx-math-dollar
+nbsphinx

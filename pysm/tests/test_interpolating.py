@@ -17,4 +17,8 @@ def test_interpolating(tmp_path):
     )
 
     interpolated_map = interp.get_emission(15 * u.GHz)
-    np.testing.assert_allclose(0.5 * np.ones(shape)*u.uK_RJ, interpolated_map)
+    np.testing.assert_allclose(0.5 * np.ones(shape) * u.uK_RJ, interpolated_map)
+
+    # test pick one of the available maps
+    interpolated_map = interp.get_emission(20 * u.GHz)
+    np.testing.assert_allclose(np.ones(shape) * u.uK_RJ, interpolated_map)
