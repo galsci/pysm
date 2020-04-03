@@ -397,6 +397,7 @@ class HensleyDraine2017(Model):
         f_fe=None,
         f_car=None,
         rnd_uval=True,
+        nside_uval=256,
         seed=None,
     ):
         """ This function initializes the Hensley-Draine 2017 model.
@@ -452,6 +453,7 @@ class HensleyDraine2017(Model):
             self.U_ref <<= u.uK_RJ
             self.freq_ref_P = u.Quantity(freq_ref_P).to(u.GHz)
         self.nside = int(nside)
+        self.nside_uval = nside_uval
 
         self.f_fe = f_fe
         self.f_car = f_car
@@ -551,16 +553,16 @@ class HensleyDraine2017(Model):
         # now draw the random realisation of uval if draw_uval = true
         if rnd_uval:
             T_mean = self.read_map(
-                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="K", field=3, nside=256
+                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="K", field=3, nside=self.nside_uval
             )
             T_std = self.read_map(
-                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="K", field=5, nside=256
+                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="K", field=5, nside=self.nside_uval
             )
             beta_mean = self.read_map(
-                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="", field=6, nside=256
+                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="", field=6, nside=self.nside_uval
             )
             beta_std = self.read_map(
-                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="", field=8, nside=256
+                "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits", unit="", field=8, nside=self.nside_uval
             )
             # draw the realisations
             np.random.seed(seed)
