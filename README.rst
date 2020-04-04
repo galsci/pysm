@@ -1,4 +1,4 @@
-|Build Status| |Documentation Status|
+|Build Status| |Documentation Status| |PyPI| |Conda| |Astropy|
 
 PySM 3
 ======
@@ -67,3 +67,9 @@ It also has a ``mpich`` version:
    :target: https://travis-ci.org/healpy/pysm
 .. |Documentation Status| image:: https://readthedocs.org/projects/pysm3/badge/?version=latest
    :target: https://pysm3.readthedocs.io/en/latest/?badge=latest
+.. |PyPI| image:: https://img.shields.io/pypi/v/pysm3
+   :target: https://pypi.org/project/pysm3/
+.. |Conda| image:: https://img.shields.io/conda/vn/conda-forge/pysm3
+   :target: https://anaconda.org/conda-forge/pysm3
+.. |Astropy| image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
+   :target: http://www.astropy.org/
