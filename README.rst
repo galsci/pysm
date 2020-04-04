@@ -11,11 +11,11 @@ MPI.
 
 See the documentation at https://pysm3.readthedocs.io
 
-* Check code style with `tox -e codestyle`
-* Test with `pytest` or `tox -e test`
-* Build docs locally with `tox -e build_docs`
+* Check code style with ``tox -e codestyle``
+* Test with ``pytest`` or ``tox -e test``
+* Build docs locally with ``tox -e build_docs``
 
-See changes in `CHANGES.rst` in the repository.
+See changes in ``CHANGES.rst`` in the repository.
 
 Install
 -------
