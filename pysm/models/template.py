@@ -54,7 +54,7 @@ class Model:
     def read_map(self, path, unit=None, field=0, nside=None):
         """Wrapper of the PySM read_map function that automatically
         uses nside, pixel_indices and mpi_comm defined in this Model
-        by default. 
+        by default.
         If the `nside` keyword is set, this will override the `Model`
         value when reading the map. This can be used to read in data
         products that must be processed at a specific nside.
