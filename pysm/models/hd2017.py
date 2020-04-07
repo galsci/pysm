@@ -34,6 +34,7 @@ class HensleyDraine2017(Model):
         f_fe=None,
         f_car=None,
         rnd_uval=True,
+        uval=None,
         nside_uval=256,
         seed=None,
     ):
@@ -71,6 +72,8 @@ class HensleyDraine2017(Model):
             Fractional composition of grain population in carbonaceous grains.
         rnd_uval: bool (optional, default=True)
             Decide whether to draw a random realization of the ISRF.
+        uval: float
+            If no random realization is requested, can choose a fixed value of uval
         nside_uval: int (optional, default=256)
             HEALPix nside at which to evaluate the ISRF before ud_grade is applied
             to get the output scaling law. The default is the resolution at which
@@ -193,6 +196,7 @@ class HensleyDraine2017(Model):
 
         # now draw the random realisation of uval if draw_uval = true
         if rnd_uval:
+            assert uval is None, "Cannot request a random uval and also specify a value"
             T_mean = self.read_map(
                 "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits",
                 unit="K",
@@ -235,16 +239,14 @@ class HensleyDraine2017(Model):
                 ),
                 nside_out=nside,
             )
-        elif not rnd_uval:
+        else:
             # I think this needs filling in for case when ISRF is not
             # a random realization. What should the default be? Could
             # choose a single value corresponding to T=20K, beta_d=1.54?
-            pass
-        else:
-            print(
-                """Hensley_Draine_2017 model selected, but draw_uval not set.
-                Set 'draw_uval' to True or False."""
-            )
+            assert (
+                uval is not None
+            ), "Need to specify a uval value if not requesting a random realization"
+            self.uval = uval
 
         # compute the SED at the reference frequencies of the input templates.
         lambda_ref_i = self.freq_ref_I.to(u.um, equivalencies=u.spectral())

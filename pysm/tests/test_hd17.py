@@ -5,7 +5,7 @@ from astropy.tests.helper import assert_quantity_allclose
 
 
 @pytest.mark.parametrize("freq", [100, 353, 900])
-@pytest.mark.parametrize("model_tag", ["d7", "d5"])
+@pytest.mark.parametrize("model_tag", ["d7", "d5", "d8"])
 def test_highfreq_dust_model(model_tag, freq):
 
     model = pysm.Sky(preset_strings=[model_tag], nside=64)
