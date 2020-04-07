@@ -34,7 +34,7 @@ class HensleyDraine2017(Model):
         f_fe=None,
         f_car=None,
         rnd_uval=True,
-        uval=None,
+        uval=0.2,
         nside_uval=256,
         seed=None,
     ):
@@ -73,7 +73,9 @@ class HensleyDraine2017(Model):
         rnd_uval: bool (optional, default=True)
             Decide whether to draw a random realization of the ISRF.
         uval: float
-            If no random realization is requested, can choose a fixed value of uval
+            This value is used only if rnd_uval is False, the default of 0.2
+            corresponds reasonably well to a Modifield Black Body model with
+            temperature of 20K and an index of 1.54
         nside_uval: int (optional, default=256)
             HEALPix nside at which to evaluate the ISRF before ud_grade is applied
             to get the output scaling law. The default is the resolution at which
@@ -196,7 +198,6 @@ class HensleyDraine2017(Model):
 
         # now draw the random realisation of uval if draw_uval = true
         if rnd_uval:
-            assert uval is None, "Cannot request a random uval and also specify a value"
             T_mean = self.read_map(
                 "pysm_2/COM_CompMap_dust-commander_0256_R2.00.fits",
                 unit="K",
@@ -240,12 +241,6 @@ class HensleyDraine2017(Model):
                 nside_out=nside,
             )
         else:
-            # I think this needs filling in for case when ISRF is not
-            # a random realization. What should the default be? Could
-            # choose a single value corresponding to T=20K, beta_d=1.54?
-            assert (
-                uval is not None
-            ), "Need to specify a uval value if not requesting a random realization"
             self.uval = uval
 
         # compute the SED at the reference frequencies of the input templates.
