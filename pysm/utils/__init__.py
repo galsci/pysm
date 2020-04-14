@@ -7,6 +7,7 @@ import numpy as np
 from numba import njit
 
 from .. import units as u
+from .data import RemoteData  # noqa: F401
 
 
 def has_polarization(m):

@@ -8,14 +8,11 @@ Objects:
     Model
 """
 import warnings
-import os.path
 import numpy as np
 import healpy as hp
 from astropy.io import fits
-from astropy.utils import data
 from .. import utils
 from .. import units as u
-from ..constants import DATAURL
 from .. import mpi
 import gc
 
@@ -35,7 +32,7 @@ class Model:
     If libsharp is not available, pixels are distributed uniformly across
     processes, see :py:func:`pysm.mpi.distribute_pixels_uniformly`"""
 
-    def __init__(self, nside, map_dist=None, dataurl=None):
+    def __init__(self, nside, map_dist=None):
         """
         Parameters
         ----------
@@ -49,7 +46,6 @@ class Model:
         self.nside = nside
         assert nside is not None
         self.map_dist = map_dist
-        self.dataurl = dataurl
 
     def read_map(self, path, unit=None, field=0, nside=None):
         """Wrapper of the PySM read_map function that automatically
@@ -63,14 +59,7 @@ class Model:
             nside = nside
         else:
             nside = self.nside
-        return read_map(
-            path,
-            nside,
-            unit=unit,
-            field=field,
-            map_dist=self.map_dist,
-            dataurl=self.dataurl,
-        )
+        return read_map(path, nside, unit=unit, field=field, map_dist=self.map_dist)
 
     def read_txt(self, path, **kwargs):
         mpi_comm = None if self.map_dist is None else self.map_dist.mpi_comm
@@ -201,7 +190,7 @@ def extract_hdu_unit(path):
     return unit
 
 
-def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
+def read_map(path, nside, unit=None, field=0, map_dist=None):
     """Wrapper of `healpy.read_map` for PySM data. This function also extracts
     the units from the fits HDU and applies them to the data array to form an
     `astropy.units.Quantity` object.
@@ -223,17 +212,8 @@ def read_map(path, nside, unit=None, field=0, map_dist=None, dataurl=None):
     """
     mpi_comm = None if map_dist is None else map_dist.mpi_comm
     pixel_indices = None if map_dist is None else map_dist.pixel_indices
-    if dataurl is None:
-        dataurl = DATAURL
-    # read map. Add `str()` operator in case dealing with `Path` object.
-    if os.path.exists(str(path)):  # Python 3.5 requires turning a Path object to str
-        filename = str(path)
-    else:
-        with data.conf.set_temp("dataurl", dataurl), data.conf.set_temp(
-            "remote_timeout", 30
-        ):
-            filename = data.get_pkg_data_filename(path)
-    # inmap = hp.read_map(filename, field=field, verbose=False)
+    filename = utils.RemoteData().get(path)
+
     if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
         output_map = hp.read_map(filename, field=field, verbose=False, dtype=None)
         dtype = output_map.dtype
@@ -332,13 +312,7 @@ def read_txt(path, mpi_comm=None, **kwargs):
         data read with numpy.loadtxt
     """
 
-    if os.path.exists(str(path)):
-        filename = str(path)
-    else:
-        with data.conf.set_temp("dataurl", DATAURL), data.conf.set_temp(
-            "remote_timeout", 30
-        ):
-            filename = data.get_pkg_data_filename(path)
+    filename = utils.RemoteData().get(path)
 
     if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
         output = np.loadtxt(filename, **kwargs)

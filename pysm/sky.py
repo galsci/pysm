@@ -6,11 +6,9 @@ Objects:
     Sky
 """
 import toml
-from astropy.utils import data
 from . import units as u
 from .utils import bandpass_unit_conversion
-
-from .constants import DATAURL
+from . import data
 from .models import Model
 from .models import *
 
