@@ -47,8 +47,14 @@ def create_components_from_config(config, nside, map_dist=None):
     return output_components
 
 
-with data.conf.set_temp("dataurl", DATAURL):
-    PRESET_MODELS = toml.load(data.get_pkg_data_filename("data/presets.cfg"))
+try:
+    import importlib.resources as pkg_resources
+except ImportError:
+    # Try backported to PY<37 `importlib_resources`.
+    import importlib_resources as pkg_resources
+
+
+PRESET_MODELS = toml.loads(pkg_resources.read_text(data, "presets.cfg"))
 
 
 class Sky(Model):
