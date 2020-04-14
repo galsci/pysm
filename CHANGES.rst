@@ -1,9 +1,11 @@
-3.1.3 (unreleased)
+3.2.0 (unreleased)
 ==================
 
 - In development
 - Implemented HD2017 `d7` dust model `PR 37 <https://github.com/healpy/pysm/pull/37>`_
+- Implemented HD2017 `d5` and `d8` dust models `PR 51 <https://github.com/healpy/pysm/pull/51>`_
 - Improved documentation about Sky
+- Implement local data folder `PR 53 <https://github.com/healpy/pysm/pull/53>`_
 
 3.1.2 (2020-03-27)
 ==================
