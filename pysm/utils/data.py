@@ -40,5 +40,5 @@ class RemoteData:
             "remote_timeout", 30
         ):
             warnings.warn(f"Retrieve data for {filename} (if not cached already)")
-            map_out = data.get_pkg_data_filename(filename, show_progress=True)
-        return map_out
+            full_path = data.get_pkg_data_filename(filename, show_progress=True)
+        return full_path
