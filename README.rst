@@ -20,48 +20,7 @@ See changes in ``CHANGES.rst`` in the repository.
 Install
 -------
 
-Requirements
-~~~~~~~~~~~~
-
-::
-
-    astropy
-    healpy
-    numba
-    toml
-
-Conda
-~~~~~
-
-::
-
-   conda install -c conda-forge pysm3
-
-See the `conda repository <https://anaconda.org/conda-forge/pysm3>`__
-and the `feedstock <https://github.com/conda-forge/pysm3-feedstock>`__
-
-Pip
-~~~
-
-::
-
-   pip install pysm3
-
-Libsharp
-~~~~~~~~
-
-MPI-Distributed smoothing (optional) requires ``libsharp``, it is
-easiest to install the conda package:
-
-::
-
-   conda install -c conda-forge libsharp=*=*openmpi*
-
-It also has a ``mpich`` version:
-
-::
-
-   conda install -c conda-forge libsharp=*=*mpich*
+See the `documentation <https://pysm3.readthedocs.io/en/latest/#installation>`_
 
 Release
 -------

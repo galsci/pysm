@@ -39,14 +39,20 @@ PySM is written in Python and requires:
 * `numba`
 * `astropy`
 * `toml`
+* `importlib_resources` only for python_version<"3.7"
 
 In order to run in parallel with MPI, it also needs:
 
 * `mpi4py`
 
-To support distributed smoothing, it also requires:
+MPI-Distributed smoothing (optional) requires `libsharp`, it is easiest to install the conda package::
 
-* `libsharp`, see the `ci/install_libsharp.sh script <https://github.com/healpy/pysm/blob/master/ci/install_libsharp.sh>`_
+    conda install -c conda-forge libsharp=*=*openmpi*
+
+It also has a `mpich` version::
+
+    conda install -c conda-forge libsharp=*=*mpich*
+
 
 Installation
 ============
@@ -58,22 +64,6 @@ PySM is a pure Python package, the easiest way to install the last release is to
 or `pip`::
 
     pip install pysm3
-
-Requirements
-------------
-
-See the `requirements.txt` file in the repository.
-
-Libsharp
---------
-
-MPI-Distributed smoothing (optional) requires `libsharp`, it is easiest to install the conda package::
-
-    conda install -c conda-forge libsharp=*=*openmpi*
-
-It also has a `mpich` version::
-
-    conda install -c conda-forge libsharp=*=*mpich*
 
 Install at NERSC
 ----------------
