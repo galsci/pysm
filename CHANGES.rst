@@ -1,7 +1,13 @@
-3.2.0 (unreleased)
+3.2.1 (unreleased)
 ==================
 
 - In development
+
+3.2.0 (2020-04-15)
+==================
+
+First version with all models available in PySM 2
+
 - Implemented HD2017 `d7` dust model `PR 37 <https://github.com/healpy/pysm/pull/37>`_
 - Implemented HD2017 `d5` and `d8` dust models `PR 51 <https://github.com/healpy/pysm/pull/51>`_
 - Improved documentation about Sky
