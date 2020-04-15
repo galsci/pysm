@@ -63,6 +63,11 @@ It also has a ``mpich`` version:
 
    conda install -c conda-forge libsharp=*=*mpich*
 
+Release
+-------
+
+Follow the `Astropy guide to release a new version <https://docs.astropy.org/en/stable/development/astropy-package-template.html>`.
+
 .. |Build Status| image:: https://travis-ci.org/healpy/pysm.svg?branch=master
    :target: https://travis-ci.org/healpy/pysm
 .. |Documentation Status| image:: https://readthedocs.org/projects/pysm3/badge/?version=latest
