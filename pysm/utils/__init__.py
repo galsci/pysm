@@ -29,6 +29,25 @@ def has_polarization(m):
 
 
 def normalize_weights(freqs, weights):
+    """Normalize bandpass weights
+
+    Bandpasses are assumed to be in power units, i.e. Jy/sr
+    and are then converted to K_RJ which are the units used
+    everywhere else in PySM
+
+    Parameters
+    ----------
+    freqs : np.array
+        array of frequency in GHz, without units
+    weights : np.array
+        array of weights, without units, if None, a top-hat
+        bandpass (in power units) will be used
+
+    Returns
+    -------
+    normalized_weights : np.array
+        Normalized weights
+    """
     if len(freqs) == 1:
         return np.array([1.0])
     else:
