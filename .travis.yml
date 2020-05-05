@@ -138,6 +138,7 @@ install:
 script:
     - pip install tox
     - tox $TOXARGS -- $TOXPOSARGS
+    - bash run_mpi_tests.sh
 
 after_success:
     # If coveralls.io is set up for this package, uncomment the two lines below.
