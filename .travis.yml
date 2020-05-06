@@ -138,6 +138,9 @@ install:
 script:
     - pip install tox
     - tox $TOXARGS -- $TOXPOSARGS
+    - if [[ $TOXENV == py38-test-cov ]]; then
+        mpirun -np 2 .tox/py38-test-cov/bin/python -m pytest pysm/tests/test_read_map_mpi.py;
+      fi
 
 after_success:
     # If coveralls.io is set up for this package, uncomment the two lines below.
