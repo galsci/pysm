@@ -71,8 +71,8 @@ Install at NERSC
 Optionally replace with a newer anaconda environment::
 
     module load python/3.7-anaconda-2019.10
-    conda create -c conda-forge -n pysm pysm3 python=3.7 ipython
-    conda activate pysm
+    conda create -c conda-forge -n pysm3 pysm3 python=3.7 ipython
+    conda activate pysm3
     module unload python
 
 Development install
@@ -109,4 +109,4 @@ All the tutorials are Jupyter Notebooks and can be accessed `from the repository
 Reference/API
 =============
 
-.. automodapi:: pysm
+.. automodapi:: pysm3

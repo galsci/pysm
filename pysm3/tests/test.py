@@ -1,4 +1,4 @@
-import pysm
+import pysm3
 import numpy as np
 import healpy as hp
 import matplotlib.pyplot as plt
@@ -8,9 +8,9 @@ if __name__ == "__main__":
     bpass = [(np.linspace(140.0, 170.0, 10), np.ones(10))]
     freqs = np.linspace(1, 500, 100.0)
 
-    sky = pysm.Sky(nside, preset_strings=["d6"])
+    sky = pysm3.Sky(nside, preset_strings=["d6"])
     sky.correlation_length = 1.0
-    sky_d1 = pysm.Sky(nside, preset_strings=["d1"])
+    sky_d1 = pysm3.Sky(nside, preset_strings=["d1"])
     # hp.mollview(sky.get_emission(150.)[0, 0], title="model d4", norm='log')
     # plt.show()
 
@@ -23,8 +23,8 @@ if __name__ == "__main__":
     plt.show()
 
     # get either individual model, or sky with group of components
-    mbb = pysm.preset_models("d1", nside)
-    sky = pysm.Sky(nside, preset_strings=["d1"])
+    mbb = pysm3.preset_models("d1", nside)
+    sky = pysm3.Sky(nside, preset_strings=["d1"])
 
     # the three main functions to be used (haven't added noise yet)
     out_delta = sky.get_emission(bpass[0][0].mean())

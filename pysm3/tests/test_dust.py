@@ -2,8 +2,8 @@ import astropy.units as units
 import numpy as np
 from astropy.tests.helper import assert_quantity_allclose
 
-import pysm
-import pysm.models.dust as dust
+import pysm3
+import pysm3.models.dust as dust
 import pytest
 
 
@@ -27,10 +27,10 @@ def test_dust_model(model_tag, freq):
             return
         np.random.seed(123)
 
-    model = pysm.Sky(preset_strings=[model_tag], nside=64)
+    model = pysm3.Sky(preset_strings=[model_tag], nside=64)
 
     model_number = {"d0": 1, "d1": 1, "d2": 6, "d3": 9, "d6": 12}[model_tag]
-    expected_output = pysm.read_map(
+    expected_output = pysm3.read_map(
         "pysm_2_test_data/check{}therm_{}p0_64.fits".format(model_number, freq),
         64,
         unit="uK_RJ",

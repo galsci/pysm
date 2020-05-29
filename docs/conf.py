@@ -41,11 +41,6 @@ except ImportError:
 # Get configuration information from setup.cfg
 from configparser import ConfigParser
 
-conf = ConfigParser()
-
-conf.read([os.path.join(os.path.dirname(__file__), "..", "setup.cfg")])
-setup_cfg = dict(conf.items("metadata"))
-
 # -- General configuration ----------------------------------------------------
 
 # By default, highlight as Python 3.
@@ -70,16 +65,16 @@ rst_epilog += """
 # -- Project information ------------------------------------------------------
 
 # This does not *have* to match the package name, but typically does
-project = setup_cfg["name"]
-author = setup_cfg["author"]
-copyright = "{0}, {1}".format(datetime.datetime.now().year, setup_cfg["author"])
+project = "PySM 3"
+author = "Ben Thorne, David Alonso, Sigurd Naess, Jo Dunkley, Andrea Zonca"
+copyright = "{0}, {1}".format(datetime.datetime.now().year, author)
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-import_module("pysm")
-package = sys.modules["pysm"]
+import_module("pysm3")
+package = sys.modules["pysm3"]
 
 # The short X.Y version.
 version = package.__version__.split("-", 1)[0]
@@ -108,7 +103,7 @@ release = package.__version__
 
 
 html_theme_options = {
-    "logotext1": "pysm",  # white,  semi-bold
+    "logotext1": "pysm3",  # white,  semi-bold
     "logotext2": "",  # orange, light
     "logotext3": ":docs",  # white,  light
 }
@@ -153,21 +148,16 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [("index", project.lower(), project + u" Documentation", [author], 1)]
 
+extensions += ["sphinx_astropy.ext.edit_on_github"]
 
-# -- Options for the edit_on_github extension ---------------------------------
+edit_on_github_project = "healpy/pysm3"
+edit_on_github_branch = "master"
 
-if setup_cfg.get("edit_on_github").lower() == "true":
-
-    extensions += ["sphinx_astropy.ext.edit_on_github"]
-
-    edit_on_github_project = setup_cfg["github_project"]
-    edit_on_github_branch = "master"
-
-    edit_on_github_source_root = ""
-    edit_on_github_doc_root = "docs"
+edit_on_github_source_root = ""
+edit_on_github_doc_root = "docs"
 
 # -- Resolving issue number to links in changelog -----------------------------
-github_issues_url = "https://github.com/{0}/issues/".format(setup_cfg["github_project"])
+github_issues_url = "https://github.com/{0}/issues/".format(edit_on_github_project)
 
 # -- Turn on nitpicky mode for sphinx (to warn about references not found) ----
 #

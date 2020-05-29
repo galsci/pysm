@@ -5,7 +5,7 @@ import numpy as np
 from .template import Model
 from .. import units as u
 from .. import utils
-from pysm.utils import trapz_step_inplace
+from ..utils import trapz_step_inplace
 
 
 class InterpolatingComponent(Model):

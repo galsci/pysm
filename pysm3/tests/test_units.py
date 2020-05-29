@@ -2,8 +2,8 @@ from pathlib import Path
 import unittest
 import numpy as np
 import healpy as hp
-import pysm.units as units
-from pysm.models.template import read_map
+import pysm3.units as units
+from pysm3.models.template import read_map
 
 
 class TestUnits(unittest.TestCase):
