@@ -7,10 +7,10 @@ python-versions = "*"
 version = "0.7.12"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 name = "appdirs"
-optional = false
+optional = true
 python-versions = "*"
 version = "1.4.4"
 
@@ -46,11 +46,11 @@ version = "1.1"
 setuptools = "*"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Atomic file writes."
 marker = "sys_platform == \"win32\""
 name = "atomicwrites"
-optional = false
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.4.0"
 
@@ -58,7 +58,7 @@ version = "1.4.0"
 category = "main"
 description = "Classes Without Boilerplate"
 name = "attrs"
-optional = false
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "19.3.0"
 
@@ -121,15 +121,15 @@ category = "main"
 description = "Cross-platform colored terminal text."
 marker = "sys_platform == \"win32\" or platform_system == \"Windows\""
 name = "colorama"
-optional = false
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 version = "0.4.3"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Code coverage measurement for Python"
 name = "coverage"
-optional = false
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
 version = "5.1"
 
@@ -164,10 +164,10 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 version = "0.6.0"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Distribution utilities"
 name = "distlib"
-optional = false
+optional = true
 python-versions = "*"
 version = "0.3.0"
 
@@ -188,10 +188,10 @@ python-versions = ">=2.7"
 version = "0.3"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "A platform independent file lock."
 name = "filelock"
-optional = false
+optional = true
 python-versions = "*"
 version = "3.0.12"
 
@@ -211,10 +211,10 @@ scipy = "*"
 six = "*"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "A library for property-based testing"
 name = "hypothesis"
-optional = false
+optional = true
 python-versions = ">=3.5.2"
 version = "5.16.0"
 
@@ -254,7 +254,7 @@ category = "main"
 description = "Read metadata from Python packages"
 marker = "python_version < \"3.8\""
 name = "importlib-metadata"
-optional = false
+optional = true
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 version = "1.6.0"
 
@@ -266,11 +266,11 @@ docs = ["sphinx", "rst.linker"]
 testing = ["packaging", "importlib-resources"]
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Read resources from Python packages"
 marker = "python_version < \"3.7\""
 name = "importlib-resources"
-optional = false
+optional = true
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 version = "1.5.0"
 
@@ -473,18 +473,18 @@ python-versions = "*"
 version = "0.8.4"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "More routines for operating on iterables, beyond itertools"
 name = "more-itertools"
-optional = false
+optional = true
 python-versions = ">=3.5"
 version = "8.3.0"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Python bindings for MPI"
 name = "mpi4py"
-optional = false
+optional = true
 python-versions = "*"
 version = "3.0.3"
 
@@ -586,7 +586,7 @@ sphinx = ">=1.6.5"
 category = "main"
 description = "Core utilities for Python packages"
 name = "packaging"
-optional = false
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "20.4"
 
@@ -653,10 +653,10 @@ python-versions = ">=3.5"
 version = "7.1.2"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "plugin and hook calling mechanisms for python"
 name = "pluggy"
-optional = false
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.13.1"
 
@@ -688,10 +688,10 @@ version = "3.0.3"
 wcwidth = "*"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Cross-platform lib for process and system monitoring in Python."
 name = "psutil"
-optional = false
+optional = true
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "5.7.0"
 
@@ -708,10 +708,10 @@ python-versions = "*"
 version = "0.6.0"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "library with cross-python path, ini-parsing, io, code, log facilities"
 name = "py"
-optional = false
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.8.1"
 
@@ -743,10 +743,10 @@ version = "0.16.0"
 six = "*"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "pytest: simple powerful testing with Python"
 name = "pytest"
-optional = false
+optional = true
 python-versions = ">=3.5"
 version = "5.4.3"
 
@@ -769,10 +769,10 @@ checkqa-mypy = ["mypy (v0.761)"]
 testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "requests", "xmlschema"]
 
 [[package]]
-category = "dev"
+category = "main"
 description = "pytest plugin to help with comparing array output from tests"
 name = "pytest-arraydiff"
-optional = false
+optional = true
 python-versions = "*"
 version = "0.3"
 
@@ -782,10 +782,10 @@ pytest = "*"
 six = "*"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Meta-package containing dependencies for testing"
 name = "pytest-astropy"
-optional = false
+optional = true
 python-versions = ">=3.6"
 version = "0.8.0"
 
@@ -801,10 +801,10 @@ pytest-openfiles = ">=0.3.1"
 pytest-remotedata = ">=0.3.1"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "pytest plugin to add diagnostic information to the header of the test output"
 name = "pytest-astropy-header"
-optional = false
+optional = true
 python-versions = "*"
 version = "0.1.2"
 
@@ -815,10 +815,10 @@ pytest = ">=2.8"
 test = ["pytest", "pytest-cov", "codecov", "coverage", "numpy", "astropy"]
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Pytest plugin for measuring coverage."
 name = "pytest-cov"
-optional = false
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 version = "2.9.0"
 
@@ -830,10 +830,10 @@ pytest = ">=3.6"
 testing = ["fields", "hunter", "process-tests (2.0.2)", "six", "pytest-xdist", "virtualenv"]
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Pytest plugin with advanced doctest features."
 name = "pytest-doctestplus"
-optional = false
+optional = true
 python-versions = ">=3.6"
 version = "0.7.0"
 
@@ -842,10 +842,10 @@ pip = "*"
 pytest = ">=4.0"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Pytest plugin for filtering based on sub-packages"
 name = "pytest-filter-subpackage"
-optional = false
+optional = true
 python-versions = ">=3.6"
 version = "0.1.1"
 
@@ -856,10 +856,10 @@ pytest = ">=3.0"
 test = ["pytest", "pytest-doctestplus", "pytest-cov"]
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Pytest plugin for detecting inadvertent open file handles"
 name = "pytest-openfiles"
-optional = false
+optional = true
 python-versions = ">=3.6"
 version = "0.5.0"
 
@@ -868,10 +868,10 @@ psutil = "*"
 pytest = ">=4.6"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Pytest plugin for controlling remote data access."
 name = "pytest-remotedata"
-optional = false
+optional = true
 python-versions = ">=2.7"
 version = "0.3.2"
 
@@ -961,10 +961,10 @@ python-versions = "*"
 version = "2.0.0"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Sorted Containers -- Sorted List, Sorted Dict, Sorted Set"
 name = "sortedcontainers"
-optional = false
+optional = true
 python-versions = "*"
 version = "2.1.0"
 
@@ -994,10 +994,6 @@ sphinxcontrib-htmlhelp = "*"
 sphinxcontrib-jsmath = "*"
 sphinxcontrib-qthelp = "*"
 sphinxcontrib-serializinghtml = "*"
-
-[package.dependencies.sphinxcontrib-websupport]
-optional = true
-version = "*"
 
 [package.extras]
 docs = ["sphinxcontrib-websupport"]
@@ -1129,18 +1125,6 @@ test = ["pytest"]
 
 [[package]]
 category = "main"
-description = "Sphinx API for Web Apps"
-name = "sphinxcontrib-websupport"
-optional = true
-python-versions = ">=3.5"
-version = "1.2.2"
-
-[package.extras]
-lint = ["flake8"]
-test = ["pytest", "sqlalchemy", "whoosh", "sphinx"]
-
-[[package]]
-category = "main"
 description = "Test utilities for code working with files and commands"
 name = "testpath"
 optional = true
@@ -1167,10 +1151,10 @@ python-versions = ">= 3.5"
 version = "6.0.4"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "tox is a generic virtualenv management and test command line tool"
 name = "tox"
-optional = false
+optional = true
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 version = "3.15.1"
 
@@ -1222,10 +1206,10 @@ secure = ["certifi", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "pyOpenSSL (>=0
 socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7,<2.0)"]
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Virtual Python Environment builder"
 name = "virtualenv"
-optional = false
+optional = true
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
 version = "20.0.21"
 
@@ -1251,7 +1235,7 @@ testing = ["pytest (>=4)", "coverage (>=5)", "coverage-enable-subprocess (>=1)",
 category = "main"
 description = "Measures the displayed width of unicode strings in a terminal"
 name = "wcwidth"
-optional = false
+optional = true
 python-versions = "*"
 version = "0.2.3"
 
@@ -1268,7 +1252,7 @@ category = "main"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 marker = "python_version < \"3.8\""
 name = "zipp"
-optional = false
+optional = true
 python-versions = ">=3.6"
 version = "3.1.0"
 
@@ -1276,8 +1260,12 @@ version = "3.1.0"
 docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
+[extras]
+docs = ["sphinx", "sphinx-astropy", "nbsphinx", "sphinx-math-dollar", "pandoc", "ipykernel"]
+test = ["pytest", "pytest-astropy", "mpi4py", "tox"]
+
 [metadata]
-content-hash = "9fbf63e4f393f71df75a6397f622eef1d5d3ea86293c116b37619eb90215317a"
+content-hash = "803e8b868036f2660bed50cffea037aed37324148800d38421059a7dcdbb1458"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -1903,10 +1891,6 @@ sphinxcontrib-qthelp = [
 sphinxcontrib-serializinghtml = [
     {file = "sphinxcontrib-serializinghtml-1.1.4.tar.gz", hash = "sha256:eaa0eccc86e982a9b939b2b82d12cc5d013385ba5eadcc7e4fed23f4405f77bc"},
     {file = "sphinxcontrib_serializinghtml-1.1.4-py2.py3-none-any.whl", hash = "sha256:f242a81d423f59617a8e5cf16f5d4d74e28ee9a66f9e5b637a18082991db5a9a"},
-]
-sphinxcontrib-websupport = [
-    {file = "sphinxcontrib-websupport-1.2.2.tar.gz", hash = "sha256:33c0db6c0635b9dc3e72629b7278ca3b9fa24c156eeeaf1674be8f268831d951"},
-    {file = "sphinxcontrib_websupport-1.2.2-py2.py3-none-any.whl", hash = "sha256:c155cfa18e8b7c832b3cac0a2d41810ebacd26b26ba9624cd2f42c3496dad04b"},
 ]
 testpath = [
     {file = "testpath-0.4.4-py2.py3-none-any.whl", hash = "sha256:bfcf9411ef4bf3db7579063e0546938b1edda3d69f4e1fb8756991f5951f85d4"},
