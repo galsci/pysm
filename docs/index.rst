@@ -31,15 +31,8 @@ For example free-free:
 Dependencies
 ============
 
-PySM is written in Python and requires:
-
-* `healpy`
-* `numpy`
-* `scipy`
-* `numba`
-* `astropy`
-* `toml`
-* `importlib_resources` only for python_version<"3.7"
+PySM is written in Python, for the requirements
+see `pyproject.toml` on PyPI and within the package.
 
 In order to run in parallel with MPI, it also needs:
 
@@ -83,13 +76,28 @@ you can clone and install it with::
 
     pip install .
 
-for a development installation, instead run::
-
-    pip install -e .
+A development installation as `pip install -e` is not supported by `poetry`.
 
 Execute the unit tests with::
 
     pytest
+
+Develop with poetry
+-------------------
+
+In order to have a reproducible environment, you can use `poetry`.
+
+`poetry` also manages dependencies and a local virtualenv.
+
+`Install poetry <https://python-poetry.org/docs/#installation>`_
+
+Install the specific requirements used for develoment with::
+
+    poetry install
+
+Run tests in the `poetry` environment::
+
+    poetry run pytest
 
 Tutorials
 =========
