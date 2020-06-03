@@ -1,6 +1,6 @@
 import numpy as np
-import pysm
-import pysm.units as u
+import pysm3
+import pysm3.units as u
 from astropy.tests.helper import assert_quantity_allclose
 import pytest
 
@@ -10,11 +10,11 @@ def test_cmb_map():
     nside = 32
 
     # pretend for testing that the Dust is CMB
-    model = pysm.CMBMap(map_IQU="pysm_2/lensed_cmb.fits", nside=nside)
+    model = pysm3.CMBMap(map_IQU="pysm_2/lensed_cmb.fits", nside=nside)
 
     freq = 100 * u.GHz
 
-    expected_map = pysm.read_map(
+    expected_map = pysm3.read_map(
         "pysm_2/lensed_cmb.fits", field=(0, 1), nside=nside, unit=u.uK_CMB
     ).to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq))
 
@@ -28,11 +28,11 @@ def test_cmb_map_bandpass():
     nside = 32
 
     # pretend for testing that the Dust is CMB
-    model = pysm.CMBMap(map_IQU="pysm_2/lensed_cmb.fits", nside=nside)
+    model = pysm3.CMBMap(map_IQU="pysm_2/lensed_cmb.fits", nside=nside)
 
     freq = 100 * u.GHz
 
-    expected_map = pysm.read_map(
+    expected_map = pysm3.read_map(
         "pysm_2/lensed_cmb.fits", field=0, nside=nside, unit=u.uK_CMB
     ).to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq))
 
@@ -58,11 +58,11 @@ def test_cmb_lensed(model_tag, freq):
 
     # The PySM test was done with a different seed than the one
     # baked into the preset models
-    pysm.sky.PRESET_MODELS["c1"]["cmb_seed"] = 1234
-    model = pysm.Sky(preset_strings=[model_tag], nside=64)
+    pysm3.sky.PRESET_MODELS["c1"]["cmb_seed"] = 1234
+    model = pysm3.Sky(preset_strings=[model_tag], nside=64)
 
     model_number = 5
-    expected_output = pysm.read_map(
+    expected_output = pysm3.read_map(
         "pysm_2_test_data/check{}cmb_{}p0_64.fits".format(model_number, freq),
         64,
         unit="uK_RJ",

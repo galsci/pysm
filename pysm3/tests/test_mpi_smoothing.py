@@ -1,8 +1,8 @@
 import pytest
 import numpy as np
 import healpy as hp
-import pysm
-import pysm.units as u
+import pysm3
+import pysm3.units as u
 
 try:
     from mpi4py import MPI
@@ -25,10 +25,10 @@ def mpi_comm():
 
 def test_mpi_assemble(mpi_comm):
     nside = 128
-    map_dist = pysm.MapDistribution(pixel_indices=None, mpi_comm=mpi_comm, nside=nside)
-    model = pysm.Model(nside, map_dist=map_dist)
+    map_dist = pysm3.MapDistribution(pixel_indices=None, mpi_comm=mpi_comm, nside=nside)
+    model = pysm3.Model(nside, map_dist=map_dist)
     distributed_map = model.read_map("pysm_2/dust_temp.fits")
-    full_map_rank0 = pysm.mpi.assemble_map_on_rank0(
+    full_map_rank0 = pysm3.mpi.assemble_map_on_rank0(
         mpi_comm,
         distributed_map,
         model.map_dist.pixel_indices,
@@ -38,7 +38,7 @@ def test_mpi_assemble(mpi_comm):
     if mpi_comm.rank == 0:
         np.testing.assert_allclose(
             full_map_rank0,
-            pysm.read_map("pysm_2/dust_temp.fits", nside=nside).value,
+            pysm3.read_map("pysm_2/dust_temp.fits", nside=nside).value,
             rtol=1e-5,
         )
 
@@ -46,16 +46,16 @@ def test_mpi_assemble(mpi_comm):
 def test_mpi_smoothing(mpi_comm):
     nside = 128
     lmax = 2 * nside
-    map_dist = pysm.MapDistribution(
+    map_dist = pysm3.MapDistribution(
         pixel_indices=None, mpi_comm=mpi_comm, smoothing_lmax=lmax, nside=nside
     )
-    model = pysm.Model(nside, map_dist=map_dist)
+    model = pysm3.Model(nside, map_dist=map_dist)
     distributed_map = model.read_map("pysm_2/dust_temp.fits")
     fwhm = 5 * u.deg
-    smoothed_distributed_map = pysm.mpi_smoothing(
+    smoothed_distributed_map = pysm3.mpi_smoothing(
         distributed_map, fwhm, map_dist=map_dist
     )
-    full_map_rank0 = pysm.mpi.assemble_map_on_rank0(
+    full_map_rank0 = pysm3.mpi.assemble_map_on_rank0(
         mpi_comm,
         smoothed_distributed_map,
         model.map_dist.pixel_indices,
@@ -66,7 +66,7 @@ def test_mpi_smoothing(mpi_comm):
         np.testing.assert_allclose(
             full_map_rank0,
             hp.smoothing(
-                pysm.read_map("pysm_2/dust_temp.fits", nside=nside).value,
+                pysm3.read_map("pysm_2/dust_temp.fits", nside=nside).value,
                 fwhm.to(u.rad).value,
                 iter=0,
                 lmax=lmax,

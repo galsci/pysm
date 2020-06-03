@@ -1,7 +1,7 @@
 3.2.1 (unreleased)
 ==================
 
-- In development
+- Using `poetry` to build package and manage dependencies `PR 56 <https://github.com/healpy/pysm/pull/56>`_
 
 3.2.0 (2020-04-15)
 ==================

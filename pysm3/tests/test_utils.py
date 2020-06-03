@@ -1,10 +1,10 @@
 import numpy as np
-import pysm
-import pysm.units as u
+import pysm3
+import pysm3.units as u
 
 
 def test_has_polarization():
-    h = pysm.utils.has_polarization
+    h = pysm3.utils.has_polarization
 
     m = np.empty(12)
     assert h(np.empty((3, 12)))
@@ -19,8 +19,8 @@ def test_has_polarization():
 def test_bandpass_unit_conversion():
     freqs = np.array([250, 300, 350]) * u.GHz
     weights = np.ones(len(freqs))
-    norm_weights = pysm.normalize_weights(freqs.value, weights)
-    conversion_factor = pysm.utils.bandpass_unit_conversion(freqs, weights, "uK_CMB")
+    norm_weights = pysm3.normalize_weights(freqs.value, weights)
+    conversion_factor = pysm3.utils.bandpass_unit_conversion(freqs, weights, "uK_CMB")
 
     each_factor = [
         (1 * u.uK_RJ).to_value(u.uK_CMB, equivalencies=u.cmb_equivalencies(f))

@@ -1,5 +1,5 @@
 import pytest
-import pysm
+import pysm3
 import astropy.units as units
 from astropy.tests.helper import assert_quantity_allclose
 
@@ -8,9 +8,9 @@ from astropy.tests.helper import assert_quantity_allclose
 @pytest.mark.parametrize("model_tag", ["d7", "d5", "d8"])
 def test_highfreq_dust_model(model_tag, freq):
 
-    model = pysm.Sky(preset_strings=[model_tag], nside=64)
+    model = pysm3.Sky(preset_strings=[model_tag], nside=64)
 
-    expected_output = pysm.read_map(
+    expected_output = pysm3.read_map(
         "pysm_2_test_data/check_{}_{}_uK_RJ_64.fits".format(model_tag, freq),
         64,
         unit="uK_RJ",
