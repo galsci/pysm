@@ -1,6 +1,7 @@
 3.2.1 (unreleased)
 ==================
 
+- Renamed the package to `pysm3`, therefore now need to `import pysm3`
 - Using `poetry` to build package and manage dependencies `PR 56 <https://github.com/healpy/pysm/pull/56>`_
 
 3.2.0 (2020-04-15)
