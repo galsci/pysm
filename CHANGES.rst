@@ -1,4 +1,4 @@
-3.2.1 (unreleased)
+3.2.1 (2020-06-05)
 ==================
 
 - Renamed the package to `pysm3`, therefore now need to `import pysm3`
