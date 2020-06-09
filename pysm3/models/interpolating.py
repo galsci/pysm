@@ -1,4 +1,5 @@
 import os
+import healpy as hp
 from numba import njit, types
 from numba.typed import Dict
 import numpy as np
@@ -6,6 +7,7 @@ from .template import Model
 from .. import units as u
 from .. import utils
 from ..utils import trapz_step_inplace
+import warnings
 
 
 class InterpolatingComponent(Model):
@@ -93,16 +95,21 @@ class InterpolatingComponent(Model):
                     zeros = np.zeros_like(out)
                     return np.array([out, zeros, zeros]) << u.uK_RJ
 
-        assert (
-            nu[0] >= self.freqs[0]
-        ), "Frequency not supported, requested {} Ghz < lower bound {} GHz".format(
-            nu[0].value, self.freqs[0]
-        )
-        assert (
-            nu[-1] <= self.freqs[-1]
-        ), "Frequency not supported, requested {} Ghz > upper bound {} GHz".format(
-            nu[-1], self.freqs[-1]
-        )
+        npix = hp.nside2npix(self.nside)
+        if nu[0] < self.freqs[0]:
+            warnings.warn(
+                "Frequency not supported, requested {} Ghz < lower bound {} GHz".format(
+                    nu[0], self.freqs[0]
+                )
+            )
+            return np.zeros((3, npix)) << u.uK_RJ
+        if nu[-1] > self.freqs[-1]:
+            warnings.warn(
+                "Frequency not supported, requested {} Ghz > upper bound {} GHz".format(
+                    nu[-1], self.freqs[-1]
+                )
+            )
+            return np.zeros((3, npix)) << u.uK_RJ
 
         first_freq_i, last_freq_i = np.searchsorted(self.freqs, [nu[0], nu[-1]])
         first_freq_i -= 1
