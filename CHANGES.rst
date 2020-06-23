@@ -1,7 +1,12 @@
-3.2.2 (unreleased)
+3.2.3 (unreleased)
 ==================
 
 - In progress
+
+3.2.2 (2020-06-23)
+==================
+
+- Fix packaging issue `importlib-resources` for python 3.6 was missing
 
 3.2.1 (2020-06-05)
 ==================
