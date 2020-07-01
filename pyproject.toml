@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pysm3"
-version = "3.2.2"
+version = "3.2.2.dev"
 description = "PySM generates full-sky simulations of Galactic emissions in intensity and polarization relevant to CMB experiments"
 authors = ["Andrea Zonca <code@andreazonca.com>"]
 readme = "README.rst"
