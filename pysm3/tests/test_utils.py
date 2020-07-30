@@ -1,6 +1,7 @@
 import numpy as np
 import pysm3
 import pysm3.units as u
+from astropy.tests.helper import assert_quantity_allclose
 
 
 def test_has_polarization():
@@ -17,15 +18,16 @@ def test_has_polarization():
 
 
 def test_bandpass_unit_conversion():
+    nside = 32
     freqs = np.array([250, 300, 350]) * u.GHz
     weights = np.ones(len(freqs))
-    norm_weights = pysm3.normalize_weights(freqs.value, weights)
-    conversion_factor = pysm3.utils.bandpass_unit_conversion(freqs, weights, "uK_CMB")
-
-    each_factor = [
-        (1 * u.uK_RJ).to_value(u.uK_CMB, equivalencies=u.cmb_equivalencies(f))
-        for f in freqs
-    ]
-    expected_factor = np.trapz(each_factor * norm_weights, freqs.value)
-
-    np.testing.assert_allclose(expected_factor, conversion_factor.value)
+    sky = pysm3.Sky(nside=nside, preset_strings=["c2"])
+    CMB_rj_int = sky.get_emission(freqs, weights)
+    CMB_thermo_int = CMB_rj_int*pysm3.utils.bandpass_unit_conversion(
+        freqs, weights, u.uK_CMB
+    )
+    expected_map = pysm3.read_map(
+        "pysm_2/lensed_cmb.fits", field=(0, 1), nside=nside, unit=u.uK_CMB
+    )
+    for pol in [0, 1]:
+        assert_quantity_allclose(expected_map[pol], CMB_thermo_int[pol], rtol=1e-4)
