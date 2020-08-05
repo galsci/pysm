@@ -17,7 +17,6 @@ class InterpolatingComponent(Model):
         input_units,
         nside,
         interpolation_kind="linear",
-        has_polarization=True,
         map_dist=None,
         verbose=False,
     ):
@@ -31,6 +30,9 @@ class InterpolatingComponent(Model):
         with a similar bandpass.
         If not, you can call `cached_maps.clear()` to remove the cached maps.
 
+        It always returns a IQU map to avoid broadcasting issues, even
+        if the inputs are I only.
+
         Parameters
         ----------
         path : str
@@ -42,8 +44,6 @@ class InterpolatingComponent(Model):
             HEALPix NSIDE of the output maps
         interpolation_kind : string
             Currently only linear is implemented
-        has_polarization : bool
-            whether or not to simulate also polarization maps
         map_dist : pysm.MapDistribution
             Required for partial sky or MPI, see the PySM docs
         verbose : bool
@@ -62,7 +62,6 @@ class InterpolatingComponent(Model):
         self.freqs = np.array(list(self.maps.keys()))
         self.freqs.sort()
         self.input_units = input_units
-        self.has_polarization = has_polarization
         self.interpolation_kind = interpolation_kind
         self.verbose = verbose
 
@@ -89,11 +88,10 @@ class InterpolatingComponent(Model):
 
                 freq = self.freqs[check_isclose][0]
                 out = self.read_map_by_frequency(freq)
-                if self.has_polarization:
-                    return out << u.uK_RJ
-                else:
+                if out.ndim == 1 or out.shape[0] == 1:
                     zeros = np.zeros_like(out)
-                    return np.array([out, zeros, zeros]) << u.uK_RJ
+                    out = np.array([out, zeros, zeros])
+                return out << u.uK_RJ
 
         npix = hp.nside2npix(self.nside)
         if nu[0] < self.freqs[0]:
@@ -123,13 +121,11 @@ class InterpolatingComponent(Model):
         for freq in freq_range:
             if freq not in self.cached_maps:
                 m = self.read_map_by_frequency(freq)
-                if not self.has_polarization:
+                if m.shape[0] != 3:
                     m = m.reshape((1, -1))
                 self.cached_maps[freq] = m.astype(np.float32)
                 if self.verbose:
-                    for i_pol, pol in enumerate(
-                        "IQU" if self.has_polarization else "I"
-                    ):
+                    for i_pol, pol in enumerate("IQU" if m.shape[0] == 3 else "I"):
                         print(
                             "Mean emission at {} GHz in {}: {:.4g} uK_RJ".format(
                                 freq, pol, self.cached_maps[freq][i_pol].mean()
@@ -140,6 +136,11 @@ class InterpolatingComponent(Model):
             nu, weights, freq_range, self.cached_maps
         )
 
+        if out.ndim == 1 or out.shape[0] == 1:
+            if out.ndim == 2:
+                out = out[0]
+            zeros = np.zeros_like(out)
+            out = np.array([out, zeros, zeros])
         # the output of out is always 2D, (IQU, npix)
         return out << u.uK_RJ
 
@@ -150,11 +151,11 @@ class InterpolatingComponent(Model):
     def read_map_file(self, freq, filename):
         if self.verbose:
             print("Reading map {}".format(filename))
-        m = self.read_map(
-            filename,
-            field=(0, 1, 2) if self.has_polarization else 0,
-            unit=self.input_units,
-        )
+
+        try:
+            m = self.read_map(filename, field=(0, 1, 2), unit=self.input_units,)
+        except IndexError:
+            m = self.read_map(filename, field=0, unit=self.input_units,)
         return m.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz)).value
 
 

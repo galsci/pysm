@@ -1,7 +1,7 @@
 3.2.3 (unreleased)
 ==================
 
-- In progress
+- Removed support for `has_polarization` in interpolator, always return IQU map
 
 3.2.2 (2020-06-23)
 ==================
