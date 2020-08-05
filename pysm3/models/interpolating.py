@@ -92,8 +92,8 @@ class InterpolatingComponent(Model):
                 if self.has_polarization:
                     return out << u.uK_RJ
                 else:
-                    out = out.reshape((1, -1))
-                    return out << u.uK_RJ
+                    zeros = np.zeros_like(out)
+                    return np.array([out, zeros, zeros]) << u.uK_RJ
 
         npix = hp.nside2npix(self.nside)
         if nu[0] < self.freqs[0]:
