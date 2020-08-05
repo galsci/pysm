@@ -56,7 +56,7 @@ class InterpolatingComponent(Model):
 
         # use a numba typed Dict so we can used in JIT compiled code
         self.cached_maps = Dict.empty(
-            key_type=types.float32, value_type=types.float32[:, :]
+            key_type=types.float64, value_type=types.float32[:, :]
         )
 
         self.freqs = np.array(list(self.maps.keys()))
