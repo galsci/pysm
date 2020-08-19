@@ -59,7 +59,7 @@ def normalize_weights(freqs, weights):
         return weights / np.trapz(weights, freqs)
 
 
-def bandpass_unit_conversion(freqs, weights, output_unit, input_unit=u.uK_RJ):
+def bandpass_unit_conversion(freqs, weights=None, output_unit=None, input_unit=u.uK_RJ):
     """Unit conversion from input to output unit given a bandpass
 
     The bandpass is always assumed in power units (Jy/sr)
@@ -83,6 +83,7 @@ def bandpass_unit_conversion(freqs, weights, output_unit, input_unit=u.uK_RJ):
     factor : astropy.units.Quantity
         Conversion factor in units of output_unit/input_unit
     """
+    assert output_unit is not None, "Please specify an output unit"
     freqs = check_freq_input(freqs)
     if weights is None:
         weights = np.ones(len(freqs), dtype=np.float64)
