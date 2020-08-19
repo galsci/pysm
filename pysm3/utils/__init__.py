@@ -68,6 +68,8 @@ def bandpass_unit_conversion(freqs, weights, output_unit):
         Frequency array in a unit compatible with GHz
     """
     freqs = check_freq_input(freqs)
+    if weights is None:
+        weights = np.ones(len(freqs), dtype=np.float64)
     weights_to_rj = (weights * u.uK_RJ).to_value(
             (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
         )
