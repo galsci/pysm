@@ -61,10 +61,13 @@ def normalize_weights(freqs, weights):
         return weights / np.trapz(weights, freqs)
 
 
-def bandpass_unit_conversion(freqs, weights=None, output_unit=None, input_unit=u.uK_RJ):
+def bandpass_unit_conversion(
+    freqs, weights=None, output_unit=None, input_unit=u.uK_RJ, cut=1e-10
+):
     """Unit conversion from input to output unit given a bandpass
 
     The bandpass is always assumed in power units (Jy/sr)
+    Gain weights below cut are removed.
 
     Parameters
     ----------
@@ -79,6 +82,8 @@ def bandpass_unit_conversion(freqs, weights=None, output_unit=None, input_unit=u
     input_unit : astropy.units.Unit
         Input unit for the bandpass conversion factor
         Default uK_RJ, the standard unit used internally by PySM
+    cut : float
+        Normalized gains under this value are removed
 
     Returns
     -------
@@ -90,7 +95,6 @@ def bandpass_unit_conversion(freqs, weights=None, output_unit=None, input_unit=u
     if weights is None:
         weights = np.ones(len(freqs), dtype=np.float64)
     weights /= np.trapz(weights, freqs)
-    cut = 1e-10
     if weights.min() < cut:
         good = np.logical_not(weights < cut)
         warnings.warn(
