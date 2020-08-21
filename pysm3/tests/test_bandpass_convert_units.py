@@ -18,7 +18,9 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
         https://wiki.cosmos.esa.int/planckpla/index.php/UC_CC_Tables
         """
         # Read in the fits file. This contains only the HFI frequencies 100 -> 857.
-        planck_HFI_file = utils.RemoteData().get("pysm_2_test_data/HFI_RIMO_R1.10_onlybandpasses.fits.gz")
+        planck_HFI_file = utils.RemoteData().get(
+            "pysm_2_test_data/HFI_RIMO_R1.10_onlybandpasses.fits.gz"
+        )
         with fits.open(planck_HFI_file) as hdu:
             bandpasses = [np.array(hdu[i].data) for i in range(2, 8)]
             names = [int(hdu[i].name[-3:]) for i in range(2, 8)]
@@ -29,8 +31,9 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
             wavenumber, transmission, _, _ = list(zip(*b))
             frequency = 1e-7 * constants.c * np.array(wavenumber)
             # exclude the element frqeuency[0] = 0
-            filt = lambda x: (x[0] > 1.0) & (x[0] < 1200)
-            freqs, weights = list(zip(*filter(filt, zip(frequency, transmission))))
+            good = np.logical_and(frequency > 1, frequency < 1200)
+            transmission = np.array(transmission)
+            freqs, weights = frequency[good], transmission[good]
             self.channels[name] = (np.array(freqs, dtype=np.double), np.array(weights))
 
         """Planck-provided coefficients for K_CMB to MJysr.
