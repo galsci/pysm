@@ -3,6 +3,8 @@
 # This sub-module is destined for common non-package specific utility
 # functions.
 
+import warnings
+
 import numpy as np
 from numba import njit
 
@@ -88,6 +90,15 @@ def bandpass_unit_conversion(freqs, weights=None, output_unit=None, input_unit=u
     if weights is None:
         weights = np.ones(len(freqs), dtype=np.float64)
     weights /= np.trapz(weights, freqs)
+    cut = 1e-10
+    if weights.min() < cut:
+        good = np.logical_not(weights < cut)
+        warnings.warn(
+            "Removing {}/{} points below {}".format(good.sum(), len(good), cut)
+        )
+        weights = weights[good]
+        freqs = freqs[good]
+        weights /= np.trapz(weights, freqs)
     weights_to_rj = (weights * input_unit).to_value(
         (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
     )
