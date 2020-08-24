@@ -48,6 +48,15 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
         self.CMB2MJysr_avg[545] = 58.0356 * u.MJy / u.sr / u.K_CMB
         self.CMB2MJysr_avg[857] = 2.2681 * u.MJy / u.sr / u.K_CMB
 
+        # Comparison with PySM 2
+        self.CMB2MJysr_avg_pysm2 = {}
+        self.CMB2MJysr_avg_pysm2[100] = 243.1769177398688 * u.MJy / u.sr / u.K_CMB
+        self.CMB2MJysr_avg_pysm2[143] = 376.0354144258313 * u.MJy / u.sr / u.K_CMB
+        self.CMB2MJysr_avg_pysm2[217] = 476.8415133279352 * u.MJy / u.sr / u.K_CMB
+        self.CMB2MJysr_avg_pysm2[353] = 282.97356344925504 * u.MJy / u.sr / u.K_CMB
+        self.CMB2MJysr_avg_pysm2[545] = 57.27399314424877 * u.MJy / u.sr / u.K_CMB
+        # 857 integration gives nan in PySM 2
+
         """And for MJysr to K_RJ"""
         self.MJysr2KRJ_avg = {}
         self.MJysr2KRJ_avg[100] = 0.0032548074 * u.K_RJ / (u.MJy / u.sr)
@@ -75,7 +84,14 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
                 input_unit=u.K_CMB,
                 output_unit=u.MJy / u.sr,
             )
-            assert_quantity_allclose(pysm_conv, self.CMB2MJysr_avg[freq], rtol=5 / 100)
+            assert_quantity_allclose(
+                pysm_conv, self.CMB2MJysr_avg[freq], rtol=5 * u.pct
+            )
+            assert_quantity_allclose(
+                pysm_conv,
+                self.CMB2MJysr_avg_pysm2.get(freq, pysm_conv),
+                rtol=0.02 * u.pct,
+            )
 
     def test_bandpass_unit_conversion_MJysr2KRJ(self):
 
