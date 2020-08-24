@@ -3,6 +3,8 @@
 # This sub-module is destined for common non-package specific utility
 # functions.
 
+import warnings
+
 import numpy as np
 from numba import njit
 
@@ -59,24 +61,61 @@ def normalize_weights(freqs, weights):
         return weights / np.trapz(weights, freqs)
 
 
-def bandpass_unit_conversion(freqs, weights, output_unit):
-    """Unit conversion from uK_RJ to output unit given a bandpass
+def bandpass_unit_conversion(
+    freqs, weights=None, output_unit=None, input_unit=u.uK_RJ, cut=1e-10
+):
+    """Unit conversion from input to output unit given a bandpass
+
+    The bandpass is always assumed in power units (Jy/sr)
+    Gain weights below cut are removed.
 
     Parameters
     ----------
     freqs : astropy.units.Quantity
         Frequency array in a unit compatible with GHz
+    weights : numpy array
+        Bandpass weights, if None, assume top-hat bandpass
+        Weights are always assumed in (Jy/sr), whatever the
+        input unit
+    output_unit : astropy.units.Unit
+        Output unit for the bandpass conversion factor
+    input_unit : astropy.units.Unit
+        Input unit for the bandpass conversion factor
+        Default uK_RJ, the standard unit used internally by PySM
+    cut : float
+        Normalized gains under this value are removed
+
+    Returns
+    -------
+    factor : astropy.units.Quantity
+        Conversion factor in units of output_unit/input_unit
     """
+    assert output_unit is not None, "Please specify an output unit"
     freqs = check_freq_input(freqs)
-    factors = (np.ones(len(freqs), dtype=np.float) * u.uK_RJ).to_value(
-        output_unit, equivalencies=u.cmb_equivalencies(freqs * u.GHz)
+    if weights is None:
+        weights = np.ones(len(freqs), dtype=np.float64)
+    weights /= np.trapz(weights, freqs)
+    if weights.min() < cut:
+        good = np.logical_not(weights < cut)
+        warnings.warn(
+            "Removing {}/{} points below {}".format(good.sum(), len(good), cut)
+        )
+        weights = weights[good]
+        freqs = freqs[good]
+        weights /= np.trapz(weights, freqs)
+    weights_to_rj = (weights * input_unit).to_value(
+        (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
+    )
+    weights_to_out = (weights * output_unit).to_value(
+        (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
     )
     if len(freqs) > 1:
-        w = normalize_weights(freqs, weights)
-        factor = np.trapz(factors * w, freqs)
+        factor = np.trapz(weights_to_rj, freqs) / np.trapz(weights_to_out, freqs)
     else:
-        factor = factors[0]
-    return factor * u.Unit(u.Unit(output_unit) / u.uK_RJ)
+        factor = (1.0 * u.uK_RJ).to_value(
+            output_unit, equivalencies=u.cmb_equivalencies(freqs * u.GHz)
+        )
+    return factor * u.Unit(output_unit / input_unit)
 
 
 @njit
