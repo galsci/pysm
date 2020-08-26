@@ -57,6 +57,15 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
         self.CMB2MJysr_avg_pysm2[545] = 57.27399314424877 * u.MJy / u.sr / u.K_CMB
         # 857 integration gives nan in PySM 2
 
+        # Comparison with @keskitalo's `tod2flux`
+        self.CMB2MJysr_avg_tod2flux = {}
+        self.CMB2MJysr_avg_tod2flux[100] = 243.85683354532185 * u.MJy / u.sr / u.K_CMB
+        self.CMB2MJysr_avg_tod2flux[143] = 371.6089707231943 * u.MJy / u.sr / u.K_CMB
+        self.CMB2MJysr_avg_tod2flux[217] = 483.08838646305196 * u.MJy / u.sr / u.K_CMB
+        self.CMB2MJysr_avg_tod2flux[353] = 287.4084320551084 * u.MJy / u.sr / u.K_CMB
+        self.CMB2MJysr_avg_tod2flux[545] = 58.00914618834249 * u.MJy / u.sr / u.K_CMB
+        self.CMB2MJysr_avg_tod2flux[857] = 2.2381134501410505 * u.MJy / u.sr / u.K_CMB
+
         """And for MJysr to K_RJ"""
         self.MJysr2KRJ_avg = {}
         self.MJysr2KRJ_avg[100] = 0.0032548074 * u.K_RJ / (u.MJy / u.sr)
@@ -65,6 +74,27 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
         self.MJysr2KRJ_avg[353] = 0.00026120163 * u.K_RJ / (u.MJy / u.sr)
         self.MJysr2KRJ_avg[545] = 0.00010958025 * u.K_RJ / (u.MJy / u.sr)
         self.MJysr2KRJ_avg[857] = 4.4316316e-5 * u.K_RJ / (u.MJy / u.sr)
+
+        # Comparison with @keskitalo's `tod2flux`
+        self.MJysr2KRJ_avg_tod2flux = {}
+        self.MJysr2KRJ_avg_tod2flux[100] = (
+            0.0031315339458127182 * u.K_RJ / (u.MJy / u.sr)
+        )
+        self.MJysr2KRJ_avg_tod2flux[143] = (
+            0.0015988463655762359 * u.K_RJ / (u.MJy / u.sr)
+        )
+        self.MJysr2KRJ_avg_tod2flux[217] = (
+            0.0006436743956801712 * u.K_RJ / (u.MJy / u.sr)
+        )
+        self.MJysr2KRJ_avg_tod2flux[353] = (
+            0.00024388323334674145 * u.K_RJ / (u.MJy / u.sr)
+        )
+        self.MJysr2KRJ_avg_tod2flux[545] = (
+            0.00010246437528390336 * u.K_RJ / (u.MJy / u.sr)
+        )
+        self.MJysr2KRJ_avg_tod2flux[857] = (
+            4.321471531508259e-05 * u.K_RJ / (u.MJy / u.sr)
+        )
 
     def test_bandpass_unit_conversion_CMB2MJysr(self):
         """Note that the precision is limited by uncertainty on the bandpass central frequency.
@@ -92,6 +122,9 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
                 self.CMB2MJysr_avg_pysm2.get(freq, pysm_conv),
                 rtol=0.02 * u.pct,
             )
+            assert_quantity_allclose(
+                pysm_conv, self.CMB2MJysr_avg_tod2flux.get(freq), rtol=1 * u.pct,
+            )
 
     def test_bandpass_unit_conversion_MJysr2KRJ(self):
 
@@ -103,6 +136,9 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
                 output_unit=u.K_RJ,
             )
             assert_quantity_allclose(pysm_conv, self.MJysr2KRJ_avg[freq], rtol=6 / 100)
+            assert_quantity_allclose(
+                pysm_conv, self.MJysr2KRJ_avg_tod2flux[freq], rtol=1 / 100
+            )
 
 
 class test_bandpass_convert_integration(unittest.TestCase):
