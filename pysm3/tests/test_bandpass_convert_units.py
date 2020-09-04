@@ -57,14 +57,14 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
         self.CMB2MJysr_avg_pysm2[545] = 57.27399314424877 * u.MJy / u.sr / u.K_CMB
         # 857 integration gives nan in PySM 2
 
-        # Comparison with @keskitalo's `tod2flux`
+        # Comparison with @keskitalo's `tod2flux` removing the nu^-1 IRAS convention
         self.CMB2MJysr_avg_tod2flux = {}
-        self.CMB2MJysr_avg_tod2flux[100] = 243.85683354532185 * u.MJy / u.sr / u.K_CMB
-        self.CMB2MJysr_avg_tod2flux[143] = 371.6089707231943 * u.MJy / u.sr / u.K_CMB
-        self.CMB2MJysr_avg_tod2flux[217] = 483.08838646305196 * u.MJy / u.sr / u.K_CMB
-        self.CMB2MJysr_avg_tod2flux[353] = 287.4084320551084 * u.MJy / u.sr / u.K_CMB
-        self.CMB2MJysr_avg_tod2flux[545] = 58.00914618834249 * u.MJy / u.sr / u.K_CMB
-        self.CMB2MJysr_avg_tod2flux[857] = 2.2381134501410505 * u.MJy / u.sr / u.K_CMB
+        self.CMB2MJysr_avg_tod2flux[100] = 243.08197 * u.MJy / u.sr / u.K_CMB
+        self.CMB2MJysr_avg_tod2flux[143] = 375.959 * u.MJy / u.sr / u.K_CMB
+        self.CMB2MJysr_avg_tod2flux[217] = 476.18509 * u.MJy / u.sr / u.K_CMB
+        self.CMB2MJysr_avg_tod2flux[353] = 283.31489 * u.MJy / u.sr / u.K_CMB
+        self.CMB2MJysr_avg_tod2flux[545] = 57.339909 * u.MJy / u.sr / u.K_CMB
+        self.CMB2MJysr_avg_tod2flux[857] = 2.2449586 * u.MJy / u.sr / u.K_CMB
 
         """And for MJysr to K_RJ"""
         self.MJysr2KRJ_avg = {}
@@ -97,14 +97,19 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
         )
 
     def test_bandpass_unit_conversion_CMB2MJysr(self):
-        """Note that the precision is limited by uncertainty on the bandpass central frequency.
+        """
 
         Also from `hfi_unit_conversion.pro` at
         https://irsa.ipac.caltech.edu/data/Planck/release_1/software/index.html
         It looks like Planck is averaging the coefficients, it is not computing
         the coefficient from the averaged bandpass as we are doing here.
 
-        So the agreement to 5 or 6% looks reasonable
+        Moreover, the convention for the Planck HFI bandpass conversion is to
+        use the IRAS convention of considering a spectrum of shape v^-1
+        so the agreement to 5 or 6% looks reasonable.
+        If we compare with Reijo Keskitalo's tod2flux, which implements the Planck
+        algorithm and disable the nu^-1 factor in the integration, agreement is
+        below 1% for all channels except 857GHz which is ~1.3%.
         """
 
         for freq in self.CMB2MJysr_avg.keys():
@@ -123,7 +128,7 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
                 rtol=0.02 * u.pct,
             )
             assert_quantity_allclose(
-                pysm_conv, self.CMB2MJysr_avg_tod2flux.get(freq), rtol=1 * u.pct,
+                pysm_conv, self.CMB2MJysr_avg_tod2flux.get(freq), rtol=1.3 * u.pct,
             )
 
     def test_bandpass_unit_conversion_MJysr2KRJ(self):
@@ -135,9 +140,11 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
                 input_unit=u.MJy / u.sr,
                 output_unit=u.K_RJ,
             )
-            assert_quantity_allclose(pysm_conv, self.MJysr2KRJ_avg[freq], rtol=6 / 100)
             assert_quantity_allclose(
-                pysm_conv, self.MJysr2KRJ_avg_tod2flux[freq], rtol=1 / 100
+                pysm_conv, self.MJysr2KRJ_avg[freq], rtol=6 * u.pct
+            )
+            assert_quantity_allclose(
+                pysm_conv, self.MJysr2KRJ_avg_tod2flux[freq], rtol=2 * u.pct
             )
 
 
