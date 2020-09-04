@@ -28,16 +28,12 @@ class CMBMap(Model):
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
-        convert_to_uK_RJ = (np.ones(len(freqs), dtype=np.double) * u.uK_CMB).to_value(
-            u.uK_RJ, equivalencies=u.cmb_equivalencies(freqs * u.GHz)
+
+        scaling_factor = utils.bandpass_unit_conversion(
+            freqs * u.GHz, weights, output_unit=u.uK_RJ, input_unit=u.uK_CMB
         )
 
-        if len(freqs) == 1:
-            scaling_factor = convert_to_uK_RJ[0]
-        else:
-            scaling_factor = np.trapz(convert_to_uK_RJ * weights, x=freqs)
-
-        return u.Quantity(self.map.value * scaling_factor, unit=u.uK_RJ, copy=False)
+        return u.Quantity(self.map * scaling_factor, unit=u.uK_RJ, copy=False)
 
 
 """The following code is edited from the taylens code: Naess,

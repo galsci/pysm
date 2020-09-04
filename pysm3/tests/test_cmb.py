@@ -9,7 +9,6 @@ def test_cmb_map():
 
     nside = 32
 
-    # pretend for testing that the Dust is CMB
     model = pysm3.CMBMap(map_IQU="pysm_2/lensed_cmb.fits", nside=nside)
 
     freq = 100 * u.GHz
