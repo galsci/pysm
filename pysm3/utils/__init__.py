@@ -31,11 +31,17 @@ def has_polarization(m):
 
 
 def normalize_weights(freqs, weights):
-    """Normalize bandpass weights
+    """Normalize bandpass weights to support integration "in K_RJ"
 
     Bandpasses are assumed to be in power units, i.e. Jy/sr
-    and are then converted to K_RJ which are the units used
-    everywhere else in PySM
+    this function takes the input weights and multiplies them
+    by the conversion factor from RJ to Jy/sr, so that when
+    we do the integration with foregrounds defined in RJ units
+    using these weights, we first convert to power and do the
+    integration in power.
+    Then they are also all multiplied by the integrated conversion
+    factor from Jy/sr to RJ, so that the output of the integral
+    is transformed back to RJ.
 
     Parameters
     ----------
@@ -55,6 +61,7 @@ def normalize_weights(freqs, weights):
     else:
         if weights is None:
             weights = np.ones(len(freqs), dtype=np.float)
+        weights = weights / np.trapz(weights, freqs)
         weights = (weights * u.uK_RJ).to_value(
             (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
         )
@@ -92,29 +99,31 @@ def bandpass_unit_conversion(
     """
     assert output_unit is not None, "Please specify an output unit"
     freqs = check_freq_input(freqs)
-    if weights is None:
-        weights = np.ones(len(freqs), dtype=np.float64)
-    weights /= np.trapz(weights, freqs)
-    if weights.min() < cut:
-        good = np.logical_not(weights < cut)
-        warnings.warn(
-            "Removing {}/{} points below {}".format(good.sum(), len(good), cut)
-        )
-        weights = weights[good]
-        freqs = freqs[good]
-        weights /= np.trapz(weights, freqs)
-    weights_to_rj = (weights * input_unit).to_value(
-        (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
-    )
-    weights_to_out = (weights * output_unit).to_value(
-        (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
-    )
-    if len(freqs) > 1:
-        factor = np.trapz(weights_to_rj, freqs) / np.trapz(weights_to_out, freqs)
-    else:
-        factor = (1.0 * u.uK_RJ).to_value(
+    if len(freqs) == 1:
+        factor = (1.0 * input_unit).to_value(
             output_unit, equivalencies=u.cmb_equivalencies(freqs * u.GHz)
         )
+    else:
+        if weights is None:
+            weights = np.ones(len(freqs), dtype=np.float64)
+        else:
+            weights = weights.copy()
+        weights /= np.trapz(weights, freqs)
+        if weights.min() < cut:
+            good = np.logical_not(weights < cut)
+            warnings.warn(
+                "Removing {}/{} points below {}".format(good.sum(), len(good), cut)
+            )
+            weights = weights[good]
+            freqs = freqs[good]
+            weights /= np.trapz(weights, freqs)
+        weights_to_rj = (weights * input_unit).to_value(
+            (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
+        )
+        weights_to_out = (weights * output_unit).to_value(
+            (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
+        )
+        factor = np.trapz(weights_to_rj, freqs) / np.trapz(weights_to_out, freqs)
     return factor * u.Unit(output_unit / input_unit)
 
 
