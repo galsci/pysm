@@ -31,11 +31,17 @@ def has_polarization(m):
 
 
 def normalize_weights(freqs, weights):
-    """Normalize bandpass weights
+    """Normalize bandpass weights to support integration "in K_RJ"
 
     Bandpasses are assumed to be in power units, i.e. Jy/sr
-    and are then converted to K_RJ which are the units used
-    everywhere else in PySM
+    this function takes the input weights and multiplies them
+    by the conversion factor from RJ to Jy/sr, so that when
+    we do the integration with foregrounds defined in RJ units
+    using these weights, we first convert to power and do the
+    integration in power.
+    Then they are also all multiplied by the integrated conversion
+    factor from Jy/sr to RJ, so that the output of the integral
+    is transformed back to RJ.
 
     Parameters
     ----------
@@ -55,9 +61,10 @@ def normalize_weights(freqs, weights):
     else:
         if weights is None:
             weights = np.ones(len(freqs), dtype=np.float)
-        # weights = (weights * u.uK_RJ).to_value(
-        #     (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
-        # )
+        weights = weights / np.trapz(weights, freqs)
+        weights = (weights * u.uK_RJ).to_value(
+            (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
+        )
         return weights / np.trapz(weights, freqs)
 
 
