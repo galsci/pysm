@@ -27,7 +27,10 @@ class CMBMap(Model):
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
         freqs = utils.check_freq_input(freqs)
-        weights = utils.normalize_weights(freqs, weights)
+        # do not use normalize weights because that includes a transformation
+        # to spectral radiance and then back to RJ
+        if weights is None:
+            weights = np.ones(len(freqs), dtype=np.float)
 
         scaling_factor = utils.bandpass_unit_conversion(
             freqs * u.GHz, weights, output_unit=u.uK_RJ, input_unit=u.uK_CMB
