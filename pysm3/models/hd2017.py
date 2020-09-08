@@ -408,7 +408,8 @@ class HensleyDraine2017(Model):
             temp[Q, :] = self.Q_ref.value
             temp[U, :] = self.U_ref.value
             temp[I] *= scaling_i
-            temp[Q:] *= scaling_p
+            temp[Q] *= scaling_p
+            temp[U] *= scaling_p
             if len(freqs) > 1:
                 utils.trapz_step_inplace(freqs, weights, i, temp, output)
         return output << u.uK_RJ
