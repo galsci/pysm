@@ -9,7 +9,7 @@ repository = "https://github.com/healpy/pysm"
 [tool.poetry.dependencies]
 python = "^3.6"
 healpy = "^1.13.0"
-numba = "^0.49.1"
+numba = ">0.49.1"
 toml = "^0.10.1"
 astropy = "^4.0.1"
 sphinx = {version = "^3.0.4", optional = true}
