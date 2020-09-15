@@ -1,6 +1,11 @@
-3.2.3 (unreleased)
+3.3.1 (unreleased)
 ==================
 
+3.3.0 (2020-09-12)
+==================
+
+- Avoid an imcompatibility issue with ``numba``, see `Pull Request 63 <https://github.com/healpy/pysm/pull/63>`_
+- Fix a severe bug in unit conversion with bandpass integration, which can give an overall scale error of a few percent at high frequency for all components, see `Issue 59 <https://github.com/healpy/pysm/issues/59>`_, also imported all bandpass integration tests from PySM 2 and added a comparison with the `tod2flux` tool by @keskitalo
 - Removed support for `has_polarization` in interpolator, always return IQU map
 
 3.2.2 (2020-06-23)
