@@ -37,7 +37,7 @@ class RemoteData:
                 warnings.warn(f"Access data from {full_path}")
                 return full_path
         with data.conf.set_temp("dataurl", self.data_url), data.conf.set_temp(
-            "remote_timeout", 30
+            "remote_timeout", 90
         ):
             warnings.warn(f"Retrieve data for {filename} (if not cached already)")
             full_path = data.get_pkg_data_filename(filename, show_progress=True)
