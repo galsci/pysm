@@ -1,6 +1,6 @@
 import numpy as np
-import pysm
-import pysm.units as u
+import pysm3 as pysm
+import pysm3.units as u
 
 from mpi4py import MPI
 
