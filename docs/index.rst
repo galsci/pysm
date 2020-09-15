@@ -1,7 +1,7 @@
 PySM Documentation
 ==================
 
-This code generates full-sky simulations of Galactic foregrounds in intensity and polarization relevant for CMB experiments. The components simulated are: thermal dust, synchrotron, AME, free-free, and CMB at a given HEALPix $N_{side}$, with an option to integrate over a bandpass and to smooth with a given beam.
+PySM 3 generates full-sky simulations of Galactic foregrounds in intensity and polarization relevant for CMB experiments. The components simulated are: thermal dust, synchrotron, AME, free-free, and CMB at a given HEALPix $N_{side}$, with an option to integrate over a bandpass and to smooth with a given beam.
 
 There is scope for a few options for the model for each component, attempting to be consistent with current data.
 
@@ -31,7 +31,7 @@ For example free-free:
 Dependencies
 ============
 
-PySM is written in Python, for the requirements
+PySM is written in pure Python, multi-threading and Just-In-Time compilation are provided by `numba`, for the requirements
 see `pyproject.toml` on PyPI and within the package.
 
 In order to run in parallel with MPI, it also needs:
@@ -50,7 +50,7 @@ It also has a `mpich` version::
 Installation
 ============
 
-PySM is a pure Python package, the easiest way to install the last release is to use `conda`::
+The easiest way to install the last release is to use `conda`::
 
     conda install -c conda-forge pysm3
 
