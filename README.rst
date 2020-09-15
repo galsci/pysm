@@ -29,7 +29,7 @@ Release
 Follow the `Astropy guide to release a new version <https://docs.astropy.org/en/stable/development/astropy-package-template.html>`.
 
 .. |Build Status| image:: https://travis-ci.com/healpy/pysm.svg?branch=master
-   :target: https://travis-ci.org/healpy/pysm
+   :target: https://travis-ci.com/healpy/pysm
 .. |Documentation Status| image:: https://readthedocs.org/projects/pysm3/badge/?version=latest
    :target: https://pysm3.readthedocs.io/en/latest/?badge=latest
 .. |PyPI| image:: https://img.shields.io/pypi/v/pysm3
