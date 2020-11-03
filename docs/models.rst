@@ -3,7 +3,7 @@
 Summary of Models
 *****************
 
-For all details of the models also check the `presets.cfg file <https://github.com/healpy/pysm/blob/master/pysm/data/presets.cfg>`_.
+For all details of the models also check the `presets.cfg file <https://github.com/healpy/pysm/blob/master/pysm3/data/presets.cfg>`_.
 
 Input templates
 ===============
@@ -34,6 +34,10 @@ Dust
 - **d5**: implementation of the dust model described in Hensley and Draine 2017.
   
 - **d6**: implementation of the frequency decorrelation of dust, modelling the impact of averaging over spatially varying dust spectral indices both unresolved and along the line of sight. We take an analytic frequency covariance (Vansyngel 2016 arXiv:1611.02577) to calculate the resulting frequency dependence. The user specifies a single parameter, the correlation length. The smaller the correlation length, the larger the decorrelation. This parameter is constant across the sky.
+
+- **d7**: modification of `d5` with iron inclusions in the grain composition.
+
+- **d8**: simplified version of `d7` where the interstellar radiation field (ISRF) strength, instead of being a random realization, is fixed at 0.2.  This corresponds reasonably well to a Modifield Black Body model with temperature of 20K and an index of 1.54.
 
 Synchrotron
 ===========
