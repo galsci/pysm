@@ -27,7 +27,8 @@ The PySM 2 paper describes how input data (e.g. component separation maps from P
 most templates have been smoothed to remove high $\ell$ noise and then added small scale fluctuations.
 Here we try to reproduce the process to clarify it:
 
-* `Dust polarization templates from Planck Commander component separation outputs <template_preprocessing/reproduce_pysm2_dust_pol.ipynb>`_, used in all dust models from `d0` to `d8` except `d4`
+* `Dust polarization templates from Planck Commander component separation outputs <preprocess-templates/reproduce_pysm2_dust_pol.html>`_, used in all dust models from `d0` to `d8` except `d4`
+* `Synchrotron polarization templates from WMAP low frequency maps <preprocess-templates/reproduce_pysm2_sync_pol.html>`_, used in all synchrotron models
 
 
 Dust
