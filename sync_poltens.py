@@ -117,15 +117,19 @@ def InspectGNILCMasks():
 def InspectSyncMaps():
     """ Plot Haslam and Kband maps.
     """
-    int_map, h = hp.read_map(str(DATA_DIR / MAPS["Haslam"]), h=True)
-    pol_map, h = hp.read_map(str(DATA_DIR / MAPS["KBand"]), field=(1, 2), h=True)
-    hp.mollview(int_map, title=r"${\rm Haslsm,~408~MHz~desourced~destriped}$", cmap="div yel grn")
+    int_map = hp.read_map(str(DATA_DIR / MAPS["Haslam"])) * 1e6 * (23. / 0.408) ** -3
+    pol_map = hp.read_map(str(DATA_DIR / MAPS["KBand"]), field=(1, 2)) * 1e3
+    hp.mollview(int_map, min=0, max=500, title=r"${\rm Haslsm,~408~MHz~desourced~destriped}$", cmap="div yel grn")
     fig = plt.gcf()
     fig.savefig(Path(MAPS["Haslam"]).with_suffix('.pdf'), bbox_inches='tight')
     
-    hp.mollview(pol_map[1], title=r"${\rm Pol~Mask}$", cmap="div yel grn")
+    hp.mollview(pol_map[0], min=-250, max=250, title=r"${\rm WMAP~K~Band,~Q}$", cmap="div yel grn")
     fig = plt.gcf()
-    fig.savefig(Path(MAPS["KBand"]).with_suffix('.pdf'), bbox_inches='tight')
+    fig.savefig(Path(MAPS["KBand"]).with_suffix('.pdf'),  bbox_inches='tight')
+
+    hp.mollview(np.sqrt(pol_map[0] ** 2 + pol_map[1] ** 2), min=0, max=500, title=r"${\rm WMAP~K~Band,~P}$", cmap="div yel grn")
+    fig = plt.gcf()
+    fig.savefig("wmap_kband_P.pdf",  bbox_inches='tight')
     return
 
 
@@ -133,32 +137,60 @@ def DoFrolovTransform():
     """ Do the Frolov transform.
     """
     IQU = np.zeros((3, hp.nside2npix(512)))
-    IQU[0, :], h = hp.read_map(str(DATA_DIR / MAPS["Haslam"]), h=True) 
-    print(h)
-    IQU[1:, :], h = hp.read_map(str(DATA_DIR / MAPS["KBand"]), field=(1, 2), h=True)
-    print(h)
+    IQU[0, :] = hp.read_map(str(DATA_DIR / MAPS["Haslam"])) * 1e6 * (23. / 0.408) ** -3 # convert units, and scale to 23 GHz
+    IQU[1:, :] = hp.read_map(str(DATA_DIR / MAPS["KBand"]), field=(1, 2)) * 1e3 # convert units
 
     # 0.88 degrees Kband res
     # 56 arcmin beam size haslam
 
-    IQU[0, :] *= 1e6 * (23. / 0.408) ** -3 # convert units, and scale to 23 GHz
-    IQU[1, :] *= 1e3 # convert units
-
-    IQU = hp.smoothing(IQU, fwhm=1. * np.pi/180.)
+    #IQU = hp.smoothing(IQU, fwhm=1. * np.pi/180.)
 
     iqu = FrolovTransformForward(IQU)
 
-    hp.mollview(iqu[0])
+    hp.mollview(iqu[0], min=-2, max=10, title=r"Frolov $i$")
     fig = plt.gcf()
-    fig.savefig("transformed_i.pdf")
-    hp.mollview(iqu[1])
+    fig.savefig("transformed_i_naive.pdf")
+    hp.mollview(iqu[1], min=-5, max=5, title=r"Frolov $q$")
     fig = plt.gcf()
-    fig.savefig("transformed_q.pdf")
-    hp.mollview(iqu[2])
+    fig.savefig("transformed_q_naive.pdf")
+    hp.mollview(iqu[2], min=-5, max=5, title=r"Frolov $u$")
     fig = plt.gcf()
-    fig.savefig("transformed_u.pdf")
+    fig.savefig("transformed_u_naive.pdf")
 
-    hp.write_map(str(DATA_DIR / "transformed_iqu.fits"), iqu, overwrite=True)
+    hp.write_map(str(DATA_DIR / "transformed_iqu_naive.fits"), iqu, overwrite=True)
+
+    iqu = FrolovTransformForward(hp.smoothing(IQU, fwhm=np.pi/180.))
+
+    hp.mollview(iqu[0], min=-2, max=10, title=r"${\rm Frolov}~i$")
+    fig = plt.gcf()
+    fig.savefig("transformed_i_2degfwhm.pdf")
+    hp.mollview(iqu[1], min=-2, max=2, title=r"${\rm Frolov}~q$")
+    fig = plt.gcf()
+    fig.savefig("transformed_q_2degfwhm.pdf")
+    hp.mollview(iqu[2], min=-2, max=2, title=r"${\rm Frolov}~u$")
+    fig = plt.gcf()
+    fig.savefig("transformed_u_2degfwhm.pdf")
+
+    hp.write_map(str(DATA_DIR / "transformed_iqu_fwhm2deg.fits"), iqu, overwrite=True)
+
+    IQU = hp.smoothing(IQU, fwhm=2 * np.pi/180.)
+    P = np.sqrt(IQU[1] ** 2 + IQU[2] ** 2)
+    idx = np.where(P > IQU[0])[0]
+    rescaling = np.sqrt(0.99 * IQU[0] ** 2 / P ** 2)
+    IQU[1:, idx] *= rescaling[None, idx]
+    iqu = FrolovTransformForward(IQU)
+
+    hp.mollview(iqu[0], min=-2, max=10, title=r"${\rm Frolov}~i$")
+    fig = plt.gcf()
+    fig.savefig("transformed_i_2degfwhm_corrected.pdf")
+    hp.mollview(iqu[1], min=-2, max=2, title=r"${\rm Frolov}~q$")
+    fig = plt.gcf()
+    fig.savefig("transformed_q_2degfwhm_corrected.pdf")
+    hp.mollview(iqu[2], min=-2, max=2, title=r"${\rm Frolov}~u$")
+    fig = plt.gcf()
+    fig.savefig("transformed_u_2degfwhm_corrected.pdf")
+
+    hp.write_map(str(DATA_DIR / "transformed_iqu_fwhm2deg_corrected.fits"), iqu, overwrite=True)
     return 
 
 
@@ -202,6 +234,23 @@ def CalculatePowerspectra(nside=512, lmax=1000):
         else:
             fname = "haslam_kband_spectra_cl.fits"
         hp.write_cl(str(DATA_DIR / fname), cl, overwrite=True)
+
+    iqu = hp.read_map(str(DATA_DIR / "transformed_iqu_fwhm2deg_corrected.fits"), field=(0, 1, 2))
+    for is_Dell in [True, False]:
+        binning = nmt.NmtBin(nside=nside, nlb=1, lmax=lmax, is_Dell=is_Dell)
+        f2 = nmt.NmtField(joint_mask, iqu[1:])
+        f0 = nmt.NmtField(joint_mask, [iqu[0]])
+
+        cl_22 = nmt.compute_full_master(f2, f2, binning)
+        cl_00 = nmt.compute_full_master(f0, f0, binning)
+
+        cl = np.concatenate([binning.get_effective_ells()[None, :], cl_00, cl_22])
+        if is_Dell:
+            fname = "frolov_2degfwhm_corr_dl.fits"
+        else:
+            fname = "frolov_2degfwhm_corr_cl.fits"
+        hp.write_cl(str(DATA_DIR / fname), cl, overwrite=True)
+
     return 
 
 def PlotPowerspectra():
@@ -221,6 +270,20 @@ def PlotPowerspectra():
     ax.tick_params(direction="inout", which="both")
     ax.set_title(r"${\rm Data~at~23~GHz}$")
     fig.savefig("spectra_TTEEBB.pdf")
+
+    dl = hp.read_cl(str(DATA_DIR / "frolov_2degfwhm_corr_dl.fits"))
+    fig, ax = plt.subplots(1, 1)
+    ax.loglog(dl[0], dl[1], label=r"${\rm tt}$")    
+    ax.loglog(dl[0], dl[2], label=r"${\rm ee}$")
+    ax.loglog(dl[0], dl[5], label=r"${\rm bb}$")
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.set_xlabel(r"$\ell$")
+    ax.set_ylabel(r"$\ell (\ell + 1) / 2 \pi~C_\ell~({\rm \mu K}^2)$")
+    ax.legend(frameon=False)
+    ax.tick_params(direction="inout", which="both")
+    ax.set_title(r"${\rm Frolov~transformed~spectra}$")
+    fig.savefig("frolov_spectra_tteebb.pdf")
     return
 
 
@@ -254,8 +317,15 @@ def PowerLaw(ells, amplitude, gamma):
 def main(argv):
     del argv
     VerifyData()
-    if FLAGS.mode == "inspect":
+    if FLAGS.mode == "all":
         InspectGNILCMasks()
+        InspectSyncMaps()
+        CalculatePowerspectra()
+        PlotPowerspectra()
+        PerformFitStokes()
+        DoFrolovTransform()
+    if FLAGS.mode == "inspect":
+        #InspectGNILCMasks()
         InspectSyncMaps()
     if FLAGS.mode == "powerspectra":
         CalculatePowerspectra()
@@ -268,5 +338,5 @@ def main(argv):
     return
 
 if __name__ == '__main__':
-    flags.DEFINE_enum("mode", "inspect", ["inspect", "powerspectra", "plot", "fit", "transform"], "Which mode to run in.")
+    flags.DEFINE_enum("mode", "inspect", ["all", "inspect", "powerspectra", "plot", "fit", "transform"], "Which mode to run in.")
     app.run(main)
