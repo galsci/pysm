@@ -34,6 +34,16 @@ Dependencies
 PySM is written in pure Python, multi-threading and Just-In-Time compilation are provided by `numba`, for the requirements
 see `pyproject.toml` on PyPI and within the package.
 
+How many threads are used by `numba` can be controlled by setting::
+
+    export OMP_NUM_THREADS=2
+    export NUMBA_NUM_THREADS=2
+
+For debugging purposes, you can also completely disable the `numba` JIT compilation and have the code just use plain
+Python, which is slower, but easier to debug::
+
+    export NUMBA_DISABLE_JIT=1
+
 In order to run in parallel with MPI, it also needs:
 
 * `mpi4py`
