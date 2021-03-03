@@ -1,4 +1,6 @@
 import numpy as np
+import healpy as hp
+import astropy.units as u
 
 
 def map_to_log_pol_tens(m):
@@ -17,7 +19,7 @@ def log_pol_tens_to_map(log_pol_tens):
     return m
 
 
-def sigmoid(x, x0, width, power=10):
+def sigmoid(x, x0, width, power=4):
     """Sigmoid function given start point and width
 
     Parameters
@@ -36,3 +38,6 @@ def sigmoid(x, x0, width, power=10):
     sigmoid : array
         sigmoid, same length of x"""
     return 1.0 / (1 + np.exp(-power * (x - x0 - width / 2) / width))
+    # return np.heaviside(x - x0, 0)
+    #fwhm = 20 * u.arcmin
+    #return 1 - hp.gauss_beam(fwhm=fwhm.to_value(u.radian), lmax=x[-1])**2
