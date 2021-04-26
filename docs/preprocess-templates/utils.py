@@ -48,7 +48,7 @@ def run_namaster(m, mask, lmax):
 
     cl_namaster_I = nmt.compute_full_master(f_0, f_0, binning)
 
-    cl["II"] = np.concatenate([[0, 0], cl_namaster_I[0]])
+    cl["TT"] = np.concatenate([[0, 0], cl_namaster_I[0]])
     ell = np.concatenate([[0, 1], binning.get_effective_ells()])
     cl_norm = ell * (ell + 1) / np.pi / 2
     cl_norm[0] = 1
