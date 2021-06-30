@@ -102,8 +102,8 @@ class Sky(Model):
         component_config : dict or TOML filename
             Modify the configuration of one of the included components or create
             a new component based on a Python dictionary or a TOML filename,
-            see for example the TOML configuration file for the `presets`_
-        .. _presets: https://github.com/healpy/pysm/blob/master/pysm/data/presets.cfg
+            see for example the TOML configuration file for the `presets.cfg`
+            file in the `data` folder of the package.
         component_config : list of Model subclasses
             List of component objects already initialized, typically subclasses of PySM.Model
             This is the most flexible way to provide a custom model to PySM
