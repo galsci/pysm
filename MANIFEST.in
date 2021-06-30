@@ -4,7 +4,7 @@ include setup.cfg
 include LICENSE.rst
 include pyproject.toml
 
-recursive-include pysm *.pyx *.c *.pxd
+recursive-include pysm3 *.pyx *.c *.pxd
 recursive-include docs *
 recursive-include licenses *
 recursive-include scripts *

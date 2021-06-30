@@ -1,4 +1,6 @@
 # flake8: noqa
+from ._astropy_init import *   # noqa
+
 try:
     from importlib.metadata import version, PackageNotFoundError  # type: ignore
 except ImportError:  # pragma: no cover
