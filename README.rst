@@ -26,7 +26,10 @@ See the `documentation <https://pysm3.readthedocs.io/en/latest/#installation>`_
 Release
 -------
 
-Follow the `Astropy guide to release a new version <https://docs.astropy.org/en/stable/development/astropy-package-template.html>`.
+* Tag the new version with git
+* ``pip install build --upgrade``
+* ``python -m build --sdist --wheel .``
+* ``twine upload dist/*``
 
 .. |CI Tests| image:: https://github.com/healpy/pysm/actions/workflows/ci_tests.yml/badge.svg
    :target: https://github.com/healpy/pysm/actions/workflows/ci_tests.yml
