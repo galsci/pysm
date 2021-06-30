@@ -62,6 +62,10 @@ jobs:
     - name: Test with tox
       run: |
         tox -e ${{ matrix.toxenv }}
+    - name: MPI test
+      if: ${{ matrix.toxenv != 'codestyle' }}
+      run: |
+        mpirun -np 2 python -m pytest pysm3/tests/test_read_map_mpi.py;
     # This is an example of how to upload coverage to codecov
     # - name: Upload coverage to codecov
     #   if: "contains(matrix.toxenv, '-cov')"
