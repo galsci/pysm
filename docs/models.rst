@@ -3,7 +3,7 @@
 Summary of Models
 *****************
 
-For all details of the models also check the `presets.cfg file <https://github.com/healpy/pysm/blob/master/pysm3/data/presets.cfg>`_.
+For all details of the models also check the `presets.cfg file <https://github.com/healpy/pysm/blob/main/pysm3/data/presets.cfg>`_.
 
 Input templates
 ===============

@@ -97,7 +97,7 @@ Execute the unit tests with::
 Tutorials
 =========
 
-All the tutorials are Jupyter Notebooks and can be accessed `from the repository <https://github.com/healpy/pysm/tree/master/docs>`_:
+All the tutorials are Jupyter Notebooks and can be accessed `from the repository <https://github.com/healpy/pysm/tree/main/docs>`_:
 
 .. toctree::
   :maxdepth: 2
