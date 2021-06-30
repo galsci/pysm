@@ -41,6 +41,11 @@ except ImportError:
 # Get configuration information from setup.cfg
 from configparser import ConfigParser
 
+conf = ConfigParser()
+
+conf.read([os.path.join(os.path.dirname(__file__), "..", "setup.cfg")])
+setup_cfg = dict(conf.items("metadata"))
+
 # -- General configuration ----------------------------------------------------
 
 # By default, highlight as Python 3.
@@ -50,7 +55,7 @@ highlight_language = "python3"
 # needs_sphinx = '1.2'
 
 # To perform a Sphinx version check that needs to be more specific than
-# major.minor, call `check_sphinx_version("x.y.z")` here.
+# major.minor, call `check_sphinx_version("X.Y.Z")` here.
 # check_sphinx_version("1.2.1")
 
 # List of patterns, relative to source directory, that match files and
@@ -65,16 +70,16 @@ rst_epilog += """
 # -- Project information ------------------------------------------------------
 
 # This does not *have* to match the package name, but typically does
-project = "PySM 3"
-author = "Ben Thorne, David Alonso, Sigurd Naess, Jo Dunkley, Andrea Zonca"
-copyright = "{0}, {1}".format(datetime.datetime.now().year, author)
+project = setup_cfg["name"]
+author = setup_cfg["author"]
+copyright = "{0}, {1}".format(datetime.datetime.now().year, setup_cfg["author"])
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-import_module("pysm3")
-package = sys.modules["pysm3"]
+import_module(setup_cfg["name"])
+package = sys.modules[setup_cfg["name"]]
 
 # The short X.Y version.
 version = package.__version__.split("-", 1)[0]
@@ -132,6 +137,9 @@ html_title = "{0} v{1}".format(project, release)
 # Output file base name for HTML help builder.
 htmlhelp_basename = project + "doc"
 
+# Prefixes that are ignored for sorting the Python module index
+modindex_common_prefix = ["pysm3."]
+
 
 # -- Options for LaTeX output -------------------------------------------------
 
@@ -148,16 +156,30 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [("index", project.lower(), project + u" Documentation", [author], 1)]
 
-extensions += ["sphinx_astropy.ext.edit_on_github"]
 
-edit_on_github_project = "healpy/pysm3"
-edit_on_github_branch = "master"
+# -- Options for the edit_on_github extension ---------------------------------
 
-edit_on_github_source_root = ""
-edit_on_github_doc_root = "docs"
+if setup_cfg.get("edit_on_github").lower() == "true":
+
+    extensions += ["sphinx_astropy.ext.edit_on_github"]
+
+    edit_on_github_project = setup_cfg["github_project"]
+    edit_on_github_branch = "main"
+
+    edit_on_github_source_root = ""
+    edit_on_github_doc_root = "docs"
 
 # -- Resolving issue number to links in changelog -----------------------------
-github_issues_url = "https://github.com/{0}/issues/".format(edit_on_github_project)
+github_issues_url = "https://github.com/{0}/issues/".format(setup_cfg["github_project"])
+
+
+# -- Options for linkcheck output -------------------------------------------
+linkcheck_retry = 5
+linkcheck_ignore = [
+    r"https://github\.com/healpy/pysm/(?:issues|pull)/\d+",
+]
+linkcheck_timeout = 180
+linkcheck_anchors = False
 
 # -- Turn on nitpicky mode for sphinx (to warn about references not found) ----
 #
