@@ -1,4 +1,4 @@
-|Build Status| |Documentation Status| |PyPI| |Conda| |Astropy|
+|CI Tests| |Documentation Status| |PyPI| |Conda| |Astropy|
 
 PySM 3
 ======
