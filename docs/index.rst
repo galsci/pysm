@@ -81,33 +81,18 @@ Optionally replace with a newer anaconda environment::
 Development install
 -------------------
 
-The development version is available in the `master` branch of the `GitHub repository <https://github.com/healpy/pysm>`_,
+The development version is available in the `main` branch of the `GitHub repository <https://github.com/healpy/pysm>`_,
 you can clone and install it with::
 
     pip install .
 
-A development installation as `pip install -e` is not supported by `poetry`.
+Create a development installation with::
+
+    pip install -e
 
 Execute the unit tests with::
 
     pytest
-
-Develop with poetry
--------------------
-
-In order to have a reproducible environment, you can use `poetry`.
-
-`poetry` also manages dependencies and a local virtualenv.
-
-`Install poetry <https://python-poetry.org/docs/#installation>`_
-
-Install the specific requirements used for develoment with::
-
-    poetry install
-
-Run tests in the `poetry` environment::
-
-    poetry run pytest
 
 Tutorials
 =========
