@@ -1,5 +1,13 @@
-3.3.1 (unreleased)
+3.3.2 (unreleased)
 ==================
+
+
+3.3.1 (2021-06-30)
+==================
+
+- Packaging: removed Poetry, using new Astropy package template and Github actions, `Pull Request 76 <https://github.com/healpy/pysm/pull/76>`_ and `77 <https://github.com/healpy/pysm/pull/77>`_.
+- Docs: Reproduce PySM 2 template preprocessing for Synchrotron, `Pull Request 71 <https://github.com/healpy/pysm/pull/71>`_
+- Docs: Reproduce PySM 2 template preprocessing for Dust, `Pull Request 66 <https://github.com/healpy/pysm/pull/66>`_
 
 3.3.0 (2020-09-12)
 ==================
