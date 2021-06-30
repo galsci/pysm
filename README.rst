@@ -11,7 +11,7 @@ MPI.
 
 See the documentation at https://pysm3.readthedocs.io
 
-* Install with `pip install .` or use `poetry`
+* Install with ``pip install .``
 * Check code style with ``tox -e codestyle``
 * Test with ``pytest`` or ``tox -e test``
 * Build docs locally with ``tox -e build_docs``
