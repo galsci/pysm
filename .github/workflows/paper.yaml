@@ -1,3 +1,5 @@
+name: Build JOSS paper draft
+
 on:
   push:
     branches:
