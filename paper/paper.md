@@ -74,6 +74,10 @@ At the moment it is not very useful to run at resolutions higher than $N_{side}=
 
 PySM 3 opens the way to implement a new category of models at much higher resolution. However, instead just upgrading the current models to smaller scales we want to also update them with the latest knowledge of Galactic emission and gather feedback from each of the numerous CMB experiments. For this reason we are collaborating with the Panexperiment Galactic Science group to lead the modelling of this new class of models, to be included in PySM 3.
 
+# How to cite
+
+If you are using PySM 3 for your work, please cite this paper for the software itself; for the actual emission modelling please also cite the original PySM 2 paper [@pysm17] and in the next future a paper on the new generation of PySM 3 Astrophysical models.
+
 # Acknowledgements
 
 We acknowledge NASA for supporting Andrea Zonca's work on the project through the funding of the grant Theoretical & Computational Astrophysics Network `80NSSC18K1487`.
