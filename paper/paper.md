@@ -33,7 +33,7 @@ bibliography: paper.bib
 
 # Summary
 
-The Python Sky Model (PySM) is a Python package used by Cosmic Microwave Background experiments to simulate maps (in HEALPix [@gorski05,@healpy09] pixelization) of all the different components of the Galactic emission (i.e. dust, synchrotron, free-free and Anomalous Microwave Emission) and the Cosmic Microwave Background as observed by their instrument (i.e. integrated over the instrument bandpass and smoothed with the instrument beam).
+The Python Sky Model (PySM) is a Python package used by Cosmic Microwave Background experiments to simulate maps, in HEALPix [@gorski05, @healpy09] pixelization, of all the different components of the Galactic emission (i.e. dust, synchrotron, free-free and Anomalous Microwave Emission) and the Cosmic Microwave Background as observed by their instrument (i.e. integrated over the instrument bandpass and smoothed with the instrument beam).
 Template maps utilized by PySM are based on Planck [@planck18] and WMAP [@wmap13] data are noise dominated at small scales, therefore PySM only uses them at large scale and supplements them at small scales with properly modulated gaussian realizations. This strategy also allows to simulate data at higher resolution than the input maps.
 
 PySM 2 [@pysm17], released in 2016, has become the de-facto standard for simulating Galactic emission, for example it is used by CMB-S4, Simons Observatory, LiteBird, PICO, CLASS, POLARBEAR and other CMB experiments, as shown by the [80+ citations of the PySM 2 publication](https://scholar.google.com/scholar?start=0&hl=en&as_sdt=2005&sciodt=0,5&cites=16628417670342266167&scipsc=).
