@@ -34,7 +34,7 @@ bibliography: paper.bib
 # Summary
 
 The Python Sky Model (PySM) is a Python package used by Cosmic Microwave Background experiments to simulate maps, in HEALPix [@gorski05, @healpy09] pixelization, of all the different components of the Galactic emission (i.e. dust, synchrotron, free-free and Anomalous Microwave Emission) and the Cosmic Microwave Background as observed by their instrument (i.e. integrated over the instrument bandpass and smoothed with the instrument beam).
-Template maps utilized by PySM are based on Planck [@planck18] and WMAP [@wmap13] data are noise dominated at small scales, therefore PySM only uses them at large scale and supplements them at small scales with properly modulated gaussian realizations. This strategy also allows to simulate data at higher resolution than the input maps.
+Template maps utilized by PySM are based on Planck [@planck18] and WMAP [@wmap13] data are noise-dominated at small scales, therefore PySM only uses them at large scale and supplements them at small scales with properly modulated gaussian realizations. This strategy also allows to simulate data at higher resolution than the input maps.
 
 PySM 2 [@pysm17], released in 2016, has become the de-facto standard for simulating Galactic emission, for example it is used by CMB-S4, Simons Observatory, LiteBird, PICO, CLASS, POLARBEAR and other CMB experiments, as shown by the [80+ citations of the PySM 2 publication](https://scholar.google.com/scholar?start=0&hl=en&as_sdt=2005&sciodt=0,5&cites=16628417670342266167&scipsc=).
 As the resolution of upcoming experiments become higher and higher, the PySM 2 software started to show some limitations:
@@ -45,8 +45,8 @@ As the resolution of upcoming experiments become higher and higher, the PySM 2 s
 
 The solution to these issues was to reimplement PySM from scratch focusing of these features:
 
-* Use `numba` [@numba] Just-In-Time compiler for Python to reduce memory overhead and optimize performance: the whole integration loop of a template map over the frequency response of an instrument is performed in a single pass in automatically multi-threaded compiled code
-* The target is to support template maps at a resolution of 0.4 arcminutes (HEALPix $N_{side}=8192$), this is difficult on a single node, so we use `mpi4py` to coordinate execution of PySM 3 using MPI
+* Use the `numba` [@numba] Just-In-Time compiler for Python to reduce memory overhead and optimize performance: the whole integration loop of a template map over the frequency response of an instrument is performed in a single pass in automatically compiled and multi-threaded Python code
+* The target is to support template maps at a resolution of 0.4 arcminutes (HEALPix $N_{side}=8192$), this is difficult on a single node, so we use `mpi4py` to coordinate execution of PySM 3 using MPI across multiple machines
 * When running over MPI we cannot smooth the maps with the instrument beam via `healpy`, we need rely on `libsharp` [@libsharp], a distributed implementation of spherical harmonics transforms
 * Input template maps are not included in the package, they are downloaded as needed and cached locally using the infrastructure provided by `astropy` [@astropy2013, @astropy2018]
 
@@ -76,7 +76,7 @@ PySM 3 opens the way to implement a new category of models at much higher resolu
 
 # How to cite
 
-If you are using PySM 3 for your work, please cite this paper for the software itself; for the actual emission modelling please also cite the original PySM 2 paper [@pysm17] and in the next future a paper on the new generation of PySM 3 Astrophysical models.
+If you are using PySM 3 for your work, please cite this paper for the software itself; for the actual emission modelling please also cite the original PySM 2 paper [@pysm17] and in the next future a paper on the new generation of PySM 3 astrophysical models.
 
 # Acknowledgements
 
