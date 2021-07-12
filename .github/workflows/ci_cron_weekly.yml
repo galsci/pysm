@@ -8,20 +8,45 @@ on:
     - cron: '0 6 * * 1'
 
 jobs:
-  # Testing links in documents is a good example of something to run on a schedule
-  # to catch links that stop working for some reason.
-  doc_test:
-    runs-on: ubuntu-latest
+  # Github Actions supports ubuntu, windows, and macos virtual environments:
+  # https://help.github.com/en/actions/reference/virtual-environments-for-github-hosted-runners
+  ci_tests:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - name: Code style checks
+            os: ubuntu-latest
+            python: 3.8
+            toxenv: linkcheck
+
+          - name: Python 3.7 with minimal dependencies
+            os: ubuntu-latest
+            python: 3.7
+            toxenv: py37-test
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python to build docs with sphinx
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Install required system packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install graphviz texlive-latex-extra dvipng libopenmpi-dev openmpi-bin pandoc
+    - name: Set up python ${{ matrix.python }} on ${{ matrix.os }}
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: ${{ matrix.python }}
     - name: Install base dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install tox
-    - name: Check links in docs using tox
+        python -m pip install tox codecov
+    - name: Test with tox
       run: |
-        tox -e linkcheck
+        tox -e ${{ matrix.toxenv }}
+    - name: MPI test
+      if: ${{ matrix.toxenv != 'codestyle' }}
+      run: |
+        mpirun -np 2 .tox/${{ matrix.toxenv}}/bin/python -m pytest pysm3/tests/test_read_map_mpi.py;
