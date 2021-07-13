@@ -9,6 +9,7 @@ authors:
    orcid: 0000-0001-6841-1058
    affiliation: "1"
  - name: Ben Thorne
+   orcid: 0000-0002-0457-0153
    affiliation: "2"
  - name: Nicoletta Krachmalnicoff
    affiliation: "3"
@@ -17,7 +18,7 @@ authors:
 affiliations:
  - name: San Diego Supercomputer Center, University of California, San Diego, USA
    index: 1
- - name: TODO
+ - name: Department of Physics, University of California, One Shields Avenue, Davis, CA 95616, USA
    index: 2
  - name: TODO
    index: 3
