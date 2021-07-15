@@ -13,12 +13,12 @@ authors:
    affiliation: "2"
  - name: Nicoletta Krachmalnicoff
    affiliation: "3,4,5"
- - name: Julian D. Borrill
-   affiliation: "6,7,8"
+ - name: Julian Borrill
+   affiliation: "6,7"
 affiliations:
- - name: San Diego Supercomputer Center, University of California, San Diego, USA
+ - name: San Diego Supercomputer Center, University of California San Diego, San Diego, USA
    index: 1
- - name: Department of Physics, University of California, One Shields Avenue, Davis, CA 95616, USA
+ - name: Department of Physics, University of California Davis, One Shields Avenue, Davis, CA 95616, USA
    index: 2
  - name: SISSA, Via Bonomea 265, 34136 Trieste, Italy
    index: 3
@@ -30,8 +30,6 @@ affiliations:
    index: 6
  - name: Space Sciences Laboratory at University of California, 7 Gauss Way, Berkeley, CA 94720
    index: 7
- - name: Department of Physics, University of California, Berkeley, CA, USA 94720
-   index: 8
 date: 20 July 2021
 bibliography: paper.bib
 ---
