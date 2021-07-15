@@ -43,15 +43,15 @@ PySM 2 [@pysm17], released in 2016, has become the de-facto standard for simulat
 As the resolution of upcoming experiments increases, the PySM 2 software has started to show some limitations:
 
 * Emission templates are provided at 7.9 arcminutes resolution (HEALPix $N_{side}=512$), while the next generation of CMB experiments will require sub-arcminute resolution.
-* Just replacing the input maps in PySM 2 with higher-resoltion versions would not be sufficient as the software is implemented in pure `numpy`, meaning it has significant memory overhead and it is not multi-threaded. 
+* The software is implemented in pure `numpy`, meaning that it has significant memory overhead and is not multi-threaded, precluding simply replacing the current templates with higher-resolution versions
 * Emission templates are included in the PySM 2 Python package, this is still practical when each of the roughly 40 input maps is ~10 Megabytes, but will not be if they are over 1 Gigabyte.
 
 The solution to these issues was to reimplement PySM from scratch focusing of these features:
 
-* Use the `numba` [@numba] Just-In-Time compiler for Python to reduce memory overhead and optimize performance: the whole integration loop of a template map over the frequency response of an instrument is performed in a single pass in automatically compiled and multi-threaded Python code.
-* The target is to support template maps at a resolution of 0.4 arcminutes (HEALPix $N_{side}=8192$), this is difficult on a single node, so we use `mpi4py` to coordinate execution of PySM 3 using MPI across multiple machines.
-* When running over MPI we cannot smooth the maps with the instrument beam via `healpy`, we need to rely on `libsharp` [@libsharp], a distributed implementation of spherical harmonic transforms.
-* Input template maps are not included in the package, they are downloaded as needed and cached locally using the infrastructure provided by `astropy` [@astropy2013; @astropy2018].
+* Reimplement all the models with the `numba` [@numba] Just-In-Time compiler for Python to reduce memory overhead and optimize performance: the whole integration loop of a template map over the frequency response of an instrument is performed in a single pass in automatically compiled and multi-threaded Python code.
+* Use MPI through `mpi4py` to coordinate execution of PySM 3 across multiple nodes, this allows to support template maps at a resolution up to 0.4 arcminutes (HEALPix $N_{side}=8192$).
+* Rely on `libsharp` [@libsharp], a distributed implementation of spherical harmonic transforms, to smooth the maps with the instrument beam when maps are distributed over multiple nodes with MPI.
+* Employ the data utilities infrastructure provided by `astropy` [@astropy2013; @astropy2018] to download the input templates and cache them when requested.
 
 At this stage we strive to maintain full compatibility with PySM 2, therefore we implement the exact same astrophysical emission models with the same naming scheme. In the extensive test suite we compare the output of each PySM 3 model with the results obtained by PySM 2.
 
