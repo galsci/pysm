@@ -83,6 +83,6 @@ If you are using PySM 3 for your work, please cite this paper for the software i
 
 # Acknowledgements
 
-We acknowledge NASA for supporting Andrea Zonca's work on the project through the funding of the grant Theoretical & Computational Astrophysics Network `80NSSC18K1487`.
+This work was supported in part by NASA grant `80NSSC18K1487`.
 
 # References
