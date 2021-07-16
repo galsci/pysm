@@ -83,6 +83,8 @@ If you are using PySM 3 for your work, please cite this paper for the software i
 
 # Acknowledgements
 
-This work was supported in part by NASA grant `80NSSC18K1487`.
+* This work was supported in part by NASA grant `80NSSC18K1487`.
+* The software was tested, in part, on facilities run by the Scientific Computing Core of the Flatiron Institute.
+* This research used resources of the National Energy Research Scientific Computing Center (NERSC), a U.S. Department of Energy Office of Science User Facility located at Lawrence Berkeley National Laboratory, operated under Contract No. `DE-AC02-05CH11231`.
 
 # References
