@@ -81,7 +81,7 @@ Optionally replace with a newer anaconda environment::
 Development install
 -------------------
 
-The development version is available in the `main` branch of the `GitHub repository <https://github.com/healpy/pysm>`_,
+The development version is available in the `main` branch of the `GitHub repository <https://github.com/galsci/pysm>`_,
 you can clone and install it with::
 
     pip install .
@@ -97,7 +97,7 @@ Execute the unit tests with::
 Tutorials
 =========
 
-All the tutorials are Jupyter Notebooks and can be accessed `from the repository <https://github.com/healpy/pysm/tree/main/docs>`_:
+All the tutorials are Jupyter Notebooks and can be accessed `from the repository <https://github.com/galsci/pysm/tree/main/docs>`_:
 
 .. toctree::
   :maxdepth: 2

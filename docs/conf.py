@@ -176,7 +176,7 @@ github_issues_url = "https://github.com/{0}/issues/".format(setup_cfg["github_pr
 # -- Options for linkcheck output -------------------------------------------
 linkcheck_retry = 5
 linkcheck_ignore = [
-    r"https://github\.com/healpy/pysm/(?:issues|pull)/\d+",
+    r"https://github\.com/galsci/pysm/(?:issues|pull)/\d+",
 ]
 linkcheck_timeout = 180
 linkcheck_anchors = False

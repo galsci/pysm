@@ -31,8 +31,8 @@ Release
 * ``python -m build --sdist --wheel .``
 * ``twine upload dist/*``
 
-.. |CI Tests| image:: https://github.com/healpy/pysm/actions/workflows/ci_tests.yml/badge.svg
-   :target: https://github.com/healpy/pysm/actions/workflows/ci_tests.yml
+.. |CI Tests| image:: https://github.com/galsci/pysm/actions/workflows/ci_tests.yml/badge.svg
+   :target: https://github.com/galsci/pysm/actions/workflows/ci_tests.yml
 .. |Documentation Status| image:: https://readthedocs.org/projects/pysm3/badge/?version=latest
    :target: https://pysm3.readthedocs.io/en/latest/?badge=latest
 .. |PyPI| image:: https://img.shields.io/pypi/v/pysm3

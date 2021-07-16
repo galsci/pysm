@@ -3,13 +3,13 @@
 Summary of Models
 *****************
 
-For all details of the models also check the `presets.cfg file <https://github.com/healpy/pysm/blob/main/pysm3/data/presets.cfg>`_.
+For all details of the models also check the `presets.cfg file <https://github.com/galsci/pysm/blob/main/pysm3/data/presets.cfg>`_.
 
 Input templates
 ===============
 
 The PySM input templates are not stored in the Python package, they are downloaded on the fly when requested using the machinery from the `astropy.io.data` package.
-The templates are stored in the `pysm-data <https://github.com/healpy/pysm-data>`_ repository on Github and published `via the cmb organization at NERSC <https://portal.nersc.gov/project/cmb/pysm-data/>`_.
+The templates are stored in the `pysm-data <https://github.com/galsci/pysm-data>`_ repository on Github and published `via the cmb organization at NERSC <https://portal.nersc.gov/project/cmb/pysm-data/>`_.
 
 PySM has an hardcoded path to access the files at NERSC, therefore when running on NERSC supercomputers or on Jupyter@NERSC, files are accessed directly.
 
@@ -17,7 +17,7 @@ When PySM is executed in another environment, the necessary templates are downlo
 
 Another option is to download the whole data repository, currently ~700MB (it will be way larger in the future), and define an environment variable::
 
-    git clone https://github.com/healpy/pysm-data /data/pysm-data
+    git clone https://github.com/galsci/pysm-data /data/pysm-data
     export PYSM_LOCAL_DATA=/data/pysm-data
 
 Reproduce PySM 2 template preprocessing
