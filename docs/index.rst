@@ -96,7 +96,7 @@ you can clone and install it with::
 
 Create a development installation with::
 
-    pip install -e
+    pip install -e .
 
 Execute the unit tests with::
 
