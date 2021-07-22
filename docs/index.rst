@@ -109,6 +109,14 @@ All the tutorials are Jupyter Notebooks and can be accessed `from the repository
   customize_components
   mpi
 
+Contributing
+============
+
+.. toctree::
+  :maxdepth: 2
+
+  contributing
+
 Reference/API
 =============
 
