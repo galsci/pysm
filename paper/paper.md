@@ -34,10 +34,16 @@ date: 22 July 2021
 bibliography: paper.bib
 ---
 
+# Statement of Need
+
+The most fruitful region of the radio spectrum to study the Early Universe is the microwave region. At those frequencies peaks the Cosmic Microwave Background (CMB) eletromagnetic radiation coming directly from the beginning of the Universe, just 370 thousand years into the 13.8 billion years age of the Universe.
+However, our own Milky Way galaxy also emits in the microwaves, for example through thermal radiation by interstellar dust grains or through synchrotron emission by relativistic electrons spiralling in magnetic fields.
+Cosmologists need to create syntetic maps of the CMB and of the galactic emission based on available data and on models that properly scale them to different frequencies. Those maps are useful to test data reduction algorithms, to understand residual systematics, to forecast maps produced by future instruments, to run Montecarlo analysis for noise estimation and more.
+
+# Summary
+
 The Python Sky Model (PySM) is a Python package used by Cosmic Microwave Background (CMB) experiments to simulate maps, in HEALPix [@gorski05; @healpy09] pixelization, of the various diffuse astrophysical components of Galactic emission relevant at CMB frequencies (i.e. dust, synchrotron, free-free and Anomalous Microwave Emission), as well as the CMB itself. These maps may be integrated over a given instrument bandpass and smoothed with a given instrument beam.
 The template emission maps used by PySM are based on Planck [@planck18] and WMAP [@wmap13] data and are noise-dominated at small scales. Therefore, PySM simulation templates are smoothed to retain the large-scale information, and then supplemented with modulated Gaussian realizations at smaller scales. This strategy allows one to simulate data at higher resolution than the input maps.
-
-# Improvements of PySM 3 over PySM 2
 
 PySM 2 [@pysm17], released in 2016, has become the de-facto standard for simulating Galactic emission, for example it is used by CMB-S4, Simons Observatory, LiteBird, PICO, CLASS, POLARBEAR and other CMB experiments, as shown by the [80+ citations of the PySM 2 publication](https://scholar.google.com/scholar?start=0&hl=en&as_sdt=2005&sciodt=0,5&cites=16628417670342266167&scipsc=).
 As the resolution of upcoming experiments increases, the PySM 2 software has started to show some limitations:
