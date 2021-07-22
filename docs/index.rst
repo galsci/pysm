@@ -31,8 +31,14 @@ For example free-free:
 Dependencies
 ============
 
-PySM is written in pure Python, multi-threading and Just-In-Time compilation are provided by `numba`, for the requirements
-see `pyproject.toml` on PyPI and within the package.
+PySM is written in pure Python, multi-threading and Just-In-Time compilation are provided by `numba`.
+The required packages are:
+
+* `healpy`
+* `numba`
+* `toml`
+* `astropy`
+* `importlib_metadata` just for Python 3.7
 
 How many threads are used by `numba` can be controlled by setting::
 
