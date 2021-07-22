@@ -74,6 +74,8 @@ or `pip`::
 
     pip install pysm3
 
+See the `changelog on Github <https://github.com/galsci/pysm/blob/main/CHANGES.rst>`_ for details about what is included in each release.
+
 Install at NERSC
 ----------------
 
