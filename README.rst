@@ -23,6 +23,11 @@ Install
 
 See the `documentation <https://pysm3.readthedocs.io/en/latest/#installation>`_
 
+Support
+-------
+
+For any question or issue with the software `open an issue <https://github.com/galsci/pysm3/issues/>`_.
+
 Release
 -------
 
