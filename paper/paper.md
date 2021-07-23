@@ -36,9 +36,9 @@ bibliography: paper.bib
 
 # Statement of Need
 
-The most fruitful region of the radio spectrum to study the Early Universe is the microwave region. At those frequencies peaks the Cosmic Microwave Background (CMB) eletromagnetic radiation coming directly from the beginning of the Universe, just 370 thousand years into the 13.8 billion years age of the Universe.
+The Cosmic Microwave Background (CMB) radiation, emitted just 370 thousand years after the Big Bang, is a pristine probe of the Early Universe. After being emitted at hight temperatures, the CMB was redshifted by the subsequent 13.8 billion years of cosmic expansion, such that it is brightest at microwave frequencies today.
 However, our own Milky Way galaxy also emits in the microwaves, for example through thermal radiation by interstellar dust grains or through synchrotron emission by relativistic electrons spiralling in magnetic fields.
-Cosmologists need to create syntetic maps of the CMB and of the galactic emission based on available data and on models that properly scale them to different frequencies. Those maps are useful to test data reduction algorithms, to understand residual systematics, to forecast maps produced by future instruments, to run Montecarlo analysis for noise estimation and more.
+Cosmologists need to create synthetic maps of the CMB and of the galactic emission based on available data and on physical models that extrapolate observations to different frequencies. The resulting maps are useful to test data reduction algorithms, to understand residual systematics, to forecast maps produced by future instruments, to run Monte Carlo analysis for noise estimation, and more.
 
 # Summary
 
