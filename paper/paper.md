@@ -37,7 +37,7 @@ bibliography: paper.bib
 # Statement of Need
 
 The Cosmic Microwave Background (CMB) radiation, emitted just 370 thousand years after the Big Bang, is a pristine probe of the Early Universe. After being emitted at hight temperatures, the CMB was redshifted by the subsequent 13.8 billion years of cosmic expansion, such that it is brightest at microwave frequencies today.
-However, our own Milky Way galaxy also emits in the microwave, obscuring our view of the CMB.  Examples of this emission are thermal radiation by interstellar dust grains, and synchrotron emission by relativistic electrons spiralling in magnetic fields.
+However, our own Milky Way galaxy also emits in the microwave portion of the spectrum, obscuring our view of the CMB.  Examples of this emission are thermal radiation by interstellar dust grains, and synchrotron emission by relativistic electrons spiralling in magnetic fields.
 Cosmologists need to create synthetic maps of the CMB and of the galactic emission based on available data and on physical models that extrapolate observations to different frequencies. The resulting maps are useful to test data reduction algorithms, to understand residual systematics, to forecast maps produced by future instruments, to run Monte Carlo analysis for noise estimation, and more.
 
 # Summary
