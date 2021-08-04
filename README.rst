@@ -11,17 +11,25 @@ MPI.
 
 See the documentation at https://pysm3.readthedocs.io
 
-* Install with ``pip install .``
-* Check code style with ``tox -e codestyle``
-* Test with ``pytest`` or ``tox -e test``
-* Build docs locally with ``tox -e build_docs``
-
 See changes in ``CHANGES.rst`` in the repository.
+
+Related scientific papers
+-------------------------
+
+See `CITATION <https://github.com/galsci/pysm/blob/main/CITATION>`_
+
+* `The Python Sky Model 3 software (Zonca et al, 2021) <https://arxiv.org/abs/2108.01444>`_
+* `The Python Sky Model: software for simulating the Galactic microwave sky (Thorne et al, 2016) <https://arxiv.org/abs/1608.02841>`_
 
 Install
 -------
 
 See the `documentation <https://pysm3.readthedocs.io/en/latest/#installation>`_
+
+* Install with ``pip install .``
+* Check code style with ``tox -e codestyle``
+* Test with ``pytest`` or ``tox -e test``
+* Build docs locally with ``tox -e build_docs``
 
 Support
 -------
