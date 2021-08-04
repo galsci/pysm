@@ -46,5 +46,5 @@ Release
    :target: https://anaconda.org/conda-forge/pysm3
 .. |Astropy| image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
    :target: http://www.astropy.org/
-.. |Astropy| image:: https://joss.theoj.org/papers/8f2d6c3bbf6cbeffbb403a1207fa8de7/status.svg
+.. |JOSS| image:: https://joss.theoj.org/papers/8f2d6c3bbf6cbeffbb403a1207fa8de7/status.svg
    :target: https://joss.theoj.org/papers/8f2d6c3bbf6cbeffbb403a1207fa8de7
