@@ -19,7 +19,7 @@ Related scientific papers
 See `CITATION <https://github.com/galsci/pysm/blob/main/CITATION>`_
 
 * `The Python Sky Model 3 software (Zonca et al, 2021) <https://arxiv.org/abs/2108.01444>`_
-* `The Python Sky Model: software for simulating the Galactic microwave sky (Thorne et al, 2016) <https://arxiv.org/abs/1608.02841>`_
+* `The Python Sky Model: software for simulating the Galactic microwave sky (Thorne et al, 2017) <https://arxiv.org/abs/1608.02841>`_
 
 Install
 -------
