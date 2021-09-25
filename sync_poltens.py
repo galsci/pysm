@@ -29,14 +29,15 @@ import pysm3.units as u
 import cosmoplotian.colormaps
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+
+CMAP = mpl.cm.get_cmap("div yel grn")
 plt.rcParams['text.usetex'] = True
-cmap = mpl.cm.get_cmap("div yel grn")
-mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=["k"] + [cmap(i) for i in [0.2, 0.5, 0.8]]) 
+plt.rcParams['axes.prop_cycle'] = mpl.cycler(color=["k"] + [CMAP(i) for i in [0.2, 0.5, 0.8]]) 
+#plt.rcParams['savefig.directory'] = Path("./plots")
+plt.rcParams['image.cmap'] = "div yel grn"
 
 FLAGS = flags.FLAGS
-
 DATA_DIR = Path(os.environ["PYSM_DATA_DIR"])
-
 MAPS = {
     'PolMask': "COM_Mask_CMB-common-Mask-Pol_2048_R3.00.fits",
     'IntMask': "COM_Mask_CMB-common-Mask-Int_2048_R3.00.fits",
@@ -142,35 +143,10 @@ def DoFrolovTransform():
 
     # 0.88 degrees Kband res
     # 56 arcmin beam size haslam
-
-    #IQU = hp.smoothing(IQU, fwhm=1. * np.pi/180.)
-
     iqu = FrolovTransformForward(IQU)
-
-    hp.mollview(iqu[0], min=-2, max=10, title=r"Frolov $i$")
-    fig = plt.gcf()
-    fig.savefig("transformed_i_naive.pdf")
-    hp.mollview(iqu[1], min=-5, max=5, title=r"Frolov $q$")
-    fig = plt.gcf()
-    fig.savefig("transformed_q_naive.pdf")
-    hp.mollview(iqu[2], min=-5, max=5, title=r"Frolov $u$")
-    fig = plt.gcf()
-    fig.savefig("transformed_u_naive.pdf")
-
     hp.write_map(str(DATA_DIR / "transformed_iqu_naive.fits"), iqu, overwrite=True)
 
     iqu = FrolovTransformForward(hp.smoothing(IQU, fwhm=np.pi/180.))
-
-    hp.mollview(iqu[0], min=-2, max=10, title=r"${\rm Frolov}~i$")
-    fig = plt.gcf()
-    fig.savefig("transformed_i_2degfwhm.pdf")
-    hp.mollview(iqu[1], min=-2, max=2, title=r"${\rm Frolov}~q$")
-    fig = plt.gcf()
-    fig.savefig("transformed_q_2degfwhm.pdf")
-    hp.mollview(iqu[2], min=-2, max=2, title=r"${\rm Frolov}~u$")
-    fig = plt.gcf()
-    fig.savefig("transformed_u_2degfwhm.pdf")
-
     hp.write_map(str(DATA_DIR / "transformed_iqu_fwhm2deg.fits"), iqu, overwrite=True)
 
     IQU = hp.smoothing(IQU, fwhm=2 * np.pi/180.)
@@ -179,18 +155,62 @@ def DoFrolovTransform():
     rescaling = np.sqrt(0.99 * IQU[0] ** 2 / P ** 2)
     IQU[1:, idx] *= rescaling[None, idx]
     iqu = FrolovTransformForward(IQU)
+    hp.write_map(str(DATA_DIR / "transformed_iqu_fwhm2deg_corrected.fits"), iqu, overwrite=True)
+    return 
 
-    hp.mollview(iqu[0], min=-2, max=10, title=r"${\rm Frolov}~i$")
+
+def PlotFrolovTransformediqu():
+    kwargs = {
+        "min": -1,
+        "max": 1,
+        "unit": r"${\rm Dimensionless}$"
+    }
+
+    iqu = hp.read_map(str(DATA_DIR / "transformed_iqu_naive.fits"), field=(0, 1, 2))
+    hp.mollview(iqu[0], title=r"${\rm Frolov}~i~{\rm raw}$", **kwargs)
+    fig = plt.gcf()
+    fig.savefig("transformed_i_naive.pdf")
+    hp.mollview(iqu[1], title=r"${\rm Frolov}~q~{\rm raw}$", **kwargs)
+    fig = plt.gcf()
+    fig.savefig("transformed_q_naive.pdf")
+    hp.mollview(iqu[2], title=r"{\rm Frolov}~$u$~{\rm raw}", **kwargs)
+    fig = plt.gcf()
+    fig.savefig("transformed_u_naive.pdf")
+    
+    iqu = hp.read_map(str(DATA_DIR / "transformed_iqu_fwhm2deg.fits"), field=(0, 1, 2))
+    hp.mollview(iqu[0], title=r"${\rm Frolov}~i,~2~{\rm deg~FWHM}$", **kwargs)
+    fig = plt.gcf()
+    fig.savefig("transformed_i_2degfwhm.pdf")
+    hp.mollview(iqu[1], title=r"${\rm Frolov}~q,~2~{\rm deg~FWHM}$", **kwargs)
+    fig = plt.gcf()
+    fig.savefig("transformed_q_2degfwhm.pdf")
+    hp.mollview(iqu[2], title=r"${\rm Frolov}~u,~2~{\rm deg~FWHM}$", **kwargs)
+    fig = plt.gcf()
+    fig.savefig("transformed_u_2degfwhm.pdf")
+    
+    iqu = hp.read_map(str(DATA_DIR / "transformed_iqu_fwhm2deg_corrected.fits"), field=(0, 1, 2))
+    hp.mollview(iqu[0], title=r"${\rm Frolov}~i,~2~{\rm deg~FWHM},~P\leq I$", **kwargs)
     fig = plt.gcf()
     fig.savefig("transformed_i_2degfwhm_corrected.pdf")
-    hp.mollview(iqu[1], min=-2, max=2, title=r"${\rm Frolov}~q$")
+    hp.mollview(iqu[1], title=r"${\rm Frolov}~q,~2~{\rm deg~FWHM},~P\leq I$", **kwargs)
     fig = plt.gcf()
     fig.savefig("transformed_q_2degfwhm_corrected.pdf")
-    hp.mollview(iqu[2], min=-2, max=2, title=r"${\rm Frolov}~u$")
+    hp.mollview(iqu[2], title=r"${\rm Frolov}~u,~2~{\rm deg~FWHM},~P\leq I$", **kwargs)
     fig = plt.gcf()
     fig.savefig("transformed_u_2degfwhm_corrected.pdf")
 
-    hp.write_map(str(DATA_DIR / "transformed_iqu_fwhm2deg_corrected.fits"), iqu, overwrite=True)
+    nside = 512
+    int_mask = hp.read_map(str(DATA_DIR / MAPS["IntMask"]))
+    pol_mask = hp.read_map(str(DATA_DIR / MAPS["PolMask"]))
+    int_mask = hp.ud_grade(int_mask, nside_out=nside)
+    pol_mask = hp.ud_grade(pol_mask, nside_out=nside)
+    joint_mask = np.logical_and(int_mask, pol_mask)
+    iqu_masked = hp.ma(iqu)
+    iqu_masked.mask = np.logical_not(joint_mask)
+    hp.mollview(iqu_masked.filled()[1], title=r"${\rm Frolov}~q,~2~{\rm deg~FWHM},~P\leq I,~{\rm ~w/~PS~Mask}$", **kwargs)
+    fig = plt.gcf()
+    fig.savefig("transformed_q_2degfwhm_corrected_masked.pdf")
+
     return 
 
 
@@ -220,6 +240,7 @@ def CalculatePowerspectra(nside=512, lmax=1000):
     # frolov transform mixes stokes parameters, requiring common
     # analysis region.
     joint_mask = np.logical_and(int_mask, pol_mask)
+
     for is_Dell in [True, False]:
         binning = nmt.NmtBin(nside=nside, nlb=1, lmax=lmax, is_Dell=is_Dell)
         f2 = nmt.NmtField(joint_mask, pol_map)
@@ -236,6 +257,7 @@ def CalculatePowerspectra(nside=512, lmax=1000):
         hp.write_cl(str(DATA_DIR / fname), cl, overwrite=True)
 
     iqu = hp.read_map(str(DATA_DIR / "transformed_iqu_fwhm2deg_corrected.fits"), field=(0, 1, 2))
+
     for is_Dell in [True, False]:
         binning = nmt.NmtBin(nside=nside, nlb=1, lmax=lmax, is_Dell=is_Dell)
         f2 = nmt.NmtField(joint_mask, iqu[1:])
@@ -273,16 +295,21 @@ def PlotPowerspectra():
 
     dl = hp.read_cl(str(DATA_DIR / "frolov_2degfwhm_corr_dl.fits"))
     fig, ax = plt.subplots(1, 1)
-    ax.loglog(dl[0], dl[1], label=r"${\rm tt}$")    
-    ax.loglog(dl[0], dl[2], label=r"${\rm ee}$")
-    ax.loglog(dl[0], dl[5], label=r"${\rm bb}$")
+    #ax.semilogx(dl[0], dl[1], label=r"${\rm tt}$") # plotting on linear y tt drowns things out
+    ax.semilogx(dl[0], dl[2], label=r"${\rm ee}$")
+    ax.semilogx(dl[0], dl[5], label=r"${\rm bb}$")
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.set_xlabel(r"$\ell$")
     ax.set_ylabel(r"$\ell (\ell + 1) / 2 \pi~C_\ell~({\rm \mu K}^2)$")
     ax.legend(frameon=False)
     ax.tick_params(direction="inout", which="both")
-    ax.set_title(r"${\rm Frolov~transformed~spectra}$")
+    ax.set_xlim(10, None)
+    ax.set_ylim(-0.001, 0.003)
+    ax.axvline(x=36, linewidth=3, alpha=0.3, color='k')
+    ax.set_xticks([10, 36, 100, 1000])
+    ax.set_xticklabels([r"$10$", r"$36$", r"$100$", r"$1000$"])
+    ax.set_title(r"${\rm Frolov~transformed~spectra~(of~logged~quantities)}$")
     fig.savefig("frolov_spectra_tteebb.pdf")
     return
 
@@ -306,8 +333,41 @@ def PerformFitStokes(lmin=10, lmax=36):
     ax.legend(frameon=False)
     ax.tick_params(direction="inout", which="both")
     ax.set_title(r"${\rm Data~at~23~GHz}$")
-    fig.savefig("fitted.pdf")
+    fig.savefig("fitted_EEBB.pdf")
+
+    dl = hp.read_cl(str(DATA_DIR / "frolov_2degfwhm_corr_dl.fits"))
+
+    fig, ax = plt.subplots(1, 1)
+    for (idx, label) in [(2, r"${\rm ee,~\gamma=}$"), (5, r"${\rm bb,~\gamma=}$")]:
+        pars, cov = curve_fit(PowerLaw, dl[0, lmin:lmax], dl[idx, lmin:lmax])
+        l1, = ax.loglog(dl[0], dl[idx], alpha=0.5)
+        ax.loglog(dl[0], PowerLaw(dl[0], *pars), color=l1.get_color(), label=label+r"${:.02f}\pm{:.02f}$".format(pars[1], cov[1, 1]))
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.set_xlabel(r"$\ell$")
+    ax.set_ylabel(r"$\ell (\ell + 1) / 2 \pi~C_\ell~({\rm Dimensionless})$")
+    ax.set_yscale('linear')
+    ax.set_ylim(None, 0.01)
+    ax.set_xlim(2, 100)
+    ax.set_xticks([10, 36, 100])
+    ax.set_xticklabels([r"$10$", r"$36$", r"$100$"])
+    ax.axvline(x=lmin, linewidth=3, alpha=0.3, color='k')
+    ax.axvline(x=lmax, linewidth=3, alpha=0.3, color='k')
+    ax.legend(frameon=False, loc=3)
+    ax.tick_params(direction="inout", which="both")
+    ax.set_title(r"${\rm Fit~}A\ell^\gamma{\rm~to~ee,~bb},~\ell_{\rm min}=$"+r"${:d},~\ell_{{\rm max}}={:d}$".format(lmin, lmax))
+    fig.savefig("fitted_eebb.pdf")
     return
+
+
+def FrolovSmallScaleRealization():
+    fig, ax = plt.subplots(1, 1)
+    for (idx, label) in [(2, r"${\rm ee,~\gamma=}$"), (5, r"${\rm bb,~\gamma=}$")]:
+        pars, cov = curve_fit(PowerLaw, dl[0, lmin:lmax], dl[idx, lmin:lmax])
+
+    
+    return 
 
 
 def PowerLaw(ells, amplitude, gamma):
@@ -331,6 +391,7 @@ def main(argv):
         CalculatePowerspectra()
     if FLAGS.mode == "plot":
         PlotPowerspectra()
+        PlotFrolovTransformediqu()
     if FLAGS.mode == "fit":
         PerformFitStokes()
     if FLAGS.mode == "transform":
