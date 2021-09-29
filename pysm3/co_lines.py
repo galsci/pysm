@@ -30,7 +30,8 @@ class COLines(pysm.Model):
 
         """Class defining attributes for CO line emission.
         CO templates are extracted from Type 1 CO Planck maps.
-        See further details in https://www.aanda.org/articles/aa/abs/2014/11/aa21553-13/aa21553-13.html
+        See further details in:
+        https://www.aanda.org/articles/aa/abs/2014/11/aa21553-13/aa21553-13.html
 
         Parameters
         ----------
@@ -123,7 +124,8 @@ class COLines(pysm.Model):
         """
         Add polarized emission by means of:
         * an overall constant polarization fraction,
-        * a depolarization map to mimick the line of sigth depolarization effect at low Galactic latitudes
+        * a depolarization map to mimick the line of sight depolarization effect
+          at low Galactic latitudes
         * a polarization angle map coming from a dust template (we exploit the observed correlation
         between polarized dust and molecular emission in star forming regions).
         """
