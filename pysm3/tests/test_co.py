@@ -1,4 +1,4 @@
-from astropy.utils.data import get_pkg_data_filename
+from ..utils import RemoteData
 
 import numpy as np
 import healpy as hp
@@ -28,8 +28,8 @@ def test_co(include_high_galactic_latitude_clouds):
     co_map = co.signal()
 
     tag = "wHGL" if include_high_galactic_latitude_clouds else "noHGL"
-    expected_map_filename = get_pkg_data_filename(
-        "data/CO10_TQUmaps_{}_nside16_ring.fits.zip".format(tag)
+    remote_data = RemoteData()
+    expected_map_filename = remote_data.get( "co/testing/CO10_TQUmaps_{}_nside16_ring.fits.zip".format(tag)
     )
     expected_co_map = hp.read_map(expected_map_filename, field=(0, 1, 2))
 
