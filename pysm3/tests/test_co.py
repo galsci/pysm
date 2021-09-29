@@ -29,7 +29,8 @@ def test_co(include_high_galactic_latitude_clouds):
 
     tag = "wHGL" if include_high_galactic_latitude_clouds else "noHGL"
     remote_data = RemoteData()
-    expected_map_filename = remote_data.get( "co/testing/CO10_TQUmaps_{}_nside16_ring.fits.zip".format(tag)
+    expected_map_filename = remote_data.get(
+        "co/testing/CO10_TQUmaps_{}_nside16_ring.fits.zip".format(tag)
     )
     expected_co_map = hp.read_map(expected_map_filename, field=(0, 1, 2))
 
