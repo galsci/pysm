@@ -22,7 +22,6 @@ def test_co(include_high_galactic_latitude_clouds):
         random_seed=1234567,
         verbose=False,
         run_mcmole3d=False,
-        coord="G",
     )
 
     co_map = co.signal()

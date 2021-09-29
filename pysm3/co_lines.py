@@ -26,7 +26,6 @@ class COLines(pysm.Model):
         verbose=False,
         run_mcmole3d=False,
         map_dist=None,
-        coord="C",
     ):
 
         """Class defining attributes for CO line emission.
