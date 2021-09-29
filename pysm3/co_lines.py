@@ -75,7 +75,7 @@ class COLines(pysm.Model):
 
         super().__init__(nside=target_nside, map_dist=map_dist)
 
-        self.remote_data = RemoteData(coord)
+        self.remote_data = RemoteData()
 
         self.planck_templatemap_filename = "co/HFI_CompMap_CO-Type1_{}_R2.00_ring.fits".format(
             self.template_nside
