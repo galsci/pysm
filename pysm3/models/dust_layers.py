@@ -11,14 +11,6 @@ from .dust import blackbody_ratio
 
 
 class ModifiedBlackBodyLayers(Model):
-    """This is a model for modified black body emission.
-
-    Attributes
-    ----------
-    I_ref, Q_ref, U_ref: ndarray
-        Arrays containing the intensity or polarization reference
-        templates at frequency `freq_ref_I` or `freq_ref_P`.
-    """
 
     def __init__(
         self,
@@ -32,33 +24,32 @@ class ModifiedBlackBodyLayers(Model):
         unit_mbb_temperature=None,
         map_dist=None,
     ):
-        """This function initializes the modified black body model.
+        """Modified Black Body model with multiple layers
 
-        The initialization of this model consists of reading in emission
-        templates from file, reading in spectral parameter maps from
-        file.
+        Used for the MKD 3D dust model by Ginés Martínez-Solaeche, Ata Karakci, Jacques Delabrouille:
+        https://arxiv.org/abs/1706.04162
 
         Parameters
         ----------
-        map_layers: `pathlib.Path` object
-            Paths to the maps to be used as I, Q, U templates.
-        unit_* : string or Unit
+        map_layers: `pathlib.Path`, str or ndarray
+            Path or string with a templated layer number {layer} to download or access locally
+            a IQU map for each layer (1-based layer number)
+            Alternatively an array of shape (num_layers, 3, num_pix)
+        num_layers: int
+            Number of layers
+        unit_* : str or Unit
             Unit string or Unit object for all input FITS maps, if None, the input file
             should have a unit defined in the FITS header.
-        freq_ref_I, freq_ref_P: Quantity or string
+        freq_ref: Quantity or string
             Reference frequencies at which the intensity and polarization
             templates are defined. They should be a astropy Quantity object
             or a string (e.g. "1500 MHz") compatible with GHz.
-        map_mbb_index: `pathlib.Path` object or scalar value
-            Path to the map to be used as the power law index for the dust
-            opacity in a modified blackbody model, for a constant value use
-            a float or an integer
-        map_mbb_temperature: `pathlib.Path` object or scalar
-            Path to the map to be used as the temperature of the dust in a
-            modified blackbody model. For a constant value use a float or an
-            integer
+        map_mbb_index, map_mbb_temperature: `pathlib.Path`, str or ndarray
+            Path or string with a templated 1-based layer number {layer} with
+            the spectra index or the blackbody temperature.
+            Alternatively an array of shape (num_layers, num_pix)
         nside: int
-            Resolution parameter at which this model is to be calculated.
+            Resolution parameter at which this model is to be calculated (with `ud_grade`)
         """
         super().__init__(nside=nside, map_dist=map_dist)
         num_pix = hp.nside2npix(nside)
