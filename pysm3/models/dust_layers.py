@@ -3,7 +3,6 @@ import healpy as hp
 
 import numpy as np
 from numba import njit
-from astropy import constants as const
 
 from .. import units as u
 from .. import utils
@@ -68,7 +67,7 @@ class ModifiedBlackBodyLayers(Model):
         if isinstance(map_layers, (str, Path)):
             for i_layer in range(num_layers):
                 self.layers[i_layer, 3, :] = self.read_map(
-                    map_layers.format(layer=i_layer), field=(0, 1, 2), unit=unit
+                    map_layers.format(layer=i_layer), field=(0, 1, 2), unit=unit_layers
                 )
         else:
             self.layers = u.Quantity(map_layers, unit_layers)

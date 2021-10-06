@@ -3,9 +3,7 @@ import numpy as np
 import healpy as hp
 from astropy.tests.helper import assert_quantity_allclose
 
-import pysm3
 from pysm3.models.dust_layers import ModifiedBlackBodyLayers
-import pytest
 from pysm3 import units as u
 
 
