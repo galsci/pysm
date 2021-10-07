@@ -17,7 +17,6 @@ try:
 except PackageNotFoundError:  # pragma: no cover
     __version__ = "unknown"
 
-import sys
 from .models import *
 from .sky import Sky
 from . import units
