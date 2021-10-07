@@ -30,7 +30,7 @@ class CMBMap(Model):
         # do not use normalize weights because that includes a transformation
         # to spectral radiance and then back to RJ
         if weights is None:
-            weights = np.ones(len(freqs), dtype=np.float)
+            weights = np.ones(len(freqs), dtype=np.float32)
 
         scaling_factor = utils.bandpass_unit_conversion(
             freqs * u.GHz, weights, output_unit=u.uK_RJ, input_unit=u.uK_CMB
