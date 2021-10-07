@@ -132,15 +132,14 @@ def apply_smoothing_and_coord_transform(
             input_map,
             lmax=lmax,
             use_pixel_weights=True if nside > 16 else False,
-            verbose=False,
         )
         if fwhm is not None:
             hp.smoothalm(
-                alm, fwhm=fwhm.to_value(u.rad), verbose=False, inplace=True, pol=True
+                alm, fwhm=fwhm.to_value(u.rad), inplace=True, pol=True
             )
         if rot is not None:
             rot.rotate_alm(alm, inplace=True)
-        smoothed_map = hp.alm2map(alm, nside=nside, verbose=False, pixwin=False)
+        smoothed_map = hp.alm2map(alm, nside=nside, pixwin=False)
 
     else:
         assert (rot is None) or (
@@ -220,7 +219,7 @@ def read_map(path, nside, unit=None, field=0, map_dist=None):
     filename = utils.RemoteData().get(path)
 
     if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
-        output_map = hp.read_map(filename, field=field, verbose=False, dtype=None)
+        output_map = hp.read_map(filename, field=field, dtype=None)
         dtype = output_map.dtype
         # numba only supports little endian
         if dtype.byteorder == ">":

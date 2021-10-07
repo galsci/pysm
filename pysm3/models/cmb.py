@@ -60,7 +60,7 @@ def simulate_tebp_correlated(cl_tebp_arr, nside, lmax, seed):
     beam_cut = np.ones(3 * nside)
     for ac in acmb:
         hp.almxfl(ac, beam_cut, inplace=True)
-    cmb = np.array(hp.alm2map(acmb, nside, pol=True, verbose=False))
+    cmb = np.array(hp.alm2map(acmb, nside, pol=True))
     return cmb, aphi
 
 
