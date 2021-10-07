@@ -7,7 +7,7 @@ this template, ensuring that the new subclass has the required
 Objects:
     Model
 """
-import warnings
+import logging
 import numpy as np
 import healpy as hp
 from astropy.io import fits
@@ -16,6 +16,7 @@ from .. import units as u
 from .. import mpi
 import gc
 
+log = logging.getLogger("pysm3")
 
 class Model:
     """ This is the template object for PySM objects.
@@ -189,7 +190,7 @@ def extract_hdu_unit(path):
     except KeyError:
         # in the case that TUNIT1 does not exist, assume unitless quantity.
         unit = ""
-        warnings.warn("No physical unit associated with file " + str(path))
+        log.warning("No physical unit associated with file %s", str(path))
     return unit
 
 
