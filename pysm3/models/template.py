@@ -43,7 +43,7 @@ class Model:
         nside: int
             Resolution parameter at which this model is to be calculated.
         smoothing_lmax : int
-            :math:`\ell_{max}` for the smoothing step, by default :math:`2*N_{side}`
+            :math:`\\ell_{max}` for the smoothing step, by default :math:`2*N_{side}`
         """
         self.nside = nside
         assert nside is not None
