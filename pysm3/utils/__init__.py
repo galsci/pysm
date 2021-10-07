@@ -3,14 +3,14 @@
 # This sub-module is destined for common non-package specific utility
 # functions.
 
-import warnings
-
 import numpy as np
 from numba import njit
 
 from .. import units as u
 from .data import RemoteData  # noqa: F401
 
+import logging
+log = logging.getLogger("pysm3")
 
 def has_polarization(m):
     """Checks if a map or a group of map is polarized
@@ -111,7 +111,7 @@ def bandpass_unit_conversion(
         weights /= np.trapz(weights, freqs)
         if weights.min() < cut:
             good = np.logical_not(weights < cut)
-            warnings.warn(
+            log.info(
                 "Removing {}/{} points below {}".format(good.sum(), len(good), cut)
             )
             weights = weights[good]
