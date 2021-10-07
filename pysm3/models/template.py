@@ -185,13 +185,13 @@ def extract_hdu_unit(path):
     string
         String specifying the unit of the fits data.
     """
-    hdul = fits.open(path)
-    try:
-        unit = hdul[1].header["TUNIT1"]
-    except KeyError:
-        # in the case that TUNIT1 does not exist, assume unitless quantity.
-        unit = ""
-        log.warning("No physical unit associated with file %s", str(path))
+    with fits.open(path) as hdul:
+        try:
+            unit = hdul[1].header["TUNIT1"]
+        except KeyError:
+            # in the case that TUNIT1 does not exist, assume unitless quantity.
+            unit = ""
+            log.warning("No physical unit associated with file %s", str(path))
     return unit
 
 
