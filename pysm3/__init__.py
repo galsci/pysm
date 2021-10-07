@@ -2,7 +2,9 @@
 from ._astropy_init import *  # noqa
 
 import warnings
+from astropy.utils.exceptions import AstropyDeprecationWarning
 
+warnings.simplefilter("ignore", category=AstropyDeprecationWarning)
 warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 try:
