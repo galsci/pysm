@@ -1,5 +1,3 @@
-from pathlib import Path
-import unittest
 import numpy as np
 import healpy as hp
 import pysm3.units as units
