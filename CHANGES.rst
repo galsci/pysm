@@ -2,6 +2,8 @@
 ==================
 
 - Moved Github repository from `healpy/pysm` to `galsci/pysm`, under the Panexperiment Galactic Science group organization
+- Changes in this release are related to the `JOSS Review <https://github.com/openjournals/joss-reviews/issues/3783>`_
+- Turned `UserWarning` into `logging`, `Pull Request 88 <https://github.com/galsci/pysm/pull/88>`_
 
 3.3.1 (2021-06-30)
 ==================
