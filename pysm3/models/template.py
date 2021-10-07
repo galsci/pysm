@@ -18,8 +18,9 @@ import gc
 
 log = logging.getLogger("pysm3")
 
+
 class Model:
-    """ This is the template object for PySM objects.
+    """This is the template object for PySM objects.
 
     If a MPI communicator is passed as input and `pixel_indices` is None,
     the class automatically distributes the maps across processes.
@@ -68,7 +69,7 @@ class Model:
 
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
-        """ This function evaluates the component model at a either
+        """This function evaluates the component model at a either
         a single frequency, an array of frequencies, or over a bandpass.
 
         Parameters
@@ -153,7 +154,7 @@ def apply_smoothing_and_coord_transform(
 
 
 def apply_normalization(freqs, weights):
-    """ Function to apply a normalization constraing to a set of weights.
+    """Function to apply a normalization constraing to a set of weights.
     This imposes the requirement that the integral of the weights over the
     array `freqs` must equal unity.
 
@@ -174,7 +175,7 @@ def apply_normalization(freqs, weights):
 
 
 def extract_hdu_unit(path):
-    """ Function to extract unit from an hdu.
+    """Function to extract unit from an hdu.
     Parameters
     ----------
     path: Path object

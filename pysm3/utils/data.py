@@ -1,4 +1,3 @@
-import warnings
 import os
 import logging
 
@@ -9,6 +8,7 @@ DATAURL = "https://portal.nersc.gov/project/cmb/pysm-data/"
 PREDEFINED_DATA_FOLDERS = ["/global/project/projectdirs/cmb/www/pysm-data/"]  # NERSC
 
 log = logging.getLogger("pysm3")
+
 
 class RemoteData:
     def __init__(self):
