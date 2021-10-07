@@ -30,7 +30,7 @@ class CMBMap(Model):
         # do not use normalize weights because that includes a transformation
         # to spectral radiance and then back to RJ
         if weights is None:
-            weights = np.ones(len(freqs), dtype=np.float)
+            weights = np.ones(len(freqs), dtype=np.float32)
 
         scaling_factor = utils.bandpass_unit_conversion(
             freqs * u.GHz, weights, output_unit=u.uK_RJ, input_unit=u.uK_CMB
@@ -60,7 +60,7 @@ def simulate_tebp_correlated(cl_tebp_arr, nside, lmax, seed):
     beam_cut = np.ones(3 * nside)
     for ac in acmb:
         hp.almxfl(ac, beam_cut, inplace=True)
-    cmb = np.array(hp.alm2map(acmb, nside, pol=True, verbose=False))
+    cmb = np.array(hp.alm2map(acmb, nside, pol=True))
     return cmb, aphi
 
 

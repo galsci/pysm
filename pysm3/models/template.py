@@ -7,7 +7,7 @@ this template, ensuring that the new subclass has the required
 Objects:
     Model
 """
-import warnings
+import logging
 import numpy as np
 import healpy as hp
 from astropy.io import fits
@@ -16,9 +16,11 @@ from .. import units as u
 from .. import mpi
 import gc
 
+log = logging.getLogger("pysm3")
+
 
 class Model:
-    """ This is the template object for PySM objects.
+    """This is the template object for PySM objects.
 
     If a MPI communicator is passed as input and `pixel_indices` is None,
     the class automatically distributes the maps across processes.
@@ -41,7 +43,7 @@ class Model:
         nside: int
             Resolution parameter at which this model is to be calculated.
         smoothing_lmax : int
-            :math:`\ell_{max}` for the smoothing step, by default :math:`2*N_{side}`
+            :math:`\\ell_{max}` for the smoothing step, by default :math:`2*N_{side}`
         """
         self.nside = nside
         assert nside is not None
@@ -67,7 +69,7 @@ class Model:
 
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
-        """ This function evaluates the component model at a either
+        """This function evaluates the component model at a either
         a single frequency, an array of frequencies, or over a bandpass.
 
         Parameters
@@ -130,15 +132,14 @@ def apply_smoothing_and_coord_transform(
             input_map,
             lmax=lmax,
             use_pixel_weights=True if nside > 16 else False,
-            verbose=False,
         )
         if fwhm is not None:
             hp.smoothalm(
-                alm, fwhm=fwhm.to_value(u.rad), verbose=False, inplace=True, pol=True
+                alm, fwhm=fwhm.to_value(u.rad), inplace=True, pol=True
             )
         if rot is not None:
             rot.rotate_alm(alm, inplace=True)
-        smoothed_map = hp.alm2map(alm, nside=nside, verbose=False, pixwin=False)
+        smoothed_map = hp.alm2map(alm, nside=nside, pixwin=False)
 
     else:
         assert (rot is None) or (
@@ -152,7 +153,7 @@ def apply_smoothing_and_coord_transform(
 
 
 def apply_normalization(freqs, weights):
-    """ Function to apply a normalization constraing to a set of weights.
+    """Function to apply a normalization constraing to a set of weights.
     This imposes the requirement that the integral of the weights over the
     array `freqs` must equal unity.
 
@@ -173,7 +174,7 @@ def apply_normalization(freqs, weights):
 
 
 def extract_hdu_unit(path):
-    """ Function to extract unit from an hdu.
+    """Function to extract unit from an hdu.
     Parameters
     ----------
     path: Path object
@@ -183,13 +184,13 @@ def extract_hdu_unit(path):
     string
         String specifying the unit of the fits data.
     """
-    hdul = fits.open(path)
-    try:
-        unit = hdul[1].header["TUNIT1"]
-    except KeyError:
-        # in the case that TUNIT1 does not exist, assume unitless quantity.
-        unit = ""
-        warnings.warn("No physical unit associated with file " + str(path))
+    with fits.open(path) as hdul:
+        try:
+            unit = hdul[1].header["TUNIT1"]
+        except KeyError:
+            # in the case that TUNIT1 does not exist, assume unitless quantity.
+            unit = ""
+            log.warning("No physical unit associated with file %s", str(path))
     return unit
 
 
@@ -218,7 +219,7 @@ def read_map(path, nside, unit=None, field=0, map_dist=None):
     filename = utils.RemoteData().get(path)
 
     if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
-        output_map = hp.read_map(filename, field=field, verbose=False, dtype=None)
+        output_map = hp.read_map(filename, field=field, dtype=None)
         dtype = output_map.dtype
         # numba only supports little endian
         if dtype.byteorder == ">":

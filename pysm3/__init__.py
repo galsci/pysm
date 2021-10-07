@@ -1,5 +1,10 @@
 # flake8: noqa
-from ._astropy_init import *   # noqa
+from ._astropy_init import *  # noqa
+
+import warnings
+from astropy.utils.exceptions import AstropyDeprecationWarning
+
+warnings.filterwarnings("ignore", message="may indicate binary incompatibility")
 
 try:
     from importlib.metadata import version, PackageNotFoundError  # type: ignore
@@ -11,7 +16,6 @@ try:
 except PackageNotFoundError:  # pragma: no cover
     __version__ = "unknown"
 
-import sys
 from .models import *
 from .sky import Sky
 from . import units

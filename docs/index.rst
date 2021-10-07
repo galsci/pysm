@@ -102,6 +102,33 @@ Execute the unit tests with::
 
     pytest
 
+Configure verbosity
+-------------------
+
+PySM uses the `logging` module to configure its verbosity,
+by default it will only print warnings and errors, to configure logging
+you can access the "pysm3" logger with::
+
+    import logging
+    log = logging.getLogger("pysm3")
+
+configure the logging level::
+
+    log.setLevel(logging.DEBUG)
+
+redirect the logs to the console::
+
+    handler = logging.StreamHandler()
+    log.addHandler(handler)
+
+or customize their format::
+
+    log_format="%(name)s - %(levelname)s - %(message)s"
+    formatter = logging.Formatter(log_format)
+    handler.setFormatter(formatter)
+
+For more details see the `Python documentation <https://docs.python.org/3/library/logging.html>`_.
+
 Tutorials
 =========
 
