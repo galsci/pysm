@@ -1,5 +1,6 @@
 import warnings
 import os
+import logging
 
 from astropy.utils import data
 
@@ -7,6 +8,7 @@ DATAURL = "https://portal.nersc.gov/project/cmb/pysm-data/"
 
 PREDEFINED_DATA_FOLDERS = ["/global/project/projectdirs/cmb/www/pysm-data/"]  # NERSC
 
+log = logging.getLogger("pysm3")
 
 class RemoteData:
     def __init__(self):
@@ -34,11 +36,11 @@ class RemoteData:
         for folder in self.data_folders:
             full_path = os.path.join(folder, filename)
             if os.path.exists(full_path):
-                warnings.warn(f"Access data from {full_path}")
+                log.info(f"Access data from {full_path}")
                 return full_path
         with data.conf.set_temp("dataurl", self.data_url), data.conf.set_temp(
             "remote_timeout", 90
         ):
-            warnings.warn(f"Retrieve data for {filename} (if not cached already)")
+            log.info(f"Retrieve data for {filename} (if not cached already)")
             full_path = data.get_pkg_data_filename(filename, show_progress=True)
         return full_path
