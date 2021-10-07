@@ -10,7 +10,9 @@ from .. import units as u
 from .data import RemoteData  # noqa: F401
 
 import logging
+
 log = logging.getLogger("pysm3")
+
 
 def has_polarization(m):
     """Checks if a map or a group of map is polarized
@@ -159,7 +161,7 @@ def trapz_step_inplace(freqs, weights, i, m, output):
 
 
 def check_freq_input(freqs):
-    """ Function to check that the input to `Model.get_emission` is a
+    """Function to check that the input to `Model.get_emission` is a
     np.ndarray.
 
     This function will convert input scalar frequencies
