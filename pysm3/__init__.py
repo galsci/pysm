@@ -5,7 +5,7 @@ import warnings
 from astropy.utils.exceptions import AstropyDeprecationWarning
 
 warnings.simplefilter("ignore", category=AstropyDeprecationWarning)
-warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
+warnings.filterwarnings("ignore", message="may indicate binary incompatibility")
 
 try:
     from importlib.metadata import version, PackageNotFoundError  # type: ignore
