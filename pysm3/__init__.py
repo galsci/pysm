@@ -1,5 +1,9 @@
 # flake8: noqa
-from ._astropy_init import *   # noqa
+from ._astropy_init import *  # noqa
+
+import warnings
+
+warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
 try:
     from importlib.metadata import version, PackageNotFoundError  # type: ignore
