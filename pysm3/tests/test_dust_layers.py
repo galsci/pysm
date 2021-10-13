@@ -5,7 +5,7 @@ from astropy.tests.helper import assert_quantity_allclose
 
 from pysm3.models.dust_layers import ModifiedBlackBodyLayers
 from pysm3 import units as u
-from pysm3 import Sky
+from pysm3 import Sky, read_map
 
 
 def test_modified_black_body_class():
@@ -44,4 +44,16 @@ def test_modified_black_body_class():
 
 def test_model_d12():
     sky = Sky(preset_strings=["d12"], nside=8, output_unit=u.MJy / u.sr,)
-    emission = sky.get_emission(353 * u.GHz)
+    freq = 353
+    emission = sky.get_emission(freq * u.GHz)
+
+    expected_map = read_map(
+        f"mkd_dust/test/layermodel_nside8_{freq}.fits",
+        8,
+        unit=u.MJy / u.sr,
+        field=(0, 1, 2),
+    )
+
+    assert_quantity_allclose(
+        expected_map, emission, rtol=1e-5
+    )
