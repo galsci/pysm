@@ -57,7 +57,7 @@ class ModifiedBlackBodyLayers(Model):
         self.layers = np.empty((num_layers, 3, num_pix))
         if isinstance(map_layers, (str, Path)):
             for i_layer in range(num_layers):
-                self.layers[i_layer, 3, :] = self.read_map(
+                self.layers[i_layer, :, :] = self.read_map(
                     map_layers.format(layer=i_layer+1), field=(0, 1, 2), unit=unit_layers
                 )
         else:
@@ -71,7 +71,7 @@ class ModifiedBlackBodyLayers(Model):
         self.mbb_temperature = np.empty((num_layers, num_pix))
 
         if isinstance(map_mbb_index, (str, Path)):
-            self.mbb_index = np.empty((num_layers, num_pix))
+            self.mbb_index = u.Quantity(np.empty((num_layers, num_pix)), unit="")
             for i_layer in range(num_layers):
                 self.mbb_index[i_layer] = self.read_map(
                     map_mbb_index.format(layer=i_layer+1), unit=""
