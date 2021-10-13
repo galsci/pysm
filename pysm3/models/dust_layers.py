@@ -25,7 +25,8 @@ class ModifiedBlackBodyLayers(Model):
     ):
         """Modified Black Body model with multiple layers
 
-        Used for the MKD 3D dust model by Ginés Martínez-Solaeche, Ata Karakci, Jacques Delabrouille:
+        Used for the MKD 3D dust model by
+        Ginés Martínez-Solaeche, Ata Karakci, Jacques Delabrouille:
         https://arxiv.org/abs/1706.04162
 
         Parameters
@@ -68,7 +69,6 @@ class ModifiedBlackBodyLayers(Model):
 
         with u.set_enabled_equivalencies(u.cmb_equivalencies(self.freq_ref)):
             self.layers <<= u.uK_RJ
-
 
         if isinstance(map_mbb_index, (str, Path)):
             self.mbb_index = u.Quantity(np.empty((num_layers, num_pix)), unit="")
