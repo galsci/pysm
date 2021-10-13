@@ -1,4 +1,5 @@
 import astropy.units as units
+import pytest
 import numpy as np
 import healpy as hp
 from astropy.tests.helper import assert_quantity_allclose
@@ -42,9 +43,10 @@ def test_modified_black_body_class():
     )
 
 
-def test_model_d12():
+@pytest.mark.parametrize("freq", [100, 353, 857])
+def test_model_d12(freq):
     sky = Sky(preset_strings=["d12"], nside=8, output_unit=u.MJy / u.sr,)
-    freq = 353
+
     emission = sky.get_emission(freq * u.GHz)
 
     expected_map = read_map(
@@ -54,6 +56,4 @@ def test_model_d12():
         field=(0, 1, 2),
     )
 
-    assert_quantity_allclose(
-        expected_map, emission, rtol=1e-5
-    )
+    assert_quantity_allclose(expected_map, emission, rtol=1e-5)

@@ -11,7 +11,6 @@ from .dust import blackbody_ratio
 
 
 class ModifiedBlackBodyLayers(Model):
-
     def __init__(
         self,
         map_layers,
@@ -54,11 +53,13 @@ class ModifiedBlackBodyLayers(Model):
         super().__init__(nside=nside, map_dist=map_dist)
         num_pix = hp.nside2npix(nside)
         self.num_layers = num_layers
-        self.layers = np.empty((num_layers, 3, num_pix))
+        self.layers = u.Quantity(np.empty((num_layers, 3, num_pix)), unit=unit_layers)
         if isinstance(map_layers, (str, Path)):
             for i_layer in range(num_layers):
                 self.layers[i_layer, :, :] = self.read_map(
-                    map_layers.format(layer=i_layer+1), field=(0, 1, 2), unit=unit_layers
+                    map_layers.format(layer=i_layer + 1),
+                    field=(0, 1, 2),
+                    unit=unit_layers,
                 )
         else:
             self.layers = u.Quantity(map_layers, unit_layers)
@@ -68,22 +69,24 @@ class ModifiedBlackBodyLayers(Model):
         with u.set_enabled_equivalencies(u.cmb_equivalencies(self.freq_ref)):
             self.layers <<= u.uK_RJ
 
-        self.mbb_temperature = np.empty((num_layers, num_pix))
 
         if isinstance(map_mbb_index, (str, Path)):
             self.mbb_index = u.Quantity(np.empty((num_layers, num_pix)), unit="")
             for i_layer in range(num_layers):
                 self.mbb_index[i_layer] = self.read_map(
-                    map_mbb_index.format(layer=i_layer+1), unit=""
+                    map_mbb_index.format(layer=i_layer + 1), unit=""
                 )
         else:
             self.mbb_index = u.Quantity(map_mbb_index, unit="")
 
         if isinstance(map_mbb_temperature, (str, Path)):
-            self.mbb_temperature = np.empty((num_layers, num_pix))
+            self.mbb_temperature = u.Quantity(
+                np.empty((num_layers, num_pix)), unit_mbb_temperature
+            )
             for i_layer in range(num_layers):
                 self.mbb_temperature[i_layer] = self.read_map(
-                    map_mbb_temperature.format(layer=i_layer+1), unit=unit_mbb_temperature
+                    map_mbb_temperature.format(layer=i_layer + 1),
+                    unit=unit_mbb_temperature,
                 )
         else:
             self.mbb_temperature = u.Quantity(
@@ -110,12 +113,7 @@ class ModifiedBlackBodyLayers(Model):
 
 @njit(parallel=True)
 def get_emission_numba(
-    freqs,
-    weights,
-    layers,
-    freq_ref,
-    mbb_index,
-    mbb_temperature,
+    freqs, weights, layers, freq_ref, mbb_index, mbb_temperature,
 ):
     npix = layers.shape[-1]
     output = np.zeros((3, npix), dtype=layers.dtype)
