@@ -5,6 +5,7 @@ from astropy.tests.helper import assert_quantity_allclose
 
 from pysm3.models.dust_layers import ModifiedBlackBodyLayers
 from pysm3 import units as u
+from pysm3 import Sky
 
 
 def test_modified_black_body_class():
@@ -39,3 +40,8 @@ def test_modified_black_body_class():
     assert_quantity_allclose(
         expected_output, model.get_emission(freq * units.GHz), rtol=rtol
     )
+
+
+def test_model_d12():
+    sky = Sky(preset_strings=["d12"], nside=8, output_unit=u.MJy / u.sr,)
+    emission = sky.get_emission(353 * u.GHz)
