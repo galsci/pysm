@@ -30,6 +30,7 @@ See the `documentation <https://pysm3.readthedocs.io/en/latest/#installation>`_
 * Optionally, if you have an MPI environment available and you would like to test the MPI capabilities of PySM, install ``mpi4py`` and ``libsharp``, check the documentation link above for more details.
 * Check code style with ``tox -e codestyle``
 * Test with ``pytest`` or ``tox -e test``
+* Building docs requires ``pandoc``, not the python package, the actual ``pandoc`` command line tool, install it with conda or your package manager
 * Build docs locally with ``tox -e build_docs``
 
 Support
