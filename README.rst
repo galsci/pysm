@@ -26,7 +26,8 @@ Install
 
 See the `documentation <https://pysm3.readthedocs.io/en/latest/#installation>`_
 
-* Install with ``pip install .``
+* Install with ``pip install .`` or with ``pip install .[test]`` to also install the requirements for running tests
+* Optionally, if you have an MPI environment available and you would like to test the MPI capabilities of PySM, install ``mpi4py`` and ``libsharp``, check the documentation link above for more details.
 * Check code style with ``tox -e codestyle``
 * Test with ``pytest`` or ``tox -e test``
 * Build docs locally with ``tox -e build_docs``

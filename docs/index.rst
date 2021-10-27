@@ -98,6 +98,10 @@ Create a development installation with::
 
     pip install -e .
 
+Install the requirements for testing with::
+
+    pip install -e .[test]
+
 Execute the unit tests with::
 
     pytest
