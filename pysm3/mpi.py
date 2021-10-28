@@ -93,10 +93,10 @@ def distribute_rings_libsharp(mpi_comm, nside, lmax):
     libsharp_grid = libsharp.healpix_grid(nside, rings=local_ring_indices)
 
     # returns start index of the ring and number of pixels
-    startpix, ringpix, _, _, _ = hp.ringinfo(nside, local_ring_indices.astype(np.int64))
+    startpix, ringpix, _, _, _ = hp.ringinfo(nside, local_ring_indices.astype(int))
 
     local_npix = libsharp_grid.local_size()
-    local_pixels = expand_pix(startpix, ringpix, local_npix).astype(np.int)
+    local_pixels = expand_pix(startpix, ringpix, local_npix).astype(int)
 
     local_m_indices = np.arange(mpi_comm.rank, lmax + 1, mpi_comm.size, dtype=np.int32)
     libsharp_order = libsharp.packed_real_order(lmax, ms=local_m_indices)

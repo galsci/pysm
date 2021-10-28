@@ -50,7 +50,14 @@ Python, which is slower, but easier to debug::
 
     export NUMBA_DISABLE_JIT=1
 
-In order to run in parallel with MPI, it also needs:
+Run PySM with MPI support
+-------------------------
+
+PySM 3 is capable of running across multiple nodes using a MPI communicator.
+
+See the details in the `MPI section of the tutorial <mpi.ipynb>`_.
+
+In order to run in parallel with MPI, it also needs a functioning MPI environment and:
 
 * `mpi4py`
 
@@ -97,6 +104,10 @@ you can clone and install it with::
 Create a development installation with::
 
     pip install -e .
+
+Install the requirements for testing with::
+
+    pip install -e .[test]
 
 Execute the unit tests with::
 

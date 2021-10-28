@@ -10,7 +10,7 @@ class MapDistribution:
         In a serial environment, this is only useful if you want to generate a partial sky,
         pass an array `pixel_indices` with the indices in RING ordering.
 
-        in a MPI environment, pass a `mpi4py` communicator and the desired :math:`\ell_{max}`
+        in a MPI environment, pass a `mpi4py` communicator and the desired :math:`\\ell_{max}`
         for smoothing and this class will create a ring-based distribution suitable for smoothing
         with `libsharp`.
 
@@ -23,7 +23,7 @@ class MapDistribution:
         nside: int
             Resolution parameter at which this model is to be calculated.
         smoothing_lmax : int
-            :math:`\ell_{max}` for the smoothing step, by default :math:`3*N_{side}-1`
+            :math:`\\ell_{max}` for the smoothing step, by default :math:`3*N_{side}-1`
         """
         self.pixel_indices = pixel_indices
         self.mpi_comm = mpi_comm
