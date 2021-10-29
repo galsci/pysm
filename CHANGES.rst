@@ -1,4 +1,7 @@
-3.3.2 (unreleased)
+3.3.3 (unreleased)
+==================
+
+3.3.2 (2021-10-29)
 ==================
 
 - `Improvements to install documentation <https://github.com/galsci/pysm/pull/93>`_
