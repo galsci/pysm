@@ -8,9 +8,23 @@ from .template import Model
 
 
 class CMBMap(Model):
+    """Load one or a set of 3 CMB maps"""
+
     def __init__(
         self, nside, map_IQU=None, map_I=None, map_Q=None, map_U=None, map_dist=None
     ):
+        """
+        The input is assumed to be in `uK_CMB`
+
+        Parameters
+        ----------
+        nside: int
+            HEALPix N_side parameter of the input maps
+        map_IQU: `pathlib.Path` object
+            Path to a single IQU map
+        map_I, map_Q, map_U: `pathlib.Path` object
+            Paths to the maps to be used as I, Q, U templates.
+        """
         super().__init__(nside=nside, map_dist=map_dist)
         if map_IQU is not None:
             self.map = self.read_map(map_IQU, unit=u.uK_CMB, field=(0, 1, 2))
