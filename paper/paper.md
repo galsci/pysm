@@ -77,6 +77,8 @@ The following tables shows the walltime and peak memory usage of this simulation
 | 1024              | 3m30s 2.3 GB  | 7m20s 5.5 GB  |
 | 2048              | 16m10s 8.5 GB | Out of memory |
 
+The models at $N_{side}=512$ have been tested to be equal given a relative tolerance of `1e-5`.
+
 At the moment it is not very useful to run at resolutions higher than $N_{side}=512$ because there is no actual template signal at smaller scales. However, it demonstrates the performance improvements that will make working with higher resolution templates possible.
 
 # Future work
