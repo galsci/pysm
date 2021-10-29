@@ -1,7 +1,7 @@
 import numpy as np
 import healpy as hp
-import pysm
-import pysm.units as u
+import pysm3 as pysm
+import pysm3.units as u
 from so_pysm_models import get_so_models
 import so_pysm_models
 
