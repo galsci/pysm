@@ -1,13 +1,18 @@
-@misc{pysm3,
-      title={The Python Sky Model 3 software}, 
-      author={Andrea Zonca and Ben Thorne and Nicoletta Krachmalnicoff and Julian Borrill},
-      year={2021},
-      eprint={2108.01444},
-      archivePrefix={arXiv},
-      primaryClass={astro-ph.IM}
+@article{Zonca_2021,
+  doi = {10.21105/joss.03783},
+  url = {https://doi.org/10.21105/joss.03783},
+  year = {2021},
+  publisher = {The Open Journal},
+  volume = {6},
+  number = {67},
+  pages = {3783},
+  author = {Andrea Zonca and Ben Thorne and Nicoletta Krachmalnicoff and Julian Borrill},
+  title = {{The Python Sky Model 3 software}},
+  journal = {Journal of Open Source Software}
 }
+
 @article{Thorne_2017,
-   title={The Python Sky Model: software for simulating the Galactic microwave sky},
+   title={{The Python Sky Model: software for simulating the Galactic microwave sky}},
    volume={469},
    ISSN={1365-2966},
    url={http://dx.doi.org/10.1093/mnras/stx949},
