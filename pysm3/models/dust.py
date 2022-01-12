@@ -383,6 +383,5 @@ def blackbody_nu(freq, temp):
 
     # Calculate blackbody flux
     bb_nu = 2.0 * h * (freq * 1e9) ** 3 / (c ** 2 * boltzm1)
-    # flux = bb_nu.to(FNU, u.spectral_density(freq * 1e9))
 
     return bb_nu
