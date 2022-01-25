@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import pysm3
 import pysm3.units as u
 from astropy.tests.helper import assert_quantity_allclose
@@ -34,6 +35,7 @@ def test_bandpass_unit_conversion():
         assert_quantity_allclose(expected_map[pol], CMB_thermo_int[pol], rtol=1e-4)
 
 
+<<<<<<< HEAD
 def test_bandpass_integration_tophat():
     input_map = np.ones(12, dtype=np.double)
     output_map = np.zeros_like(input_map)
@@ -75,3 +77,47 @@ def test_remotedata_globalpath(tmp_path):
     test_file.touch()
     filename = pysm3.utils.RemoteData().get(str(test_file))
     assert filename == str(test_file)
+
+from astropy.io import fits
+
+@pytest.fixture
+def test_fits_file(tmp_path):
+    d = tmp_path / "sub"
+    c1 = fits.Column(name="a", array=np.array([1, 2]), format="K")
+    c2 = fits.Column(name="b", array=np.array([4, 5]), format="K")
+    c3 = fits.Column(name="c", array=np.array([7, 8]), format="K")
+    t = fits.BinTableHDU.from_columns([c1, c2, c3])
+    t.writeto(d)
+    return d
+
+
+def test_add_metadata(test_fits_file):
+    pysm3.utils.add_metadata(
+        [test_fits_file, test_fits_file],
+        field=1,
+        coord="G",
+        unit="uK_RJ",
+        ref_freq="353 GHz",
+    )
+    with fits.open(test_fits_file) as f:
+        assert f[1].header["COORDSYS"] == "G"
+        assert f[1].header["TUNIT1"] == "uK_RJ"
+        assert f[1].header["TUNIT2"] == "uK_RJ"
+        assert f[1].header["TUNIT3"] == "uK_RJ"
+        assert f[1].header["REF_FREQ"] == "353 GHz"
+
+
+def test_add_metadata_different_units(test_fits_file):
+    pysm3.utils.add_metadata(
+        [test_fits_file],
+        field=1,
+        coord="G",
+        unit=["uK_RJ", "mK_RJ", "K_CMB"],
+        ref_freq="353 GHz",
+    )
+    with fits.open(test_fits_file) as f:
+        assert f[1].header["COORDSYS"] == "G"
+        assert f[1].header["TUNIT1"] == "uK_RJ"
+        assert f[1].header["TUNIT2"] == "mK_RJ"
+        assert f[1].header["TUNIT3"] == "K_CMB"
+        assert f[1].header["REF_FREQ"] == "353 GHz"
