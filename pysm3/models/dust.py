@@ -176,14 +176,14 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
             well correlated.
         """
         super().__init__(
-            map_I,
-            map_Q,
-            map_U,
-            freq_ref_I,
-            freq_ref_P,
-            map_mbb_index,
-            map_mbb_temperature,
-            nside,
+            map_I=map_I,
+            map_Q=map_Q,
+            map_U=map_U,
+            freq_ref_I=freq_ref_I,
+            freq_ref_P=freq_ref_P,
+            map_mbb_index=map_mbb_index,
+            map_mbb_temperature=map_mbb_temperature,
+            nside=nside,
             unit_I=unit_I,
             unit_Q=unit_Q,
             unit_U=unit_U,

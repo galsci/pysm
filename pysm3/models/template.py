@@ -61,7 +61,7 @@ class Model:
             nside = nside
         else:
             nside = self.nside
-        return read_map(path, nside, unit=unit, field=field, map_dist=self.map_dist)
+        return read_map(path, nside=nside, unit=unit, field=field, map_dist=self.map_dist)
 
     def read_txt(self, path, **kwargs):
         mpi_comm = None if self.map_dist is None else self.map_dist.mpi_comm
