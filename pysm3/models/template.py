@@ -61,6 +61,8 @@ class Model:
             nside = nside
         else:
             nside = self.nside
+        if "{nside}" in path:
+            path = path.format(nside=nside)
         return read_map(path, nside=nside, unit=unit, field=field, map_dist=self.map_dist)
 
     def read_txt(self, path, **kwargs):
