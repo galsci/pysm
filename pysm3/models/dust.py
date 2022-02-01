@@ -22,13 +22,13 @@ class ModifiedBlackBody(Model):
     def __init__(
         self,
         map_I,
-        map_Q,
-        map_U,
         freq_ref_I,
         freq_ref_P,
         map_mbb_index,
         map_mbb_temperature,
         nside,
+        map_Q=None,
+        map_U=None,
         has_polarization=True,
         unit_I=None,
         unit_Q=None,
@@ -46,6 +46,7 @@ class ModifiedBlackBody(Model):
         ----------
         map_I, map_Q, map_U: `pathlib.Path` object
             Paths to the maps to be used as I, Q, U templates.
+            If has_polarization is True and map_Q is None, assumes map_I is IQU
         unit_* : string or Unit
             Unit string or Unit object for all input FITS maps, if None, the input file
             should have a unit defined in the FITS header.
@@ -66,18 +67,26 @@ class ModifiedBlackBody(Model):
         """
         super().__init__(nside=nside, map_dist=map_dist)
         # do model setup
-        self.I_ref = self.read_map(map_I, unit=unit_I)
+        self.is_IQU = has_polarization and map_Q is None
+        self.I_ref = self.read_map(
+            map_I, field=[0, 1, 2] if self.is_IQU else 0, unit=unit_I
+        )
         # This does unit conversion in place so we do not copy the data
         # we do not keep the original unit because otherwise we would need
         # to make a copy of the array when we run the model
         self.I_ref <<= u.uK_RJ
         self.freq_ref_I = u.Quantity(freq_ref_I).to(u.GHz)
         self.has_polarization = has_polarization
-        if has_polarization:
+        if has_polarization and map_Q is not None:
             self.Q_ref = self.read_map(map_Q, unit=unit_Q)
             self.Q_ref <<= u.uK_RJ
             self.U_ref = self.read_map(map_U, unit=unit_U)
             self.U_ref <<= u.uK_RJ
+        else:  # unpack IQU map to 3 arrays
+            self.Q_ref = self.I_ref[1]
+            self.U_ref = self.I_ref[2]
+            self.I_ref = self.I_ref[0]
+        if has_polarization:
             self.freq_ref_P = u.Quantity(freq_ref_P).to(u.GHz)
         self.mbb_index = (
             self.read_map(map_mbb_index, unit="")
