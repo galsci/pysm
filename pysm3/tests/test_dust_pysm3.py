@@ -14,7 +14,7 @@ def test_dust_model(model_tag, freq):
 
     model = pysm3.Sky(preset_strings=[model_tag], nside=2048)
 
-    model_number = {"d0": 1, "d9":1, "d1": 1, "d2": 6, "d3": 9, "d6": 12}[model_tag]
+    model_number = {"d0": 1, "d9": 1, "d1": 1, "d2": 6, "d3": 9, "d6": 12}[model_tag]
     expected_output = pysm3.read_map(
         "pysm_2_test_data/check{}therm_{}p0_64.fits".format(model_number, freq),
         64,

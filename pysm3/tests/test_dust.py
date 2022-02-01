@@ -42,5 +42,5 @@ def test_dust_model(model_tag, freq):
     rtol = {"d0": 0.9}.get(model_tag, 1e-5)
 
     assert_quantity_allclose(
-       expected_output, model.get_emission(freq * units.GHz), rtol=rtol
+        expected_output, model.get_emission(freq * units.GHz), rtol=rtol
     )
