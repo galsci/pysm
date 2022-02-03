@@ -9,7 +9,17 @@ except ImportError:
     import pysm.units as u
     import pysm
 
-from .utils import RemoteData
+from . import utils
+
+
+def build_lines_dict(lines, maps):
+    """Build a dictionary for lines and maps
+
+    Takes a list of tags (strings) and a map or set of maps
+    and returns a dictionary where each tag is associated with
+    a map
+    """
+    return dict(zip(lines, np.atleast_2d(maps)))
 
 
 class COLines(pysm.Model):
@@ -18,7 +28,7 @@ class COLines(pysm.Model):
         target_nside,
         output_units,
         has_polarization=True,
-        line="10",
+        lines=["10", "21", "32"],
         include_high_galactic_latitude_clouds=False,
         polarization_fraction=0.001,
         theta_high_galactic_latitude_deg=20.0,
@@ -41,8 +51,8 @@ class COLines(pysm.Model):
             unit string as defined by `pysm.convert_units`, e.g. uK_RJ, K_CMB
         has_polarization : bool
             whether or not to simulate also polarization maps
-        line : string
-            CO rotational transitions.
+        lines : list of strings
+            CO rotational transitions to consider.
             Accepted values : 10, 21, 32
         polarization_fraction: float
             polarisation fraction for polarised CO emission.
@@ -62,63 +72,101 @@ class COLines(pysm.Model):
             Read inputs across a MPI communicator, see pysm.read_map
         """
 
-        self.line = line
-        self.line_index = {"10": 0, "21": 1, "32": 2}[line]
+        self.lines = lines
+        self.line_index = {"10": 0, "21": 1, "32": 2}
         self.line_frequency = {
             "10": 115.271 * u.GHz,
             "21": 230.538 * u.GHz,
             "32": 345.796 * u.GHz,
-        }[line]
+        }
         self.target_nside = target_nside
 
         self.template_nside = 512 if self.target_nside <= 512 else 2048
 
         super().__init__(nside=target_nside, map_dist=map_dist)
 
-        self.remote_data = RemoteData()
+        self.remote_data = utils.RemoteData()
 
-        self.planck_templatemap_filename = (
-            "co/HFI_CompMap_CO-Type1_{}_R2.00_ring.fits".format(self.template_nside)
+        self.planck_templatemap_filename = "co/HFI_CompMap_CO-Type1_{}_R2.00_ring.fits".format(
+            self.template_nside
         )
-        self.planck_templatemap = self.read_map(
-            self.remote_data.get(self.planck_templatemap_filename),
-            field=self.line_index,
-            unit=u.K_CMB,
+        self.planck_templatemap = build_lines_dict(
+            self.lines,
+            hp.ud_grade(
+                map_in=self.read_map(
+                    self.remote_data.get(self.planck_templatemap_filename),
+                    field=[self.line_index[line] for line in self.lines],
+                    unit=u.K_CMB,
+                ),
+                nside_out=self.target_nside,
+            )
+            << u.K_CMB,
         )
 
         self.include_high_galactic_latitude_clouds = (
             include_high_galactic_latitude_clouds
         )
         self.has_polarization = has_polarization
+        if self.has_polarization:
+            self.polangle = self.read_map(
+                self.remote_data.get(
+                    "co/psimap_dust90_{}.fits".format(self.template_nside)
+                )
+            ).value
+            self.depolmap = self.read_map(
+                self.remote_data.get(
+                    "co/gmap_dust90_{}.fits".format(self.template_nside)
+                )
+            ).value
         self.polarization_fraction = polarization_fraction
         self.theta_high_galactic_latitude_deg = theta_high_galactic_latitude_deg
         self.random_seed = random_seed
         self.run_mcmole3d = run_mcmole3d
 
+        if include_high_galactic_latitude_clouds and not run_mcmole3d:
+            # Dictionary where keys are "10", "21" and values
+            self.mapclouds = build_lines_dict(
+                self.lines,
+                self.read_map(
+                    self.remote_data.get(
+                        "co/mcmoleCO_HGL_{}.fits".format(self.template_nside)
+                    ),
+                    field=[self.line_index[line] for line in self.lines],
+                    unit=u.K_CMB,
+                ),
+            )
+
         self.output_units = u.Unit(output_units)
         self.verbose = verbose
 
-    def signal(self):
-        """
-        Simulate CO signal
-        """
-        out = (
-            hp.ud_grade(map_in=self.planck_templatemap, nside_out=self.target_nside)
-            << u.K_CMB
+    @u.quantity_input
+    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
+        freqs = utils.check_freq_input(freqs)
+        weights = utils.normalize_weights(freqs, weights)
+        out = np.zeros(
+            (3 if self.has_polarization else 1, hp.nside2npix(self.target_nside)),
+            dtype=np.double,
         )
+        for line in self.lines:
+            line_freq = self.line_frequency[line].to_value(u.GHz)
+            if line_freq >= freqs[0] and line_freq <= freqs[-1]:
+                convert_to_uK_RJ = (1 * u.K_CMB).to_value(
+                    self.output_units,
+                    equivalencies=u.cmb_equivalencies(line_freq * u.GHz),
+                )
+                I_map = self.planck_templatemap[line] * np.interp(
+                    line_freq, freqs, weights
+                )
+                if self.include_high_galactic_latitude_clouds:
+                    I_map += self.simulate_high_galactic_latitude_CO(line)
 
-        if self.include_high_galactic_latitude_clouds:
-            out += self.simulate_high_galactic_latitude_CO()
+                if self.has_polarization:
+                    out[1:] += (
+                        self.simulate_polarized_emission(I_map).value * convert_to_uK_RJ
+                    )
+                out[0] += I_map.value * convert_to_uK_RJ
 
-        if self.has_polarization:
-            Q_map, U_map = self.simulate_polarized_emission(out)
-            out = np.array([out, Q_map, U_map])
-
-        convert_to_uK_RJ = (1 * u.K_CMB).to_value(
-            self.output_units, equivalencies=u.cmb_equivalencies(self.line_frequency)
-        )
-
-        return out * convert_to_uK_RJ
+        return out * u.uK_RJ
 
     def simulate_polarized_emission(self, I_map):
         """
@@ -129,26 +177,14 @@ class COLines(pysm.Model):
         * a polarization angle map coming from a dust template (we exploit the observed correlation
         between polarized dust and molecular emission in star forming regions).
         """
-        polangle = self.read_map(
-            self.remote_data.get("co/psimap_dust90_{}.fits".format(self.template_nside))
-        ).value
-        depolmap = self.read_map(
-            self.remote_data.get("co/gmap_dust90_{}.fits".format(self.template_nside))
-        ).value
 
-        if hp.get_nside(depolmap) != self.target_nside:
-            polangle = hp.ud_grade(map_in=polangle, nside_out=self.target_nside)
-            depolmap = hp.ud_grade(map_in=depolmap, nside_out=self.target_nside)
+        cospolangle = np.cos(2.0 * self.polangle)
+        sinpolangle = np.sin(2.0 * self.polangle)
 
-        cospolangle = np.cos(2.0 * polangle)
-        sinpolangle = np.sin(2.0 * polangle)
+        P_map = self.polarization_fraction * self.depolmap * I_map
+        return P_map * np.array([cospolangle, sinpolangle])
 
-        P_map = self.polarization_fraction * depolmap * I_map
-        Q_map = P_map * cospolangle
-        U_map = P_map * sinpolangle
-        return Q_map, U_map
-
-    def simulate_high_galactic_latitude_CO(self):
+    def simulate_high_galactic_latitude_CO(self, line):
         """
         Coadd High Galactic Latitude CO emission, simulated with  MCMole3D.
         """
@@ -171,8 +207,8 @@ class COLines(pysm.Model):
 
             nside = self.target_nside
             Itot_o, _ = cl.integrate_intensity_map(
-                self.planck_templatemap,
-                hp.get_nside(self.planck_templatemap),
+                self.planck_templatemap[line],
+                hp.get_nside(self.planck_templatemap[line]),
                 planck_map=True,
             )
             Pop = cl.Cloud_Population(N, model, randseed=self.random_seed)
@@ -208,7 +244,7 @@ class COLines(pysm.Model):
                 np.deg2rad(90 - self.theta_high_galactic_latitude_deg),
             )
             hglmask[listhgl] = 1.0
-            rmsplanck = self.planck_templatemap[listhgl].std()
+            rmsplanck = self.planck_templatemap[line][listhgl].std()
             rmssim = mapclouds[listhgl].std()
             if rmssim == 0.0:
                 belowplanck = 1.0
@@ -217,12 +253,4 @@ class COLines(pysm.Model):
 
             return mapclouds * hglmask / belowplanck
         else:
-            mapclouds = self.read_map(
-                self.remote_data.get(
-                    "co/mcmoleCO_HGL_{}.fits".format(self.template_nside)
-                ),
-                field=self.line_index,
-                unit=u.K_CMB,
-            )
-
-            return mapclouds
+            return self.mapclouds[line]
