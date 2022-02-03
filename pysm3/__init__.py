@@ -1,6 +1,5 @@
 # flake8: noqa
 from ._astropy_init import *  # noqa
-
 import warnings
 from astropy.utils.exceptions import AstropyDeprecationWarning
 
@@ -22,4 +21,3 @@ from . import units
 from .distribution import MapDistribution
 from .mpi import mpi_smoothing
 from .utils import normalize_weights, bandpass_unit_conversion, check_freq_input
-from .co_lines import COLines

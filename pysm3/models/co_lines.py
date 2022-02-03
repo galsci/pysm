@@ -1,15 +1,9 @@
 import numpy as np
-
 import healpy as hp
 
-try:  # PySM >= 3.2.1
-    import pysm3.units as u
-    import pysm3 as pysm
-except ImportError:
-    import pysm.units as u
-    import pysm
-
-from . import utils
+from .. import units as u
+from .. import utils
+from .template import Model
 
 
 def build_lines_dict(lines, maps):
@@ -22,11 +16,10 @@ def build_lines_dict(lines, maps):
     return dict(zip(lines, np.atleast_2d(maps)))
 
 
-class COLines(pysm.Model):
+class COLines(Model):
     def __init__(
         self,
-        target_nside,
-        output_units,
+        nside,
         has_polarization=True,
         lines=["10", "21", "32"],
         include_high_galactic_latitude_clouds=False,
@@ -45,10 +38,8 @@ class COLines(pysm.Model):
 
         Parameters
         ----------
-        target_nside : int
+        nside : int
             HEALPix NSIDE of the output maps
-        output_units : str
-            unit string as defined by `pysm.convert_units`, e.g. uK_RJ, K_CMB
         has_polarization : bool
             whether or not to simulate also polarization maps
         lines : list of strings
@@ -79,16 +70,16 @@ class COLines(pysm.Model):
             "21": 230.538 * u.GHz,
             "32": 345.796 * u.GHz,
         }
-        self.target_nside = target_nside
+        self.nside = nside
 
-        self.template_nside = 512 if self.target_nside <= 512 else 2048
+        self.template_nside = 512 if self.nside <= 512 else 2048
 
-        super().__init__(nside=target_nside, map_dist=map_dist)
+        super().__init__(nside=nside, map_dist=map_dist)
 
         self.remote_data = utils.RemoteData()
 
-        self.planck_templatemap_filename = "co/HFI_CompMap_CO-Type1_{}_R2.00_ring.fits".format(
-            self.template_nside
+        self.planck_templatemap_filename = (
+            "co/HFI_CompMap_CO-Type1_{}_R2.00_ring.fits".format(self.template_nside)
         )
         self.planck_templatemap = build_lines_dict(
             self.lines,
@@ -98,7 +89,7 @@ class COLines(pysm.Model):
                     field=[self.line_index[line] for line in self.lines],
                     unit=u.K_CMB,
                 ),
-                nside_out=self.target_nside,
+                nside_out=self.nside,
             )
             << u.K_CMB,
         )
@@ -136,20 +127,19 @@ class COLines(pysm.Model):
                 ),
             )
 
-        self.output_units = u.Unit(output_units)
         self.verbose = verbose
 
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
-        out = np.zeros((3, hp.nside2npix(self.target_nside)), dtype=np.double)
+        out = np.zeros((3, hp.nside2npix(self.nside)), dtype=np.double)
         for line in self.lines:
             line_freq = self.line_frequency[line].to_value(u.GHz)
             if line_freq >= freqs[0] and line_freq <= freqs[-1]:
                 weight = np.interp(line_freq, freqs, weights)
                 convert_to_uK_RJ = (1 * u.K_CMB).to_value(
-                    self.output_units,
+                    u.K_RJ,
                     equivalencies=u.cmb_equivalencies(line_freq * u.GHz),
                 )
                 I_map = self.planck_templatemap[line]
@@ -203,7 +193,7 @@ class COLines(pysm.Model):
             R_em = 6.6
             model = "LogSpiral"
 
-            nside = self.target_nside
+            nside = self.nside
             Itot_o, _ = cl.integrate_intensity_map(
                 self.planck_templatemap[line],
                 hp.get_nside(self.planck_templatemap[line]),
