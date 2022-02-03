@@ -143,30 +143,28 @@ class COLines(pysm.Model):
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
-        out = np.zeros(
-            (3 if self.has_polarization else 1, hp.nside2npix(self.target_nside)),
-            dtype=np.double,
-        )
+        out = np.zeros((3, hp.nside2npix(self.target_nside)), dtype=np.double)
         for line in self.lines:
             line_freq = self.line_frequency[line].to_value(u.GHz)
             if line_freq >= freqs[0] and line_freq <= freqs[-1]:
+                weight = np.interp(line_freq, freqs, weights)
                 convert_to_uK_RJ = (1 * u.K_CMB).to_value(
                     self.output_units,
                     equivalencies=u.cmb_equivalencies(line_freq * u.GHz),
                 )
-                I_map = self.planck_templatemap[line] * np.interp(
-                    line_freq, freqs, weights
-                )
+                I_map = self.planck_templatemap[line]
                 if self.include_high_galactic_latitude_clouds:
                     I_map += self.simulate_high_galactic_latitude_CO(line)
 
                 if self.has_polarization:
                     out[1:] += (
-                        self.simulate_polarized_emission(I_map).value * convert_to_uK_RJ
+                        self.simulate_polarized_emission(I_map).value
+                        * convert_to_uK_RJ
+                        * weight
                     )
-                out[0] += I_map.value * convert_to_uK_RJ
+                out[0] += I_map.value * convert_to_uK_RJ * weight
 
-        return out * u.uK_RJ
+        return out << u.uK_RJ
 
     def simulate_polarized_emission(self, I_map):
         """
