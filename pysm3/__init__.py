@@ -1,6 +1,5 @@
 # flake8: noqa
 from ._astropy_init import *  # noqa
-
 import warnings
 from astropy.utils.exceptions import AstropyDeprecationWarning
 
