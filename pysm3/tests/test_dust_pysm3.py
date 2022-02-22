@@ -40,7 +40,7 @@ def test_d9_857():
     )
 
     freq_ref = 353 * u.GHz
-    scaling = (freq / (353 * u.GHz)) ** (1.48 - 2)
+    scaling = (freq / freq_ref) ** (1.48 - 2)
     scaling *= blackbody_ratio(freq, freq_ref, 19.6)
 
     assert_quantity_allclose(input_template * scaling, output, rtol=1e-6)
