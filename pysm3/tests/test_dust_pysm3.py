@@ -1,6 +1,3 @@
-import astropy.units as units
-import numpy as np
-import healpy as hp
 from astropy.tests.helper import assert_quantity_allclose
 from pysm3.models.dust import blackbody_ratio
 
