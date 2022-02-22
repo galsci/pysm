@@ -17,7 +17,8 @@ class RemoteData:
         PySM input templates are stored on the CMB project space at NERSC
         and are made available via web.
         The get method of this class tries to access data locally from one
-        of the PREDEFINED_DATA_FOLDERS defined above, if it fails, it
+        of the PREDEFINED_DATA_FOLDERS defined above or directly if given an absolute path.
+        If it fails, it
         retrieves the files and caches them remotely using facilities
         provided by `astropy.utils.data`.
 
