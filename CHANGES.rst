@@ -1,6 +1,9 @@
 3.3.3 (unreleased)
 ==================
 
+- CO Lines models `co1`, `co2`, `co3` `PR 86 <https://github.com/galsci/pysm/pull/86>`_
+- 3D MKD Dust model with 6 layers `d12` `PR 87 <https://github.com/galsci/pysm/pull/87>`_
+
 3.3.2 (2021-10-29)
 ==================
 
