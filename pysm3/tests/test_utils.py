@@ -56,3 +56,22 @@ def test_bandpass_integration_weights():
     for i, (freq, weight) in enumerate(zip(freqs, weights)):
         utils.trapz_step_inplace(freqs, weights, i, input_map, output_map)
     np.testing.assert_allclose(input_map, output_map)
+
+
+def test_remotedata(tmp_path, monkeypatch):
+    data_folder = tmp_path / "data"
+    data_folder.mkdir()
+    test_file = data_folder / "testfile.txt"
+    test_file.touch()
+    monkeypatch.setenv("PYSM_LOCAL_DATA", str(data_folder))
+    filename = pysm3.utils.RemoteData().get("testfile.txt")
+    assert filename == str(test_file)
+
+
+def test_remotedata_globalpath(tmp_path):
+    data_folder = tmp_path / "data"
+    data_folder.mkdir()
+    test_file = data_folder / "testfile.txt"
+    test_file.touch()
+    filename = pysm3.utils.RemoteData().get(str(test_file))
+    assert filename == str(test_file)

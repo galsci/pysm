@@ -10,3 +10,5 @@ build-backend = 'setuptools.build_meta'
 filterwarnings = [
     'ignore:may indicate binary incompatibility:RuntimeWarning',
 ]
+log_cli = true
+log_cli_level = "DEBUG"
