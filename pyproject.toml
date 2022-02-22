@@ -10,5 +10,8 @@ build-backend = 'setuptools.build_meta'
 filterwarnings = [
     'ignore:may indicate binary incompatibility:RuntimeWarning',
 ]
-log_cli = true
-log_cli_level = "DEBUG"
+
+## For debugging purposes, enable printing of logging calls
+
+# log_cli = true
+# log_cli_level = "DEBUG"
