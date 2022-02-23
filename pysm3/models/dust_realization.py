@@ -17,8 +17,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
     def __init__(
         self,
         largescale_alm,
-        freq_ref_I,
-        freq_ref_P,
+        freq_ref,
         amplitude_modulation_temp_alm,
         amplitude_modulation_pol_alm,
         small_scale_cl,
@@ -44,7 +43,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             and the dust black-body temperature.
             Templates are assumed to be in logpoltens formalism, units refer to
             the unit of the maps when transformed back to IQU maps.
-        freq_ref_I, freq_ref_P: Quantity or string
+        freq_ref: Quantity or string
             Reference frequencies at which the intensity and polarization
             templates are defined. They should be a astropy Quantity object
             or a string (e.g. "1500 MHz") compatible with GHz.
@@ -65,8 +64,9 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         self.map_dist = map_dist
         self.has_polarization = has_polarization
 
-        self.freq_ref = u.Quantity(freq_ref).to(u.GHz)
-        with u.set_enabled_equivalencies(u.cmb_equivalencies(self.freq_ref)):
+        self.freq_ref_I = u.Quantity(freq_ref).to(u.GHz)
+        self.freq_ref_P = self.freq_ref_I
+        with u.set_enabled_equivalencies(u.cmb_equivalencies(self.freq_ref_I)):
 
             self.template_largescale_alm = self.read_alm(
                 largescale_alm, has_polarization=self.has_polarization
@@ -78,7 +78,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
                     amplitude_modulation_pol_alm,
                 ]
             ]
-            self.small_scale_cl = self.read_cl(small_scale_cl).to(u.uK_RJ**2)
+            self.small_scale_cl = self.read_cl(small_scale_cl).to(u.uK_RJ ** 2)
         self.nside = int(nside)
         (
             self.I_ref,
@@ -92,8 +92,11 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
 
         synalm_lmax = 8192 * 2  # for reproducibility
 
+        np.random.seed(seed)
+
         alm_log_pol_tens_small_scale = hp.synalm(
-            list(self.small_scale_cl) + [np.zeros_like(self.small_scale_cl[0])] * 3,
+            list(self.small_scale_cl.value)
+            + [np.zeros_like(self.small_scale_cl[0])] * 3,
             lmax=synalm_lmax,
             new=True,
         )
