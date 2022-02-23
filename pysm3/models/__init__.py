@@ -9,3 +9,4 @@ from .interpolating import InterpolatingComponent
 from .cmb import CMBMap, CMBLensed
 from .dust_layers import ModifiedBlackBodyLayers
 from .co_lines import COLines
+from .dust_realization import ModifiedBlackBodyRealization
