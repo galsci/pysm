@@ -108,18 +108,24 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         map_log_pol_tens_small_scale = hp.alm2map(
             alm_log_pol_tens_small_scale, nside=self.nside
         )
-        map_log_pol_tens_small_scale[0] *= hp.alm2map(modulate_alm[0], self.nside)
-        map_log_pol_tens_small_scale[1:] *= hp.alm2map(modulate_alm[1], self.nside)
+        map_log_pol_tens_small_scale[0] *= hp.alm2map(
+            self.modulate_alm[0].value, self.nside
+        )
+        map_log_pol_tens_small_scale[1:] *= hp.alm2map(
+            self.modulate_alm[1].value, self.nside
+        )
 
-        I_ref, Q_ref, U_ref = utils.log_pol_tens_to_map(
-            map_log_pol_tens_large_scale
-            + hp.alm2map(
-                self.template_largescale_alm.value.astype(np.complex128),
-                nside=self.nside,
+        I_ref, Q_ref, U_ref = (
+            utils.log_pol_tens_to_map(
+                map_log_pol_tens_small_scale
+                + hp.alm2map(
+                    self.template_largescale_alm.value,
+                    nside=self.nside,
+                )
             )
             * self.template_largescale_alm.unit
         )
 
-        mbb_index = 1.48
+        mbb_index = 1.48 * u.dimensionless_unscaled
         mbb_temperature = 19.6 * u.K
         return I_ref, Q_ref, U_ref, mbb_index, mbb_temperature
