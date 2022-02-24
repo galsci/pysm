@@ -8,8 +8,9 @@ from numba import njit
 
 from .. import units as u
 from .data import RemoteData  # noqa: F401
-from .logpoltens import log_pol_tens_to_map, map_to_log_pol_tens
-from .small_scales import sigmoid
+from .logpoltens import log_pol_tens_to_map, map_to_log_pol_tens  # noqa: F401
+from .small_scales import sigmoid  # noqa: F401
+
 
 import logging
 

@@ -1,12 +1,9 @@
-from pathlib import Path
-
 import numpy as np
 import healpy as hp
 
 from .. import units as u
 from .. import utils
 from .dust import ModifiedBlackBody
-from .template import Model
 
 
 class ModifiedBlackBodyRealization(ModifiedBlackBody):
@@ -38,7 +35,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
 
         Parameters
         ----------
-        largescale_alm, largescale_alm_mbb_index, largescale_alm_mbb_temperature: `pathlib.Path` object
+        largescale_alm, largescale_alm_mbb_index, largescale_alm_mbb_temperature: `pathlib.Path`
             Paths to the Alm expansion of the dust template IQU maps, the spectral index
             and the dust black-body temperature.
             Templates are assumed to be in logpoltens formalism, units refer to

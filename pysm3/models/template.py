@@ -364,8 +364,6 @@ def read_alm(path, has_polarization=True, unit=None, map_dist=None):
         alm = np.complex128(
             hp.read_alm(filename, hdu=(1, 2, 3) if has_polarization else 1)
         )
-        lmax = hp.Alm.getlmax(alm.shape[-1])
-        shape = alm.shape
         if unit is None:
             unit = u.Unit(extract_hdu_unit(filename))
 

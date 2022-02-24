@@ -1,5 +1,7 @@
 """Utilities for generating Gaussian small scale realizations"""
 import numpy as np
+
+
 def sigmoid(x, x0, width, power=4):
     """Sigmoid function given start point and width
     Parameters
