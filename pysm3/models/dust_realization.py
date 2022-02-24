@@ -124,7 +124,8 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
                 )
             )
             * self.template_largescale_alm.unit
-        )
+        ) * 0.911 # includes color correction
+        # See https://github.com/galsci/pysm/issues/99
 
         mbb_index = 1.48 * u.dimensionless_unscaled
         mbb_temperature = 19.6 * u.K
