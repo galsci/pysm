@@ -24,7 +24,7 @@ def test_dust_model_353(model_tag):
     )
     rtol = 1e-5
 
-    #if model_tag == "d11":
+    # if model_tag == "d11":
     #    beam = 1 * u.deg
     #    input_template = hp.smoothing(input_template, fwhm=beam.to_value(u.radians))
     #    output = hp.smoothing(output, fwhm=beam.to_value(u.radians))
@@ -33,8 +33,8 @@ def test_dust_model_353(model_tag):
     assert_quantity_allclose(input_template, output, rtol=rtol)
 
 
-#@pytest.mark.parametrize("model_tag", ["d9", "d10"])
-#def test_gnilc_857(model_tag):
+# @pytest.mark.parametrize("model_tag", ["d9", "d10"])
+# def test_gnilc_857(model_tag):
 #    freq = 857 * u.GHz
 #
 #    model = pysm3.Sky(preset_strings=[model_tag], nside=2048)
