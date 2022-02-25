@@ -38,7 +38,7 @@ def test_dust_model_353(model_tag):
 def test_d9_vs_d11():
     nside = 2048
 
-    freq = 353 * u.GHz
+    freq = 857 * u.GHz
 
     output_d9 = pysm3.Sky(preset_strings=["d9"], nside=nside).get_emission(freq)
     output_d11 = pysm3.Sky(preset_strings=["d11"], nside=nside).get_emission(freq)
