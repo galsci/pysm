@@ -63,9 +63,9 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             the second for the spectral index, the third for the black body temperature.
             In order to reproduce `d10`, set them to [8192,777,888], if None, it uses random seeds.
         synalm_lmax: int
-            Lmax of Synalm for small scales generation, by default it is the 3*nside-1, with a maximum
-            of 16384. In order to reproduce `d10`, you need to set to 16834 so that we generate the
-            exact same fluctuations.
+            Lmax of Synalm for small scales generation, by default it is 3*nside-1,
+            with a maximum of 16384.
+            In order to reproduce `d10`, you need to set it to 16834.
         map_dist: Map distribution
             Unsupported, this class doesn't support MPI Parallelization
         """
