@@ -1,3 +1,4 @@
+import psutil
 from astropy.tests.helper import assert_quantity_allclose
 
 from pysm3.models.dust import blackbody_ratio
@@ -73,11 +74,10 @@ def test_gnilc_857(model_tag):
     assert_quantity_allclose(input_template * scaling, output, rtol=1e-6)
 
 
-import psutil
 
 
 @pytest.mark.skipif(
-    psutil.virtual_memory().total * u.bytes < 20 * u.GB,
+    psutil.virtual_memory().total * u.byte < 20 * u.GB,
     reason="Running d11 at high lmax requires 20 GB of RAM",
 )
 def test_d10_vs_d11():
