@@ -50,6 +50,12 @@ Dust
 
 - **d8**: simplified version of `d7` where the interstellar radiation field (ISRF) strength, instead of being a random realization, is fixed at 0.2.  This corresponds reasonably well to a Modifield Black Body model with temperature of 20K and an index of 1.54.
 
+- **d9**: simplified version of `d10` with a fixed spectral index of 1.48 and a fixed dust black body temperature of 19.6 K all over the sky, based on Planck 2018 results.
+
+- **d10**: single component modified black body model based on templates from the `GNILC needlet-based analysis of Planck data <https://wiki.cosmos.esa.int/planck-legacy-archive/index.php/Foreground_maps#GNILC_thermal_dust_maps>`_, with reduced contamination from CIB and point sources compared to the Commander maps used on **d1**. Small-scale fluctuations up to a $\ell_{max}$ of 16384 have been added to the templates in the `logpoltens` (Logarithm of the Polarization Fraction Tensor) formalism. Also the spectral index and dust temperature maps have random fluctuations at small scales. Available up to $N_{side}$ of 8192.
+
+- **d11**: like **d10** with stochastic small scales generated on-the-fly. It can reproduce **d10** if configured to run with a specific set of seeds and a specific $\ell_{max}$, see :py:`ModifiedBlackBodyRealization`.
+
 - **d12**: 3D model of polarized dust emission with 6 layers, based on the paper `"A 3-D model of polarised dust emission in the Milky Way" <https://arxiv.org/abs/1706.04162>`_, named MKD based on the names of the authors. Each layer has different templates, spectral index and dust temperature. All maps were generated at N_side 2048 with the Planck Sky Model (PSM) by Jacques Delabrouille.
 
 Synchrotron
