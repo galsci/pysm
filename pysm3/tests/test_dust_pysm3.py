@@ -9,7 +9,7 @@ from pysm3 import units as u
 import pytest
 
 
-@pytest.mark.parametrize("model_tag", ["d9", "d10", "d11"])
+@pytest.mark.parametrize("model_tag", ["d9", "d10"])
 def test_dust_model_353(model_tag):
     nside = 2048
 
@@ -72,8 +72,6 @@ def test_gnilc_857(model_tag):
     scaling *= blackbody_ratio(freq, freq_ref, Td.to_value(u.K))
 
     assert_quantity_allclose(input_template * scaling, output, rtol=1e-6)
-
-
 
 
 @pytest.mark.skipif(
