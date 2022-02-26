@@ -116,6 +116,9 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         if seeds is None:
             seeds = (None, None, None)
 
+        if synalm_lmax is None:
+            synalm_lmax = min(16384, 3 * self.nside - 1)
+
         np.random.seed(seeds[0])
 
         alm_small_scale = hp.synalm(
