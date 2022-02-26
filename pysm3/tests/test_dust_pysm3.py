@@ -1,7 +1,6 @@
 from astropy.tests.helper import assert_quantity_allclose
 
-# import healpy as hp
-# from pysm3.models.dust import blackbody_ratio
+from pysm3.models.dust import blackbody_ratio
 
 import pysm3
 from pysm3 import units as u
@@ -9,7 +8,7 @@ from pysm3 import units as u
 import pytest
 
 
-@pytest.mark.parametrize("model_tag", ["d11"])
+@pytest.mark.parametrize("model_tag", ["d9", "d10", "d11"])
 def test_dust_model_353(model_tag):
     nside = 2048
 
@@ -35,45 +34,65 @@ def test_dust_model_353(model_tag):
     assert_quantity_allclose(input_template, output, rtol=rtol)
 
 
-def test_d9_vs_d11():
+@pytest.mark.parametrize("model_tag", ["d9", "d10"])
+def test_gnilc_857(model_tag):
+    freq = 857 * u.GHz
+
+    model = pysm3.Sky(preset_strings=[model_tag], nside=2048)
+
+    output = model.get_emission(freq)
+
+    input_template = pysm3.models.read_map(
+        "dust_gnilc/gnilc_dust_template_nside{nside}.fits".format(nside=2048),
+        nside=2048,
+        field=(0, 1, 2),
+    )
+
+    freq_ref = 353 * u.GHz
+    beta = (
+        1.48
+        if model_tag == "d9"
+        else pysm3.models.read_map(
+            "dust_gnilc/gnilc_dust_beta_nside{nside}.fits".format(nside=2048),
+            nside=2048,
+            field=0,
+        )
+    )
+    Td = (
+        19.6 * u.K
+        if model_tag == "d9"
+        else pysm3.models.read_map(
+            "dust_gnilc/gnilc_dust_Td_nside{nside}.fits".format(nside=2048),
+            nside=2048,
+            field=0,
+        )
+    )
+    scaling = (freq / freq_ref) ** (beta - 2)
+    scaling *= blackbody_ratio(freq, freq_ref, Td.to_value(u.K))
+
+    assert_quantity_allclose(input_template * scaling, output, rtol=1e-6)
+
+
+import psutil
+
+
+@pytest.mark.skipif(
+    psutil.virtual_memory().total * u.bytes < 20 * u.GB,
+    reason="Running d11 at high lmax requires 20 GB of RAM",
+)
+def test_d10_vs_d11():
     nside = 2048
 
     freq = 857 * u.GHz
 
-    output_d9 = pysm3.Sky(preset_strings=["d9"], nside=nside).get_emission(freq)
-    output_d11 = pysm3.Sky(preset_strings=["d11"], nside=nside).get_emission(freq)
+    output_d10 = pysm3.Sky(preset_strings=["d10"], nside=nside).get_emission(freq)
+    d11_configuration = pysm3.sky.PRESET_MODELS["d11"].copy()
+    del d11_configuration["class"]
+    d11 = pysm3.models.ModifiedBlackBodyRealization(
+        nside=nside, seeds=[8192, 777, 888], synalm_lmax=16384, **d11_configuration
+    )
+    output_d11 = d11.get_emission(freq)
 
     rtol = 1e-5
 
-    assert_quantity_allclose(output_d9, output_d11, rtol=rtol)
-
-
-# @pytest.mark.parametrize("model_tag", ["d9", "d10"])
-# def test_gnilc_857(model_tag):
-#    freq = 857 * u.GHz
-#
-#    model = pysm3.Sky(preset_strings=[model_tag], nside=2048)
-#
-#    output = model.get_emission(freq)
-#
-#    input_template = pysm3.models.read_map(
-#        "dust_gnilc/gnilc_dust_template_nside{nside}.fits".format(nside=2048),
-#        nside=2048,
-#        field=(0, 1, 2),
-#    )
-#
-#    freq_ref = 353 * u.GHz
-#    beta = 1.48 if model_tag == "d9" else pysm3.models.read_map(
-#        "dust_gnilc/gnilc_dust_beta_nside{nside}.fits".format(nside=2048),
-#        nside=2048,
-#        field=0,
-#    )
-#    Td = 19.6 * u.K if model_tag == "d9" else pysm3.models.read_map(
-#        "dust_gnilc/gnilc_dust_Td_nside{nside}.fits".format(nside=2048),
-#        nside=2048,
-#        field=0,
-#    )
-#    scaling = (freq / freq_ref) ** (beta - 2)
-#    scaling *= blackbody_ratio(freq, freq_ref, Td.to_value(u.K))
-#
-#    assert_quantity_allclose(input_template * scaling, output, rtol=1e-6)
+    assert_quantity_allclose(output_d10, output_d11, rtol=rtol)

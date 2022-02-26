@@ -23,15 +23,21 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         largescale_alm_mbb_temperature,
         small_scale_cl_mbb_temperature,
         nside,
+        seeds=None,
+        synalm_lmax=None,
         has_polarization=True,
-        unit_mbb_temperature=None,
         map_dist=None,
     ):
-        """This function initializes the modified black body model.
+        """Modified Black Body model with stochastic small scales
 
-        The initialization of this model consists of reading in emission
-        templates from file, reading in spectral parameter maps from
-        file.
+        Small scale fluctuations in the templates, the spectral index and the black body
+        temperature are generated on the fly based on the input power spectra, then
+        added to deterministic large scales.
+
+        In order to reproduce `d10`, set seeds to [8192,777,888] and synalm_max to 16384,
+        either by passing arguments to the class constructor or by creating a configuration
+        file based on the `d11` parameters in `data/presets.cfg` uncommenting the final
+        section labelled "Configuration for reproducing d10"
 
         Parameters
         ----------
@@ -44,17 +50,24 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             Reference frequencies at which the intensity and polarization
             templates are defined. They should be a astropy Quantity object
             or a string (e.g. "1500 MHz") compatible with GHz.
-        amplitude_modulation_temp_alm,
-        amplitude_modulation_pol_alm,
-        small_scale_cl,
-        largescale_alm_mbb_index,
-        small_scale_cl_mbb_index,
-        largescale_alm_mbb_temperature,
-        small_scale_cl_mbb_temperature,
+        amplitude_modulation_temp_alm, amplitude_modulation_pol_alm: `pathlib.Path`
+            Paths to the Alm expansion of the modulation maps used to rescale the small scales
+            to make them more un-uniform, they are derived from highly smoothed input emission.
+        small_scale_cl, small_scale_cl_mbb_index, small_scale_cl_mbb_temperature: `pathlib.Path`
+            Paths to the power spectra of the small scale fluctuations for logpoltens iqu and
+            the black body spectral index and temperature
         nside: int
             Resolution parameter at which this model is to be calculated.
-        unit_mbb_temperature=None,
-        map_dist=None,
+        seeds: list of ints
+            List of seeds used for generating the small scales, first is used for the template,
+            the second for the spectral index, the third for the black body temperature.
+            In order to reproduce `d10`, set them to [8192,777,888], if None, it uses random seeds.
+        synalm_lmax: int
+            Lmax of Synalm for small scales generation, by default it is the 3*nside-1, with a maximum
+            of 16384. In order to reproduce `d10`, you need to set to 16834 so that we generate the
+            exact same fluctuations.
+        map_dist: Map distribution
+            Unsupported, this class doesn't support MPI Parallelization
         """
         self.nside = nside
         assert nside is not None
@@ -96,14 +109,12 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             self.U_ref,
             self.mbb_index,
             self.mbb_temperature,
-        ) = self.draw_realization(seeds=(8192, 777, 888))
+        ) = self.draw_realization(synalm_lmax, seeds)
 
-    def draw_realization(self, seeds=None):
+    def draw_realization(self, synalm_lmax=None, seeds=None):
 
         if seeds is None:
             seeds = (None, None, None)
-
-        synalm_lmax = 3*self.nside-1#8192 * 2  # for reproducibility
 
         np.random.seed(seeds[0])
 
@@ -154,7 +165,6 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
                 new=True,
             )
 
-            import pdb; pdb.set_trace()
             alm_small_scale = hp.almxfl(
                 alm_small_scale, np.ones(min(3 * self.nside - 1, synalm_lmax + 1))
             )
