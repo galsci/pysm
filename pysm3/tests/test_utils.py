@@ -35,7 +35,6 @@ def test_bandpass_unit_conversion():
         assert_quantity_allclose(expected_map[pol], CMB_thermo_int[pol], rtol=1e-4)
 
 
-<<<<<<< HEAD
 def test_bandpass_integration_tophat():
     input_map = np.ones(12, dtype=np.double)
     output_map = np.zeros_like(input_map)
