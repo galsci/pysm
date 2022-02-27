@@ -163,6 +163,7 @@ class COLines(Model):
         * a depolarization map to mimick the line of sight depolarization effect
           at low Galactic latitudes
         * a polarization angle map coming from a dust template (we exploit the observed correlation
+
         between polarized dust and molecular emission in star forming regions).
         """
 
