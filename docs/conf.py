@@ -208,5 +208,5 @@ linkcheck_anchors = False
 #     nitpick_ignore.append((dtype, six.u(target)))
 
 extensions += ["nbsphinx", "sphinx_math_dollar", "sphinx.ext.mathjax"]
-exclude_patterns = ["_build", "**.ipynb_checkpoints"]
+exclude_patterns += ["_build", "**.ipynb_checkpoints", "**utils*"]
 nbsphinx_kernel_name = "python3"
