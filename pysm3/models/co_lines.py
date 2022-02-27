@@ -159,9 +159,10 @@ class COLines(Model):
     def simulate_polarized_emission(self, I_map):
         """Add polarized emission by means of:
         * an overall constant polarization fraction,
-        * a depolarization map to mimick the line of sight depolarization effect at low Galactic latitudes
-        * a polarization angle map coming from a dust template
-        (we exploit the observed correlation between polarized dust and molecular emission in star forming regions).
+        * a depolarization map to mimick the line of sight depolarization effect
+        at low Galactic latitudes
+        * a polarization angle map coming from a dust template (we exploit the
+        observed correlation between polarized dust and molecular emission in star forming regions).
         """
 
         cospolangle = np.cos(2.0 * self.polangle)
