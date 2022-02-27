@@ -1,6 +1,7 @@
-3.3.3 (unreleased)
+3.4.0 (unreleased)
 ==================
 
+- Planck GNILC based templates `d9`, `d10`, `d11` `PR 108 <https://github.com/galsci/pysm/pull/108>`_
 - CO Lines models `co1`, `co2`, `co3` `PR 86 <https://github.com/galsci/pysm/pull/86>`_
 - 3D MKD Dust model with 6 layers `d12` `PR 87 <https://github.com/galsci/pysm/pull/87>`_
 
