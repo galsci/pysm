@@ -52,9 +52,9 @@ Dust
 
 - **d9**: simplified version of `d10` with a fixed spectral index of 1.48 and a fixed dust black body temperature of 19.6 K all over the sky, based on Planck 2018 results.
 
-- **d10**: single component modified black body model based on templates from the `GNILC needlet-based analysis of Planck data <https://wiki.cosmos.esa.int/planck-legacy-archive/index.php/Foreground_maps#GNILC_thermal_dust_maps>`_, with reduced contamination from CIB and point sources compared to the Commander maps used on **d1**. Small-scale fluctuations up to a $\ell_{max}$ of 16384 have been added to the templates in the `logpoltens` (Logarithm of the Polarization Fraction Tensor) formalism. Also the spectral index and dust temperature maps have random fluctuations at small scales. Available up to $N_{side}$ of 8192. Input templates are available `at NERSC <https://portal.nersc.gov/project/cmb/pysm-data/dust_gnilc/>`_.  Input templates are available at 2048, 4096 and 8192; lower nside are simulated by running `hp.ud_grade` on the $N_{side}=2048$ maps.
+- **d10**: single component modified black body model based on templates from the `GNILC needlet-based analysis of Planck data <https://wiki.cosmos.esa.int/planck-legacy-archive/index.php/Foreground_maps#GNILC_thermal_dust_maps>`_, with reduced contamination from CIB and point sources compared to the Commander maps used on **d1**. Small-scale fluctuations up to a $\ell_{max}$ of 16384 have been added to the templates in the `logpoltens` (Logarithm of the Polarization Fraction Tensor) formalism. Also the spectral index and dust temperature maps have random fluctuations at small scales. Available up to $N_{side}$ of 8192. Input templates are available `at NERSC <https://portal.nersc.gov/project/cmb/pysm-data/dust_gnilc/>`_.  Input templates are available at 2048, 4096 and 8192; lower nside are simulated by running `hp.ud_grade` on the $N_{side}=2048$ maps.  For more details about the pre-processing of the input data, see the `notebook about creating the GNILC-based template and adding small scales using the logpoltens formalism <preprocess-templates/gnilc_dust_logpoltens_templates.html>`_.
 
-- **d11**: like **d10** with stochastic small scales generated on-the-fly. It can reproduce **d10** if configured to run with a specific set of seeds and a specific $\ell_{max}$, see :py:`ModifiedBlackBodyRealization`.
+- **d11**: like **d10** with stochastic small scales generated on-the-fly. It can reproduce **d10** if configured to run with a specific set of seeds and a specific $\ell_{max}$, see :py:class:`~pysm3.ModifiedBlackBodyRealization`.
 
 - **d12**: 3D model of polarized dust emission with 6 layers, based on the paper `"A 3-D model of polarised dust emission in the Milky Way" <https://arxiv.org/abs/1706.04162>`_, named MKD based on the names of the authors. Each layer has different templates, spectral index and dust temperature. All maps were generated at N_side 2048 with the Planck Sky Model (PSM) by Jacques Delabrouille.
 
@@ -88,7 +88,11 @@ CMB
 
 CO line emission
 ================
-For more details see :ref:`colines`.
+
+.. toctree::
+  :maxdepth: 2
+
+  co_lines
 
 - **co1**: Galactic CO emission involving the first 3 CO rotational lines, i.e. :math:`J=1-0,2-1,3-2` whose center frequency is respectively at :math:`\nu_0 = 115.3, 230.5,345.8` GHz. The CO emission map templates are the CO Planck maps obtained with ``MILCA`` component separation algorithm (See `Planck paper <https://www.aanda.org/articles/aa/abs/2014/11/aa21553-13/aa21553-13.html>`). The CO maps have been released at the nominal resolution (10 and 5 arcminutes). However, to reduce  noise contamination from template maps (especially at intermediate and high Galactic latitudes), we  convolved them with a 1 deg gaussian beam.
 - **co2**: like **co1** with polarized emission at the level of 0.1%.

@@ -7,9 +7,6 @@ from .dust import ModifiedBlackBody
 
 
 class ModifiedBlackBodyRealization(ModifiedBlackBody):
-    """This is a model for modified black body emission with
-    small scales generated on the fly.
-    """
 
     def __init__(
         self,
