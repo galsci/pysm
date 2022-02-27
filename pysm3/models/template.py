@@ -62,7 +62,7 @@ class Model:
         else:
             nside = self.nside
         if "{nside}" in path:
-            path = path.format(nside=nside)
+            path = path.format(nside=max(2048, nside))
         return read_map(
             path, nside=nside, unit=unit, field=field, map_dist=self.map_dist
         )
