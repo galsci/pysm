@@ -61,11 +61,25 @@ class Model:
             nside = nside
         else:
             nside = self.nside
-        return read_map(path, nside, unit=unit, field=field, map_dist=self.map_dist)
+        if "{nside}" in path:
+            path = path.format(nside=max(2048, nside))
+        return read_map(
+            path, nside=nside, unit=unit, field=field, map_dist=self.map_dist
+        )
 
     def read_txt(self, path, **kwargs):
         mpi_comm = None if self.map_dist is None else self.map_dist.mpi_comm
         return read_txt(path, mpi_comm=mpi_comm, **kwargs)
+
+    def read_alm(self, path, has_polarization=True):
+        """See `pysm.read_alm`, this is a convenience wrapper that
+        passes `map_dist` and `dataurl` along"""
+        return read_alm(path, has_polarization=has_polarization, map_dist=self.map_dist)
+
+    def read_cl(self, path, has_polarization=True):
+        """See `pysm.read_alm`, this is a convenience wrapper that
+        passes `map_dist` and `dataurl` along"""
+        return read_cl(path, has_polarization=has_polarization, map_dist=self.map_dist)
 
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
@@ -134,9 +148,7 @@ def apply_smoothing_and_coord_transform(
             use_pixel_weights=True if nside > 16 else False,
         )
         if fwhm is not None:
-            hp.smoothalm(
-                alm, fwhm=fwhm.to_value(u.rad), inplace=True, pol=True
-            )
+            hp.smoothalm(alm, fwhm=fwhm.to_value(u.rad), inplace=True, pol=True)
         if rot is not None:
             rot.rotate_alm(alm, inplace=True)
         smoothed_map = hp.alm2map(alm, nside=nside, pixwin=False)
@@ -327,3 +339,64 @@ def read_txt(path, mpi_comm=None, **kwargs):
         output = mpi_comm.bcast(output, root=0)
 
     return output
+
+
+def read_alm(path, has_polarization=True, unit=None, map_dist=None):
+    """Read :math:`a_{\ell m}` from a FITS file
+
+    Parameters
+    ----------
+    path : str
+        absolute or relative path to local file or file available remotely.
+    has_polarization : bool
+        read only temperature alm from file or also polarization
+    map_dist : pysm.MapDistribution
+        :math:`\ell_{max}` should be the same of the :math:`\ell_{max}` in the file
+        and :math:`m_{max}=\ell_{max}`.
+    """
+
+    filename = utils.RemoteData().get(path)
+
+    mpi_comm = None if map_dist is None else map_dist.mpi_comm
+
+    if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
+
+        alm = np.complex128(
+            hp.read_alm(filename, hdu=(1, 2, 3) if has_polarization else 1)
+        )
+        if unit is None:
+            unit = u.Unit(extract_hdu_unit(filename))
+
+    if mpi_comm is not None:
+        raise NotImplementedError
+    else:
+        local_alm = alm
+
+    return local_alm * unit
+
+
+def read_cl(path, has_polarization=True, unit=None, map_dist=None):
+    """Read :math:`a_{\ell m}` from a FITS file
+
+    Parameters
+    ----------
+    path : str
+        absolute or relative path to local file or file available remotely.
+    has_polarization : bool
+        read only temperature alm from file or also polarization
+    map_dist : pysm.MapDistribution
+        :math:`\ell_{max}` should be the same of the :math:`\ell_{max}` in the file
+        and :math:`m_{max}=\ell_{max}`.
+    """
+
+    filename = utils.RemoteData().get(path)
+
+    mpi_comm = None if map_dist is None else map_dist.mpi_comm
+
+    if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
+
+        cl = hp.read_cl(filename)
+        if unit is None:
+            unit = u.Unit(extract_hdu_unit(filename))
+
+    return cl * unit
