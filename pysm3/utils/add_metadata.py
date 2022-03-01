@@ -1,5 +1,4 @@
 from astropy.io import fits
-import sys
 
 
 def add_metadata(filenames, field=1, coord=None, unit=None, **kwargs):

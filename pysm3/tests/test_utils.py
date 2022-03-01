@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 import pysm3
 import pysm3.units as u
+from astropy.io import fits
 from astropy.tests.helper import assert_quantity_allclose
 from pysm3 import utils
 
@@ -77,7 +78,6 @@ def test_remotedata_globalpath(tmp_path):
     filename = pysm3.utils.RemoteData().get(str(test_file))
     assert filename == str(test_file)
 
-from astropy.io import fits
 
 @pytest.fixture
 def test_fits_file(tmp_path):
