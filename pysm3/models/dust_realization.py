@@ -7,7 +7,6 @@ from .dust import ModifiedBlackBody
 
 
 class ModifiedBlackBodyRealization(ModifiedBlackBody):
-
     def __init__(
         self,
         largescale_alm,
@@ -20,6 +19,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         largescale_alm_mbb_temperature,
         small_scale_cl_mbb_temperature,
         nside,
+        galplane_fix=None,
         seeds=None,
         synalm_lmax=None,
         has_polarization=True,
@@ -86,6 +86,10 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
                 ]
             ]
             self.small_scale_cl = self.read_cl(small_scale_cl).to(u.uK_RJ ** 2)
+        if galplane_fix is not None:
+            self.galplane_fix_map = self.read_map(
+                galplane_fix, field=(0, 1, 2, 3)
+            ).value.astype(np.float64)
         self.largescale_alm_mbb_index = self.read_alm(
             largescale_alm_mbb_index,
             has_polarization=False,
@@ -137,14 +141,19 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         map_small_scale[0] *= modulate_map_I
         map_small_scale[1:] *= hp.alm2map(self.modulate_alm[1].value, self.nside)
 
-        I_ref, Q_ref, U_ref = (
-            utils.log_pol_tens_to_map(
-                map_small_scale
-                + hp.alm2map(
-                    self.template_largescale_alm.value,
-                    nside=self.nside,
-                )
+        map_small_scale += hp.alm2map(
+            self.template_largescale_alm.value,
+            nside=self.nside,
+        )
+
+        if self.galplane_fix_map is not None:
+            map_small_scale *= hp.ud_grade(self.galplane_fix_map[3], self.nside)
+            map_small_scale += hp.ud_grade(
+                self.galplane_fix_map[:3] * (1 - self.galplane_fix_map[3]), self.nside
             )
+
+        output_IQU = (
+            utils.log_pol_tens_to_map(map_small_scale)
             * self.template_largescale_alm.unit
         ) * 0.911  # includes color correction
         # See https://github.com/galsci/pysm/issues/99
@@ -178,4 +187,10 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
                 * output_unit
             )
 
-        return I_ref, Q_ref, U_ref, output["mbb_index"], output["mbb_temperature"]
+        return (
+            output_IQU[0],
+            output_IQU[1],
+            output_IQU[2],
+            output["mbb_index"],
+            output["mbb_temperature"],
+        )
