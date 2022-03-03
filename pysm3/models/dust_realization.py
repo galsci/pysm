@@ -55,6 +55,13 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             the black body spectral index and temperature
         nside: int
             Resolution parameter at which this model is to be calculated.
+        galplane_fix: `pathlib.Path`
+            Set to None to skip the galactic plane fix in order to save some memory and
+            computing time. Used to replace the galactic emission
+            inside the GAL 070 Planck mask to a precomputed map. This is used to avoid
+            excess power in the full sky spectra due to the generated small scales being
+            too strong on the galactic plane.
+            By default in d9,d10,d11 we use the input GNILC map with a resolution of 21.8'
         seeds: list of ints
             List of seeds used for generating the small scales, first is used for the template,
             the second for the spectral index, the third for the black body temperature.
@@ -89,7 +96,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         if galplane_fix is not None:
             self.galplane_fix_map = self.read_map(
                 galplane_fix, field=(0, 1, 2, 3)
-            ).value.astype(np.float64)
+            ).value
         self.largescale_alm_mbb_index = self.read_alm(
             largescale_alm_mbb_index,
             has_polarization=False,
