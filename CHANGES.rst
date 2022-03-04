@@ -1,6 +1,7 @@
 3.4.0 (unreleased)
 ==================
 
+- Galactic plane fix for `d9`, `d10`, `d11` `PR 111 <https://github.com/galsci/pysm/pull/111>`_
 - Documentation about the processing of GNILC dust `input templates <https://github.com/galsci/pysm/pull/97>`, `spectral index and dust temperature <https://github.com/galsci/pysm/pull/104>`_
 - Planck GNILC based templates `d9`, `d10`, `d11` `PR 108 <https://github.com/galsci/pysm/pull/108>`_
 - CO Lines models `co1`, `co2`, `co3` `PR 86 <https://github.com/galsci/pysm/pull/86>`_
