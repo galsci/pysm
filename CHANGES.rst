@@ -1,5 +1,5 @@
-3.4.0 (unreleased)
-==================
+3.4.0b1 (2022-03-03)
+====================
 
 - Galactic plane fix for `d9`, `d10`, `d11` `PR 111 <https://github.com/galsci/pysm/pull/111>`_
 - Documentation about the processing of GNILC dust `input templates <https://github.com/galsci/pysm/pull/97>`, `spectral index and dust temperature <https://github.com/galsci/pysm/pull/104>`_
