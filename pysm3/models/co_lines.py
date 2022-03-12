@@ -142,7 +142,7 @@ class COLines(Model):
                     u.uK_RJ,
                     equivalencies=u.cmb_equivalencies(line_freq * u.GHz),
                 )
-                I_map = self.planck_templatemap[line]
+                I_map = self.planck_templatemap[line].copy()
                 if self.include_high_galactic_latitude_clouds:
                     I_map += self.simulate_high_galactic_latitude_CO(line)
 
