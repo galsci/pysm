@@ -139,10 +139,10 @@ class COLines(Model):
             if line_freq >= freqs[0] and line_freq <= freqs[-1]:
                 weight = np.interp(line_freq, freqs, weights)
                 convert_to_uK_RJ = (1 * u.K_CMB).to_value(
-                    u.K_RJ,
+                    u.uK_RJ,
                     equivalencies=u.cmb_equivalencies(line_freq * u.GHz),
                 )
-                I_map = self.planck_templatemap[line]
+                I_map = self.planck_templatemap[line].copy()
                 if self.include_high_galactic_latitude_clouds:
                     I_map += self.simulate_high_galactic_latitude_CO(line)
 

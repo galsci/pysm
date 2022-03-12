@@ -36,29 +36,27 @@ def test_co(include_high_galactic_latitude_clouds):
     expected_map_filename = remote_data.get(
         "co/testing/CO10_TQUmaps_{}_nside16_ring.fits.zip".format(tag)
     )
+
     expected_co_map = (
-        hp.read_map(expected_map_filename, field=(0, 1, 2), dtype=np.float64) * u.uK_CMB
+        hp.read_map(expected_map_filename, field=(0, 1, 2), dtype=np.float64) * u.K_CMB
     ).to(u.uK_RJ, equivalencies=u.cmb_equivalencies(line_freq))
 
     assert_quantity_allclose(co_map, expected_co_map, rtol=1e-5)
 
-    # to avoid numerical errors, only compare part of the map where signal is more than 1e-3 uK
-    nonzero_values = expected_co_map > 1e-3 * u.uK_RJ
-
     co_map = co.get_emission([114.271, 115.271, 116.271, 117.271] * u.GHz)
     # weight is about 1/3 as bandwidth is 3 GHz
     assert_quantity_allclose(
-        co_map[nonzero_values],
-        expected_co_map[nonzero_values] * 0.3304377039951613,
-        rtol=1e-4,
+        co_map,
+        expected_co_map * 0.3304377039951613,
+        rtol=1e-3
     )
 
     co_map = co.get_emission([100, 120] * u.GHz)
     # weight is about 1/20, consider normalization also includes conversion to power units
     assert_quantity_allclose(
-        co_map[nonzero_values],
-        expected_co_map[nonzero_values] * 0.05475254098360655,
-        rtol=1e-4,
+        co_map,
+        expected_co_map * 0.05475254098360655,
+        rtol=1e-4
     )
 
 
@@ -76,7 +74,7 @@ def test_co_model(model_tag):
         "co/testing/CO10_TQUmaps_{}_nside16_ring.fits.zip".format(tag)
     )
     expected_co_map = (
-        hp.read_map(expected_map_filename, field=(0, 1, 2), dtype=np.float64) * u.uK_CMB
+        hp.read_map(expected_map_filename, field=(0, 1, 2), dtype=np.float64) * u.K_CMB
     )
 
     assert_quantity_allclose(co_map, expected_co_map, rtol=1e-5)
