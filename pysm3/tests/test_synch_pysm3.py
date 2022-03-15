@@ -68,7 +68,7 @@ def test_s6_vs_s5():
 
     freq = 44 * u.GHz
 
-    output_s5 = pysm3.Sky(preset_strings=["s4"], nside=nside).get_emission(freq)
+    output_s5 = pysm3.Sky(preset_strings=["s5"], nside=nside).get_emission(freq)
     s6_configuration = pysm3.sky.PRESET_MODELS["s6"].copy()
     del s6_configuration["class"]
     s6 = pysm3.models.PowerLawRealization(

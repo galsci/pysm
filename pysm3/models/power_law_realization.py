@@ -151,6 +151,6 @@ class PowerLawRealization(PowerLaw):
         )
 
         # Fixed values for comparison with s4
-        pl_index = -3.1 * u.dimensionless_unscaled
+        # pl_index = -3.1 * u.dimensionless_unscaled
 
         return (output_IQU[0], output_IQU[1], output_IQU[2], pl_index)
