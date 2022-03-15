@@ -146,15 +146,11 @@ class PowerLawRealization(PowerLaw):
             hp.alm2map(
                 self.largescale_alm_pl_index.value,
                 nside=self.nside,
-            ) * output_unit
             )
+            * output_unit
+        )
 
         # Fixed values for comparison with s4
         pl_index = -3.1 * u.dimensionless_unscaled
 
-        return (
-            output_IQU[0],
-            output_IQU[1],
-            output_IQU[2],
-            pl_index
-        )
+        return (output_IQU[0], output_IQU[1], output_IQU[2], pl_index)
