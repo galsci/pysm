@@ -20,9 +20,7 @@ def test_synch_model_noscaling(model_tag):
     output = model.get_emission(freq)
 
     input_template = pysm3.models.read_map(
-        "synch/synch_template_nside{nside}.fits".format(
-            nside=nside
-        ),
+        "synch/synch_template_nside{nside}.fits".format(nside=nside),
         nside=nside,
         field=(0, 1, 2),
     )
@@ -34,16 +32,15 @@ def test_synch_model_noscaling(model_tag):
 @pytest.mark.parametrize("model_tag", ["s4", "s5"])
 def test_synch_44(model_tag):
     freq = 44 * u.GHz
+    nside = 2048
 
-    model = pysm3.Sky(preset_strings=[model_tag], nside=2048)
+    model = pysm3.Sky(preset_strings=[model_tag], nside=nside)
 
     output = model.get_emission(freq)
 
     input_template = pysm3.models.read_map(
-        "synch/synch_template_nside{nside}.fits".format(
-            nside=2048
-        ),
-        nside=2048,
+        "synch/synch_template_nside{nside}.fits".format(nside=nside),
+        nside=nside,
         field=(0, 1, 2),
     )
 
@@ -52,8 +49,8 @@ def test_synch_44(model_tag):
         -3.1
         if model_tag == "s4"
         else pysm3.models.read_map(
-            "synch/synch_beta_nside{nside}.fits".format(nside=2048),
-            nside=2048,
+            "synch/synch_beta_nside{nside}.fits".format(nside=nside),
+            nside=nside,
             field=0,
         )
     )
@@ -68,9 +65,9 @@ def test_synch_44(model_tag):
 # )
 # def test_d10_vs_d11():
 #     nside = 2048
-# 
+#
 #     freq = 857 * u.GHz
-# 
+#
 #     output_d10 = pysm3.Sky(preset_strings=["d10"], nside=nside).get_emission(freq)
 #     d11_configuration = pysm3.sky.PRESET_MODELS["d11"].copy()
 #     del d11_configuration["class"]
@@ -78,7 +75,7 @@ def test_synch_44(model_tag):
 #         nside=nside, seeds=[8192, 777, 888], synalm_lmax=16384, **d11_configuration
 #     )
 #     output_d11 = d11.get_emission(freq)
-# 
+#
 #     rtol = 1e-5
-# 
+#
 #     assert_quantity_allclose(output_d10, output_d11, rtol=rtol, atol=0.05 * u.uK_RJ)
