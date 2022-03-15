@@ -59,23 +59,23 @@ def test_synch_44(model_tag):
     assert_quantity_allclose(input_template * scaling, output, rtol=1e-6)
 
 
-# @pytest.mark.skipif(
-#     psutil.virtual_memory().total * u.byte < 20 * u.GB,
-#     reason="Running d11 at high lmax requires 20 GB of RAM",
-# )
-# def test_d10_vs_d11():
-#     nside = 2048
-#
-#     freq = 857 * u.GHz
-#
-#     output_d10 = pysm3.Sky(preset_strings=["d10"], nside=nside).get_emission(freq)
-#     d11_configuration = pysm3.sky.PRESET_MODELS["d11"].copy()
-#     del d11_configuration["class"]
-#     d11 = pysm3.models.ModifiedBlackBodyRealization(
-#         nside=nside, seeds=[8192, 777, 888], synalm_lmax=16384, **d11_configuration
-#     )
-#     output_d11 = d11.get_emission(freq)
-#
-#     rtol = 1e-5
-#
-#     assert_quantity_allclose(output_d10, output_d11, rtol=rtol, atol=0.05 * u.uK_RJ)
+@pytest.mark.skipif(
+    psutil.virtual_memory().total * u.byte < 20 * u.GB,
+    reason="Running s6 at high lmax requires 20 GB of RAM",
+)
+def test_s6_vs_s5():
+    nside = 2048
+
+    freq = 44 * u.GHz
+
+    output_s5 = pysm3.Sky(preset_strings=["s4"], nside=nside).get_emission(freq)
+    s6_configuration = pysm3.sky.PRESET_MODELS["s6"].copy()
+    del s6_configuration["class"]
+    s6 = pysm3.models.ModifiedBlackBodyRealization(
+        nside=nside, synalm_lmax=16384, seeds = [555,444] , **s6_configuration
+    )
+    output_s6 = s6.get_emission(freq)
+
+    rtol = 1e-5
+
+    assert_quantity_allclose(output_s5, output_s6, rtol=rtol, atol=0.05 * u.uK_RJ)
