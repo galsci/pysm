@@ -10,3 +10,4 @@ from .cmb import CMBMap, CMBLensed
 from .dust_layers import ModifiedBlackBodyLayers
 from .co_lines import COLines
 from .dust_realization import ModifiedBlackBodyRealization
+from .power_law_realization import PowerLawRealization
