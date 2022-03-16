@@ -68,7 +68,7 @@ class PowerLaw(Model):
             self.Q_ref <<= u.uK_RJ
             self.U_ref = self.read_map(map_U, unit=unit_U)
             self.U_ref <<= u.uK_RJ
-        else:  # unpack IQU map to 3 arrays
+        elif self.has_polarization:  # unpack IQU map to 3 arrays
             self.Q_ref = self.I_ref[1]
             self.U_ref = self.I_ref[2]
             self.I_ref = self.I_ref[0]
