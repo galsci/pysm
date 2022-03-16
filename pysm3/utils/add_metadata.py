@@ -30,12 +30,8 @@ def add_metadata(filenames, field=1, coord=None, unit=None, **kwargs):
                 )
             if unit is not None:
                 num_columns = len(hdu.columns)
-                if isinstance(unit, list):
-                    assert len(unit) == num_columns
-                else:
-                    unit = [unit] * num_columns
                 for column in range(num_columns):
-                    hdu.header[f"TUNIT{column+1}"] = str(unit[column])
+                    hdu.header[f"TUNIT{column+1}"] = str(unit) if not isinstance(unit, list) else str(unit[column])
             for k, v in kwargs.items():
                 hdu.header[k.upper()] = v
             hdul.flush()
