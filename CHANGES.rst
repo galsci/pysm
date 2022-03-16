@@ -1,3 +1,9 @@
+3.4.0b2 (2022-03-15)
+====================
+
+- bugfix: fixed units error recently introduced in the CO Lines models, `reported by @mousset <https://github.com/galsci/pysm/issues/113>`_
+- Synchrotron high resolution models `s4`, `s5`, `s6`, `based on Haslam and WMAP <https://github.com/galsci/pysm/pull/106>`_
+
 3.4.0b1 (2022-03-03)
 ====================
 
