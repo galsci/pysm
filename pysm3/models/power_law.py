@@ -7,8 +7,7 @@ from .template import Model
 
 
 class PowerLaw(Model):
-    """ This is a model for a simple power law synchrotron model.
-    """
+    """This is a model for a simple power law synchrotron model."""
 
     def __init__(
         self,
@@ -16,6 +15,7 @@ class PowerLaw(Model):
         freq_ref_I,
         map_pl_index,
         nside,
+        has_polarization=True,
         map_Q=None,
         map_U=None,
         freq_ref_P=None,
@@ -24,7 +24,7 @@ class PowerLaw(Model):
         unit_U=None,
         map_dist=None,
     ):
-        """ This function initialzes the power law model of synchrotron
+        """This function initialzes the power law model of synchrotron
         emission.
 
         The initialization of this model consists of reading in emission
@@ -35,6 +35,7 @@ class PowerLaw(Model):
         ----------
         map_I, map_Q, map_U: `pathlib.Path` object
             Paths to the maps to be used as I, Q, U templates.
+            If has_polarization is True and map_Q is None, assumes map_I is IQU
         unit_* : string or Unit
             Unit string or Unit object for all input FITS maps, if None, the input file
             should have a unit defined in the FITS header.
@@ -49,19 +50,28 @@ class PowerLaw(Model):
         """
         super().__init__(nside, map_dist=map_dist)
         # do model setup
-        self.I_ref = self.read_map(map_I, unit=unit_I)
+        self.is_IQU = has_polarization and map_Q is None
+        self.I_ref = self.read_map(
+            map_I, field=[0, 1, 2] if self.is_IQU else 0, unit=unit_I
+        )
         # This does unit conversion in place so we do not copy the data
         # we do not keep the original unit because otherwise we would need
         # to make a copy of the array when we run the model
         self.I_ref <<= u.uK_RJ
         self.freq_ref_I = u.Quantity(freq_ref_I).to(u.GHz)
-        self.has_polarization = map_Q is not None
-        if self.has_polarization:
+        self.freq_ref_P = (
+            None if freq_ref_P is None else u.Quantity(freq_ref_P).to(u.GHz)
+        )
+        self.has_polarization = has_polarization
+        if self.has_polarization and map_Q is not None:
             self.Q_ref = self.read_map(map_Q, unit=unit_Q)
             self.Q_ref <<= u.uK_RJ
             self.U_ref = self.read_map(map_U, unit=unit_U)
             self.U_ref <<= u.uK_RJ
-            self.freq_ref_P = u.Quantity(freq_ref_P).to(u.GHz)
+        elif self.has_polarization:  # unpack IQU map to 3 arrays
+            self.Q_ref = self.I_ref[1]
+            self.U_ref = self.I_ref[2]
+            self.I_ref = self.I_ref[0]
         try:  # input is a number
             self.pl_index = u.Quantity(map_pl_index, unit="")
         except TypeError:  # input is a path

@@ -50,11 +50,11 @@ Dust
 
 - **d8**: simplified version of `d7` where the interstellar radiation field (ISRF) strength, instead of being a random realization, is fixed at 0.2.  This corresponds reasonably well to a Modifield Black Body model with temperature of 20K and an index of 1.54.
 
-- **d9**: simplified version of `d10` with a fixed spectral index of 1.48 and a fixed dust black body temperature of 19.6 K all over the sky, based on Planck 2018 results.
+- **d9**: simplified version of **d10** with a fixed spectral index of 1.48 and a fixed dust black body temperature of 19.6 K all over the sky, based on Planck 2018 results.
 
 - **d10**: single component modified black body model based on templates from the `GNILC needlet-based analysis of Planck data <https://wiki.cosmos.esa.int/planck-legacy-archive/index.php/Foreground_maps#GNILC_thermal_dust_maps>`_, with reduced contamination from CIB and point sources compared to the Commander maps used on **d1**. Small-scale fluctuations up to a $\ell_{max}$ of 16384 have been added to the templates in the `logpoltens` (Logarithm of the Polarization Fraction Tensor) formalism. Also the spectral index and dust temperature maps have random fluctuations at small scales. Available up to $N_{side}$ of 8192. Input templates are available `at NERSC <https://portal.nersc.gov/project/cmb/pysm-data/dust_gnilc/>`_.  Input templates are available at 2048, 4096 and 8192; lower nside are simulated by running `hp.ud_grade` on the $N_{side}=2048$ maps.  For more details about the pre-processing of the input data, see the `notebook about creating the GNILC-based template and adding small scales using the logpoltens formalism <preprocess-templates/gnilc_dust_logpoltens_templates.html>`_ and `the notebook about spectral index and dust temperature <preprocess-templates/gnilc_dust_spectralindex_Tdust.html>`_. The galactic region of about 30% of the sky within the GAL 70 Planck mask is set to the input GNILC map at 21.8' to avoid excess power in the spectra caused by the injected small scale signa, see `how the correction is applied <preprocess-templates/gnilc_dust_logpoltens_templates_galplane_prepare.html>`_ and `its impact on the power spectrum <preprocess-templates/gnilc_dust_logpoltens_templates_galplane_compare.html>`_.
 
-- **d11**: like **d10** with stochastic small scales generated on-the-fly. It can reproduce **d10** if configured to run with a specific set of seeds and a specific $\ell_{max}$, see :py:class:`~pysm3.ModifiedBlackBodyRealization`.
+- **d11**: like **d10** with stochastic small scales generated on-the-fly. It can reproduce **d10** if configured to run with a specific set of seeds and a specific $\ell_{max}$, see :py:class:`~pysm3.ModifiedBlackBodyRealization`. However reproducing **d10** is expensive because it needs to generate small scales with a $\ell_{max}=16384$ whatever output resolution is required, normally instead **d11** generates small scales just up to $\ell_{max}=3N_{side}-1$.
 
 - **d12**: 3D model of polarized dust emission with 6 layers, based on the paper `"A 3-D model of polarised dust emission in the Milky Way" <https://arxiv.org/abs/1706.04162>`_, named MKD based on the names of the authors. Each layer has different templates, spectral index and dust temperature. All maps were generated at N_side 2048 with the Planck Sky Model (PSM) by Jacques Delabrouille.
 
@@ -66,6 +66,12 @@ Synchrotron
 - **s2**: synchrotron index steepens off the Galactic plane, from -3.0 in the plane to -3.3 off the plane. Consistent with WMAP.
 
 - **s3**: a power law with a curved index. The model uses the same index map as the nominal model, plus a curvature term. We use the best-fit curvature amplitude of -0.052 found in Kogut, A. 2012, ApJ, 753, 110, pivoted at 23 GHz.
+
+- **s4**: simplified version of **s5** with a fixed spectral index of -3.1 all over the sky.
+
+- **s5**: power law model based on the same templates of **s1**, Haslam in temperature and WMAP 9 year 23 GHz in polarization. Small-scale fluctuations up to a $\ell_{max}$ of 16384 have been added to the templates in the `logpoltens` (Logarithm of the Polarization Fraction Tensor) formalism. The spectral index map from **s1** has been rescaled `based on S-PASS <https://arxiv.org/abs/1802.01145>`_ and had small scales added to upgrade it up to $N_{side}$ 8192. Input templates are available `at NERSC <https://portal.nersc.gov/project/cmb/pysm-data/synch/>`_ at 2048, 4096 and 8192; lower nside are simulated by running `hp.ud_grade` on the $N_{side}=2048$ maps.  For more details about the pre-processing of the input data, see the `notebook about creating the templates and adding small scales using the logpoltens formalism <preprocess-templates/synchrotron_template_logpoltens.html>`_ and `the notebook about spectral index <preprocess-templates/synchrotron_beta.html>`_.
+
+- **s6**: like **s5** with stochastic small scales generated on-the-fly. It can reproduce **s5** if configured to run with a specific set of seeds and a specific $\ell_{max}$, see :py:class:`~pysm3.PowerLawRealization`. However reproducing **s5** is expensive because it needs to generate small scales with a $\ell_{max}=16384$ whatever output resolution is required, normally instead **s6** generates small scales just up to $\ell_{max}=3N_{side}-1$.
 
 
 AME
