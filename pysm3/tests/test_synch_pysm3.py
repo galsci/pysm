@@ -1,8 +1,6 @@
 import psutil
 from astropy.tests.helper import assert_quantity_allclose
 
-from pysm3.models.dust import blackbody_ratio
-
 import pysm3
 from pysm3 import units as u
 
