@@ -149,6 +149,7 @@ class PowerLawRealization(PowerLaw):
             )
             * output_unit
         )
+        pl_index -= 3.1 * u.dimensionless_unscaled
 
         # Fixed values for comparison with s4
         # pl_index = -3.1 * u.dimensionless_unscaled
