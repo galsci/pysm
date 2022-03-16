@@ -2,7 +2,7 @@ import numpy as np
 from numba import njit
 
 
-@njit(parallel=True)
+@njit(parallel=False)
 def map_to_log_pol_tens(m):
     """Transform from IQU to Log pol tensor formalism
 
@@ -15,7 +15,7 @@ def map_to_log_pol_tens(m):
     return log_pol_tens
 
 
-@njit(parallel=True)
+@njit(parallel=False)
 def log_pol_tens_to_map(log_pol_tens):
     """Transform from Log pol tensor formalism to IQU
 
