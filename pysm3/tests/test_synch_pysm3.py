@@ -43,7 +43,6 @@ def test_synch_model_s7_44(model_tag):
         nside=nside,
         field=(0, 1, 2),
     )
-    rtol = 1e-2
 
     freq_ref = 23 * u.GHz
     beta = pysm3.models.read_map(
