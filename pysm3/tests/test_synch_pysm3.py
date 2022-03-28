@@ -1,10 +1,64 @@
 import psutil
+import numpy as np
 from astropy.tests.helper import assert_quantity_allclose
 
 import pysm3
 from pysm3 import units as u
 
 import pytest
+
+
+@pytest.mark.parametrize("model_tag", ["s7"])
+def test_synch_model_s7_noscaling(model_tag):
+    nside = 2048
+
+    freq = 23 * u.GHz
+
+    model = pysm3.Sky(preset_strings=[model_tag], nside=nside)
+
+    output = model.get_emission(freq)
+
+    input_template = pysm3.models.read_map(
+        "synch/synch_template_nside{nside}.fits".format(nside=nside),
+        nside=nside,
+        field=(0, 1, 2),
+    )
+    rtol = 1e-5
+
+    assert_quantity_allclose(input_template, output, rtol=rtol)
+
+
+@pytest.mark.parametrize("model_tag", ["s7"])
+def test_synch_model_s7_44(model_tag):
+    nside = 2048
+
+    freq = 44 * u.GHz
+
+    model = pysm3.Sky(preset_strings=[model_tag], nside=nside)
+
+    output = model.get_emission(freq)
+
+    input_template = pysm3.models.read_map(
+        "synch/synch_template_nside{nside}.fits".format(nside=nside),
+        nside=nside,
+        field=(0, 1, 2),
+    )
+
+    freq_ref = 23 * u.GHz
+    beta = pysm3.models.read_map(
+        "synch/synch_beta_nside{nside}.fits".format(nside=nside),
+        nside=nside,
+        field=0,
+    )
+    curvature = pysm3.models.read_map(
+        "synch/synch_curvature_nside{nside}.fits".format(nside=nside),
+        nside=nside,
+        field=0,
+    )
+    curvature_term = np.log((freq / (23 * u.GHz)) ** curvature)
+    scaling = (freq / freq_ref) ** (beta + curvature_term)
+
+    assert_quantity_allclose(input_template * scaling, output, rtol=1e-6)
 
 
 @pytest.mark.parametrize("model_tag", ["s4", "s5"])

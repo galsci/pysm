@@ -73,6 +73,8 @@ Synchrotron
 
 - **s6**: like **s5** with stochastic small scales generated on-the-fly. It can reproduce **s5** if configured to run with a specific set of seeds and a specific $\ell_{max}$, see :py:class:`~pysm3.PowerLawRealization`. However reproducing **s5** is expensive because it needs to generate small scales with a $\ell_{max}=16384$ whatever output resolution is required, normally instead **s6** generates small scales just up to $\ell_{max}=3N_{side}-1$.
 
+- **s7**: a power law with a curved index. The model uses the same templates and the same spectral index map of **s5**, the curvature term is based on the smoothed intensity template matched to the patch measured by the ARCADE experiment (Kogut, A. 2012, ApJ, 753, 110) and has random small scale fluctuations added, see `the relevant notebook <preprocess-templates/synchrotron_curvature.html>`_. The curvature map is available at $N_{side}=2048/4096/8192$.
+
 
 AME
 ===
