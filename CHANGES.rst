@@ -1,7 +1,7 @@
 3.4.0b3 (2022-03-28)
 ====================
 
-- Synchrotron model with curvature `s7` `based on Arcade<https://github.com/galsci/pysm/pull/115>`_
+- Implementation of Synchrotron with curvature `s7` `based on ARCADE <https://github.com/galsci/pysm/pull/115>`_
 
 3.4.0b2 (2022-03-15)
 ====================
