@@ -97,6 +97,8 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             self.galplane_fix_map = self.read_map(
                 galplane_fix, field=(0, 1, 2, 3)
             ).value
+        else:
+            self.galplane_fix_map = None
         self.largescale_alm_mbb_index = self.read_alm(
             largescale_alm_mbb_index,
             has_polarization=False,
