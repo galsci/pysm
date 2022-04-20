@@ -1,20 +1,36 @@
 import psutil
+import healpy as hp
 from astropy.tests.helper import assert_quantity_allclose
 
 from pysm3.models.dust import blackbody_ratio
 
 import pysm3
+from pysm3 import utils
 from pysm3 import units as u
 
 import pytest
 
 
 def test_d11gl_lownside():
-    nside = 64
+    nside = 2048
 
-    freq = 857 * u.GHz
+    freq = 353 * u.GHz
 
-    output = pysm3.Sky(preset_strings=["d11gl"], nside=nside).get_emission(freq)
+    d11_configuration = pysm3.sky.PRESET_MODELS["d11"].copy()
+    del d11_configuration["class"]
+    del d11_configuration["galplane_fix"]
+    output_healpix = pysm3.models.ModifiedBlackBodyRealization(
+        nside=nside,  seeds=[8192, 777, 888], **d11_configuration
+    ).get_emission(freq)
+    output_gl = pysm3.models.ModifiedBlackBodyRealizationGL(
+        nside=nside,  seeds=[8192, 777, 888], **d11_configuration
+    ).get_emission(freq)
+    lmax = 3 * nside - 1
+    alm_dx11gl = utils.gl_map2alm(output_gl.value, lmax)
+    output_gl_to_healpix = hp.alm2map(alm_dx11gl, nside=nside) * output_gl.unit
+
+    rtol = 1e-5
+    assert_quantity_allclose(output_healpix, output_gl_to_healpix, rtol=rtol)
 
 
 # @pytest.mark.skipif(
