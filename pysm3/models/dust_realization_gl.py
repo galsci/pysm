@@ -60,27 +60,26 @@ class ModifiedBlackBodyRealizationGL(ModifiedBlackBodyRealization):
             new=True,
         )
 
-        alm_small_scale = [
-            hp.almxfl(each, np.ones(min(synalm_lmax, 3 * self.nside - 1)))
-            for each in alm_small_scale
-        ]
-        map_small_scale = hp.alm2map(alm_small_scale, nside=self.nside)
+        lmax = min(synalm_lmax, 3 * self.nside - 1)
+        alm_small_scale = np.array(
+            [hp.almxfl(each, np.ones(lmax)) for each in alm_small_scale]
+        )
+        nlon, nlat = utils.lmax2nlon(lmax), utils.lmax2nlat(lmax)
+        map_small_scale = utils.gl_alm2map(alm_small_scale, lmax, nlon=nlon, nlat=nlat)
 
         # need later for beta, Td
-        modulate_map_I = hp.alm2map(self.modulate_alm[0].value, self.nside)
+        modulate_map_I = utils.gl_alm2map(
+            self.modulate_alm[0].value, lmax, nlon=nlon, nlat=nlat
+        )[0]
 
         map_small_scale[0] *= modulate_map_I
-        map_small_scale[1:] *= hp.alm2map(self.modulate_alm[1].value, self.nside)
+        map_small_scale[1:] *= utils.gl_alm2map(
+            self.modulate_alm[1].value, lmax, nlon=nlon, nlat=nlat
+        )[0]
 
-        map_small_scale += hp.alm2map(
-            self.template_largescale_alm.value, nside=self.nside
+        map_small_scale += utils.gl_alm2map(
+            self.template_largescale_alm.value, lmax, nlon=nlon, nlat=nlat
         )
-
-        if self.galplane_fix_map is not None:
-            map_small_scale *= hp.ud_grade(self.galplane_fix_map[3], self.nside)
-            map_small_scale += hp.ud_grade(
-                self.galplane_fix_map[:3] * (1 - self.galplane_fix_map[3]), self.nside
-            )
 
         output_IQU = (
             utils.log_pol_tens_to_map(map_small_scale)
@@ -100,15 +99,19 @@ class ModifiedBlackBodyRealizationGL(ModifiedBlackBodyRealization):
             output_unit = np.sqrt(1 * input_cl.unit).unit
             alm_small_scale = hp.synalm(input_cl.value, lmax=synalm_lmax, new=True)
 
-            alm_small_scale = hp.almxfl(
-                alm_small_scale, np.ones(min(3 * self.nside - 1, synalm_lmax + 1))
+            alm_small_scale = hp.almxfl(alm_small_scale, np.ones(lmax))
+            output[key] = (
+                utils.gl_alm2map(alm_small_scale, lmax, nlon=nlon, nlat=nlat)[0]
+                * output_unit
             )
-            output[key] = hp.alm2map(alm_small_scale, nside=self.nside) * output_unit
             output[key] *= modulate_map_I
             output[key] += (
-                hp.alm2map(
-                    getattr(self, f"largescale_alm_{key}").value, nside=self.nside
-                )
+                utils.gl_alm2map(
+                    getattr(self, f"largescale_alm_{key}").value,
+                    lmax,
+                    nlon=nlon,
+                    nlat=nlat,
+                )[0]
                 * output_unit
             )
 
