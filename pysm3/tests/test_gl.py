@@ -37,3 +37,24 @@ def test_map2alm2map():
     alm2 = gl_map2alm(GL_map, lmax)
 
     assert ducc0.misc.l2error(alm, alm2) < 1e-8
+
+
+def test_map2alm2map_Ionly():
+
+    import ducc0
+    import numpy as np
+    from time import time
+
+    # set maximum multipole moment
+    lmax = 2047
+    # maximum m.
+    mmax = lmax
+    nthreads = multiprocessing.cpu_count()
+
+    alm = random_alm(lmax, mmax, [0])
+    assert alm.shape[0] == 1
+
+    GL_map = gl_alm2map(alm, lmax)
+    alm2 = gl_map2alm(GL_map, lmax)
+
+    assert ducc0.misc.l2error(alm, alm2) < 1e-8
