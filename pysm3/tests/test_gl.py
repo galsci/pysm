@@ -1,6 +1,24 @@
 from pysm3.utils.gauss_legendre import *
 
 
+def test_clip_pad():
+
+    lmax = 64
+    alm_size = hp.Alm.getsize(lmax)
+    alm = np.arange(1, alm_size + 1, dtype=np.complex128)
+    alm = alm.reshape((1, -1))
+
+    higher_lmax = 128
+    alm_padded = pad_alm(alm, higher_lmax)
+
+    assert alm_padded.shape[-1] == hp.Alm.getsize(higher_lmax)
+    assert (alm_padded != 0).sum() == alm_size
+
+    clip_indices = clip_alm(higher_lmax, lmax)
+    alm_clipped = alm_padded[:, clip_indices]
+    np.testing.assert_array_equal(alm, alm_clipped)
+
+
 def random_alm(lmax, mmax, spin):
     rng = np.random.default_rng(48)
     spin = list(spin)
