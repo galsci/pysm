@@ -118,13 +118,13 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         self.fwhm = fwhm
         if self.fwhm is not None:
             self.fwhm = self.fwhm.to(u.rad)
-            self.small_scale_cl_mbb_temperature *= (
+            B_ell_squared = (
                 hp.gauss_beam(
-                    fwhm=self.fwhm.value,
-                    lmax=len(self.small_scale_cl_mbb_temperature) - 1,
+                    fwhm=self.fwhm.value, lmax=self.small_scale_cl.shape[-1] - 1
                 )
                 ** 2
             )
+            self.small_scale_cl *= B_ell_squared
         self.nside = int(nside)
         (
             self.I_ref,
