@@ -11,7 +11,7 @@ from .data import RemoteData  # noqa: F401
 from .logpoltens import log_pol_tens_to_map, map_to_log_pol_tens  # noqa: F401
 from .small_scales import sigmoid  # noqa: F401
 from .add_metadata import add_metadata  # noqa: F401
-from .gauss_legendre import * # noqa: F401
+from .gauss_legendre import *  # noqa: F401, F403
 
 import logging
 

@@ -1,6 +1,8 @@
 import numpy as np
 import healpy as hp
 import multiprocessing
+import logging
+log = logging.getLogger("pysm3")
 
 nthreads = multiprocessing.cpu_count()
 

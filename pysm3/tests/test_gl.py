@@ -1,4 +1,6 @@
 from pysm3.utils.gauss_legendre import *
+import healpy as hp
+import numpy as np
 
 
 def test_clip_pad():
@@ -40,14 +42,11 @@ def random_alm(lmax, mmax, spin):
 def test_map2alm2map():
 
     import ducc0
-    import numpy as np
-    from time import time
 
     # set maximum multipole moment
     lmax = 2047
     # maximum m.
     mmax = lmax
-    nthreads = multiprocessing.cpu_count()
 
     alm = random_alm(lmax, mmax, [0, 2, 2])
 
@@ -60,14 +59,11 @@ def test_map2alm2map():
 def test_map2alm2map_Ionly():
 
     import ducc0
-    import numpy as np
-    from time import time
 
     # set maximum multipole moment
     lmax = 2047
     # maximum m.
     mmax = lmax
-    nthreads = multiprocessing.cpu_count()
 
     alm = random_alm(lmax, mmax, [0])
     assert alm.shape[0] == 1

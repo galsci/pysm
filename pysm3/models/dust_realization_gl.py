@@ -1,7 +1,6 @@
 import numpy as np
 import healpy as hp
 
-from .. import units as u
 from .. import utils
 from .dust_realization import ModifiedBlackBodyRealization
 
