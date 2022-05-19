@@ -38,7 +38,7 @@ def test_d11gl_lownside():
         output_healpix[0], output_gl_to_healpix[0], rtol=rtol, atol=20 * u.uK_RJ
     )
     assert_quantity_allclose(
-        output_healpix[1:], output_gl_to_healpix[1:], rtol=rtol, atol=1.7 * u.uK_RJ
+        output_healpix[1:], output_gl_to_healpix[1:], rtol=rtol, atol=2 * u.uK_RJ
     )
 
 
