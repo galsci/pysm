@@ -11,10 +11,10 @@ from pysm3 import units as u
 import pytest
 
 
-def test_d11gl_lownside():
+@pytest.mark.parametrize("freq", [353 * u.GHz, 545 * u.GHz, 857 * u.GHz])
+def test_d11gl_lownside(freq):
     nside = 512
 
-    freq = 353 * u.GHz
     beamwidth = 14 * u.arcmin  # 2 pixels per beam
 
     d11_configuration = pysm3.sky.PRESET_MODELS["d11"].copy()
@@ -34,11 +34,15 @@ def test_d11gl_lownside():
     output_gl_to_healpix = hp.alm2map(alm_dx11gl, nside=nside) * output_gl.unit
 
     rtol = 1e-4
+    atol = {353: 20 * u.uK_RJ, 545: 60 * u.uK_RJ, 857: 150 * u.uK_RJ}
     assert_quantity_allclose(
-        output_healpix[0], output_gl_to_healpix[0], rtol=rtol, atol=20 * u.uK_RJ
+        output_healpix[0], output_gl_to_healpix[0], rtol=rtol, atol=atol[freq.value]
     )
     assert_quantity_allclose(
-        output_healpix[1:], output_gl_to_healpix[1:], rtol=rtol, atol=2 * u.uK_RJ
+        output_healpix[1:],
+        output_gl_to_healpix[1:],
+        rtol=rtol,
+        atol=atol[freq.value] / 10,
     )
 
 

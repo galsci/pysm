@@ -125,6 +125,12 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
                 ** 2
             )
             self.small_scale_cl *= B_ell_squared
+            self.small_scale_cl_mbb_temperature *= B_ell_squared[
+                : len(self.small_scale_cl_mbb_temperature)
+            ]
+            self.small_scale_cl_mbb_index *= B_ell_squared[
+                : len(self.small_scale_cl_mbb_index)
+            ]
         self.nside = int(nside)
         (
             self.I_ref,
