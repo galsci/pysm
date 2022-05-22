@@ -58,7 +58,7 @@ jobs:
     - name: Install base dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install tox psutil codecov
+        python -m pip install tox psutil codecov ducc0
     - name: Test with tox
       run: |
         tox -e ${{ matrix.toxenv }}
