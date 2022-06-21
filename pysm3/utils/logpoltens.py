@@ -25,5 +25,6 @@ def log_pol_tens_to_map(log_pol_tens):
     m = np.empty_like(log_pol_tens)
     exp_i = np.exp(log_pol_tens[0])
     m[0] = exp_i * np.cosh(P)
-    m[1:] = log_pol_tens[1:] / P * exp_i * np.sinh(P)
+    for pol in [1, 2]:
+        m[pol] = log_pol_tens[pol] / P * exp_i * np.sinh(P)
     return m

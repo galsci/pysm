@@ -19,6 +19,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         largescale_alm_mbb_temperature,
         small_scale_cl_mbb_temperature,
         nside,
+        fwhm=None,
         galplane_fix=None,
         seeds=None,
         synalm_lmax=None,
@@ -62,6 +63,9 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             excess power in the full sky spectra due to the generated small scales being
             too strong on the galactic plane.
             By default in d9,d10,d11 we use the input GNILC map with a resolution of 21.8'
+        fwhm: gaussian beam width
+            Produce small scales already smoothed with a gaussian beam, this makes the spherical
+            harmonics transforms more accurate compared to smoothing the outputs
         seeds: list of ints
             List of seeds used for generating the small scales, first is used for the template,
             the second for the spectral index, the third for the black body temperature.
@@ -100,8 +104,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         else:
             self.galplane_fix_map = None
         self.largescale_alm_mbb_index = self.read_alm(
-            largescale_alm_mbb_index,
-            has_polarization=False,
+            largescale_alm_mbb_index, has_polarization=False
         ).to(u.dimensionless_unscaled)
         self.small_scale_cl_mbb_index = self.read_cl(small_scale_cl_mbb_index).to(
             u.dimensionless_unscaled
@@ -112,6 +115,22 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         self.small_scale_cl_mbb_temperature = self.read_cl(
             small_scale_cl_mbb_temperature
         ).to(u.K ** 2)
+        self.fwhm = fwhm
+        if self.fwhm is not None:
+            self.fwhm = self.fwhm.to(u.rad)
+            B_ell_squared = (
+                hp.gauss_beam(
+                    fwhm=self.fwhm.value, lmax=self.small_scale_cl.shape[-1] - 1
+                )
+                ** 2
+            )
+            self.small_scale_cl *= B_ell_squared
+            self.small_scale_cl_mbb_temperature *= B_ell_squared[
+                : len(self.small_scale_cl_mbb_temperature)
+            ]
+            self.small_scale_cl_mbb_index *= B_ell_squared[
+                : len(self.small_scale_cl_mbb_index)
+            ]
         self.nside = int(nside)
         (
             self.I_ref,
@@ -151,8 +170,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         map_small_scale[1:] *= hp.alm2map(self.modulate_alm[1].value, self.nside)
 
         map_small_scale += hp.alm2map(
-            self.template_largescale_alm.value,
-            nside=self.nside,
+            self.template_largescale_alm.value, nside=self.nside
         )
 
         if self.galplane_fix_map is not None:
@@ -177,11 +195,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             np.random.seed(seed)
             input_cl = getattr(self, f"small_scale_cl_{key}")
             output_unit = np.sqrt(1 * input_cl.unit).unit
-            alm_small_scale = hp.synalm(
-                input_cl.value,
-                lmax=synalm_lmax,
-                new=True,
-            )
+            alm_small_scale = hp.synalm(input_cl.value, lmax=synalm_lmax, new=True)
 
             alm_small_scale = hp.almxfl(
                 alm_small_scale, np.ones(min(3 * self.nside - 1, synalm_lmax + 1))
@@ -190,8 +204,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             output[key] *= modulate_map_I
             output[key] += (
                 hp.alm2map(
-                    getattr(self, f"largescale_alm_{key}").value,
-                    nside=self.nside,
+                    getattr(self, f"largescale_alm_{key}").value, nside=self.nside
                 )
                 * output_unit
             )
