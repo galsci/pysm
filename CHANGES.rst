@@ -1,3 +1,8 @@
+3.4.0 (unreleased)
+==================
+
+- Running unit tests (except MPI) on MAC OS X in Github acitons `PR 122 <https://github.com/galsci/pysm/pull/122>`_
+
 3.4.0b3 (2022-03-28)
 ====================
 
