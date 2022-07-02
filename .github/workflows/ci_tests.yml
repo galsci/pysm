@@ -64,8 +64,11 @@ jobs:
         fetch-depth: 0
     - name: Install required system packages
       run: |
+        if [ "$RUNNER_OS" == "Linux" ]; then
         sudo apt-get update
         sudo apt-get install graphviz texlive-latex-extra dvipng libopenmpi-dev openmpi-bin pandoc
+        fi
+      shell: bash
     - name: Set up python ${{ matrix.python }} on ${{ matrix.os }}
       uses: actions/setup-python@v2
       with:
