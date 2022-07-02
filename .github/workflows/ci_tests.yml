@@ -37,6 +37,21 @@ jobs:
             python: 3.8
             toxenv: py38-test-alldeps-cov
 
+          - name: OS X - Python 3.8
+            os: macos-latest
+            python: 3.8
+            toxenv: py38-test
+
+          # - name: Python 3.7 with oldest supported version of all dependencies
+          #   os: ubuntu-16.04
+          #   python: 3.7
+          #   toxenv: py37-test-oldestdeps
+
+          # - name: Python 3.8 with latest dev versions of key dependencies
+          #   os: ubuntu-latest
+          #   python: 3.8
+          #   toxenv: py38-test-devdeps
+
           # - name: Test building of Sphinx docs
           #   os: ubuntu-latest
           #   python: 3.x
@@ -49,8 +64,11 @@ jobs:
         fetch-depth: 0
     - name: Install required system packages
       run: |
+        if [ "$RUNNER_OS" == "Linux" ]; then
         sudo apt-get update
         sudo apt-get install graphviz texlive-latex-extra dvipng libopenmpi-dev openmpi-bin pandoc
+        fi
+      shell: bash
     - name: Set up python ${{ matrix.python }} on ${{ matrix.os }}
       uses: actions/setup-python@v2
       with:
@@ -63,7 +81,7 @@ jobs:
       run: |
         tox -e ${{ matrix.toxenv }}
     - name: MPI test
-      if: ${{ matrix.toxenv != 'codestyle' }}
+      if: contains(matrix.toxenv, 'alldeps')
       run: |
         mpirun -np 2 --oversubscribe .tox/${{ matrix.toxenv}}/bin/python -m pytest pysm3/tests/test_read_map_mpi.py;
     # This is an example of how to upload coverage to codecov
