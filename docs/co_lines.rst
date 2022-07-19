@@ -41,3 +41,5 @@ The ``MCMole3D`` input parameters  are are obtained from best fit with the Planc
 The installation of ``mcmole3d`` is not required, HGL clouds can be input to the CO emission by setting ``run_mcmole3d=False``  (which is the default). However, if one wants to run several mock CO  realizations observing high Galactic latitude patches we encourage to run ``mcmole3d`` by changing ``random_seed`` in the CO class constructor. The parameter ``theta_high_galactic_latitude_deg`` set the latitude above which CO emission from high Galactic latitudes can be included and it has an impact **only when** ``run_mcmole3d=True``.
 
 The level of polarization in **co2** and **co3** is 0.1%, which on average is the expected level on 10% of the sky. However, polarization from CO emission have been detected at larger fluxes in  Orion and Taurus complexes (Greaves et al.1999 )
+
+See `this post <https://giuspugl.github.io/reports/Adding_CO_to_pysm>`_ for the actual processing of templates.
