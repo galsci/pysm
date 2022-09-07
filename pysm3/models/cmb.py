@@ -10,7 +10,7 @@ from .template import Model
 class CMBMap(Model):
     """Load one or a set of 3 CMB maps"""
 
-    def def __init__(
+    def __init__(
         self, nside, max_nside=None, map_IQU=None, map_I=None, map_Q=None, map_U=None, map_dist=None
     ):
         """
@@ -236,8 +236,8 @@ class CMBLensed(CMBMap):
     def __init__(
         self,
         nside,
-        max_nside=None,
         cmb_spectra,
+        max_nside=None,
         cmb_seed=None,
         apply_delens=False,
         delensing_ells=None,
