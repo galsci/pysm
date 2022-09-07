@@ -18,6 +18,7 @@ class ModifiedBlackBodyLayers(Model):
         map_mbb_index,
         map_mbb_temperature,
         nside,
+        max_nside=None,
         num_layers=1,
         unit_layers=None,
         unit_mbb_temperature=None,
@@ -51,7 +52,7 @@ class ModifiedBlackBodyLayers(Model):
         nside: int
             Resolution parameter at which this model is to be calculated (with `ud_grade`)
         """
-        super().__init__(nside=nside, map_dist=map_dist)
+        super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         num_pix = hp.nside2npix(nside)
         self.num_layers = num_layers
         self.layers = u.Quantity(np.empty((num_layers, 3, num_pix)), unit=unit_layers)

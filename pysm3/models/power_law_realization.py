@@ -17,6 +17,7 @@ class PowerLawRealization(PowerLaw):
         largescale_alm_pl_index,
         small_scale_cl_pl_index,
         nside,
+        max_nside=None,
         seeds=None,
         synalm_lmax=None,
         has_polarization=True,
@@ -55,9 +56,7 @@ class PowerLawRealization(PowerLaw):
         map_dist: Map distribution
             Unsupported, this class doesn't support MPI Parallelization
         """
-        self.nside = nside
-        assert nside is not None
-        self.map_dist = map_dist
+        super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         self.has_polarization = has_polarization
 
         self.freq_ref_I = u.Quantity(freq_ref).to(u.GHz)

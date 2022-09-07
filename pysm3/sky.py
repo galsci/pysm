@@ -81,6 +81,7 @@ class Sky(Model):
     def __init__(
         self,
         nside=None,
+        max_nside=None,
         preset_strings=None,
         component_config=None,
         component_objects=None,
@@ -123,7 +124,7 @@ class Sky(Model):
                     nside == comp.nside
                 ), "Component objects should have same NSIDE of Sky"
 
-        super().__init__(nside=nside, map_dist=map_dist)
+        super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         self.components = component_objects if component_objects is not None else []
         # otherwise instantiate the sky object from list of predefined models,
         # identified by their strings. These are defined in `pysm.presets`.

@@ -34,7 +34,7 @@ class Model:
     If libsharp is not available, pixels are distributed uniformly across
     processes, see :py:func:`pysm.mpi.distribute_pixels_uniformly`"""
 
-    def __init__(self, nside, map_dist=None):
+    def __init__(self, nside, max_nside=None, map_dist=None):
         """
         Parameters
         ----------
@@ -47,6 +47,7 @@ class Model:
         """
         self.nside = nside
         assert nside is not None
+        self.max_nside = 512 if max_nside is None else max_nside
         self.map_dist = map_dist
 
     def read_map(self, path, unit=None, field=0, nside=None):

@@ -19,6 +19,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         largescale_alm_mbb_temperature,
         small_scale_cl_mbb_temperature,
         nside,
+        max_nside=None,
         galplane_fix=None,
         seeds=None,
         synalm_lmax=None,
@@ -73,9 +74,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         map_dist: Map distribution
             Unsupported, this class doesn't support MPI Parallelization
         """
-        self.nside = nside
-        assert nside is not None
-        self.map_dist = map_dist
+        super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         self.has_polarization = has_polarization
 
         self.freq_ref_I = u.Quantity(freq_ref).to(u.GHz)

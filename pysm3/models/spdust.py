@@ -22,6 +22,7 @@ class SpDust(Model):
         freq_peak,
         freq_ref_peak,
         nside,
+        max_nside=None,
         unit_I=None,
         map_dist=None,
     ):
@@ -48,7 +49,7 @@ class SpDust(Model):
         nside: int
             Resolution parameter at which this model is to be calculated.
         """
-        super().__init__(nside=nside, map_dist=map_dist)
+        super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         # do model setup
         self.I_ref = self.read_map(map_I, unit=unit_I)
         # This does unit conversion in place so we do not copy the data
@@ -118,6 +119,7 @@ class SpDustPol(SpDust):
         angle_Q,
         angle_U,
         nside,
+        max_nside=None,
         unit_I=None,
         map_dist=None,
     ):
@@ -128,6 +130,7 @@ class SpDustPol(SpDust):
             freq_peak=freq_peak,
             freq_ref_peak=freq_ref_peak,
             nside=nside,
+            max_nside=max_nside,
             unit_I=unit_I,
             map_dist=map_dist,
         )

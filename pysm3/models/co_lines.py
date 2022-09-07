@@ -20,6 +20,7 @@ class COLines(Model):
     def __init__(
         self,
         nside,
+        max_nside=None,
         has_polarization=True,
         lines=["10", "21", "32"],
         include_high_galactic_latitude_clouds=False,
@@ -74,7 +75,7 @@ class COLines(Model):
 
         self.template_nside = 512 if self.nside <= 512 else 2048
 
-        super().__init__(nside=nside, map_dist=map_dist)
+        super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
 
         self.remote_data = utils.RemoteData()
 
