@@ -25,6 +25,7 @@ class HensleyDraine2017(Model):
         freq_ref_I,
         freq_ref_P,
         nside,
+        max_nside=None,
         has_polarization=True,
         unit_I=None,
         unit_Q=None,
@@ -83,7 +84,7 @@ class HensleyDraine2017(Model):
         seed: int
             Number used to seed RNG for `uval`.
         """
-        super().__init__(nside=nside, map_dist=map_dist)
+        super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         # do model setup
         self.I_ref = self.read_map(map_I, unit=unit_I)
         # This does unit conversion in place so we do not copy the data

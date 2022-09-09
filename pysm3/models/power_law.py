@@ -15,6 +15,7 @@ class PowerLaw(Model):
         freq_ref_I,
         map_pl_index,
         nside,
+        max_nside=None,
         has_polarization=True,
         map_Q=None,
         map_U=None,
@@ -48,7 +49,7 @@ class PowerLaw(Model):
         nside: int
             Resolution parameter at which this model is to be calculated.
         """
-        super().__init__(nside, map_dist=map_dist)
+        super().__init__(nside, max_nside=max_nside, map_dist=map_dist)
         # do model setup
         self.is_IQU = has_polarization and map_Q is None
         self.I_ref = self.read_map(
@@ -140,6 +141,7 @@ class CurvedPowerLaw(PowerLaw):
         nside,
         spectral_curvature,
         freq_curve,
+        max_nside=None,
         has_polarization=True,
         map_Q=None,
         map_U=None,
@@ -154,6 +156,7 @@ class CurvedPowerLaw(PowerLaw):
             freq_ref_I=freq_ref_I,
             map_pl_index=map_pl_index,
             nside=nside,
+            max_nside=max_nside,
             has_polarization=has_polarization,
             map_Q=map_Q,
             map_U=map_U,

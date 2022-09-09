@@ -16,6 +16,7 @@ class InterpolatingComponent(Model):
         path,
         input_units,
         nside,
+        max_nside=None,
         interpolation_kind="linear",
         map_dist=None,
         verbose=False,
@@ -50,7 +51,7 @@ class InterpolatingComponent(Model):
             Control amount of output
         """
 
-        super().__init__(nside=nside, map_dist=map_dist)
+        super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         self.maps = {}
         self.maps = self.get_filenames(path)
 

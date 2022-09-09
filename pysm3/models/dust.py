@@ -27,6 +27,7 @@ class ModifiedBlackBody(Model):
         map_mbb_index,
         map_mbb_temperature,
         nside,
+        max_nside=None,
         map_Q=None,
         map_U=None,
         has_polarization=True,
@@ -65,7 +66,7 @@ class ModifiedBlackBody(Model):
         nside: int
             Resolution parameter at which this model is to be calculated.
         """
-        super().__init__(nside=nside, map_dist=map_dist)
+        super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         # do model setup
         self.is_IQU = has_polarization and map_Q is None
         self.I_ref = self.read_map(
@@ -166,6 +167,7 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
         map_mbb_index=None,
         map_mbb_temperature=None,
         nside=None,
+        max_nside=None,
         mpi_comm=None,
         map_dist=None,
         unit_I=None,
@@ -193,6 +195,7 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
             map_mbb_index=map_mbb_index,
             map_mbb_temperature=map_mbb_temperature,
             nside=nside,
+            max_nside=max_nside,
             unit_I=unit_I,
             unit_Q=unit_Q,
             unit_U=unit_U,

@@ -5,6 +5,8 @@ Summary of Models
 
 For all details of the models also check the `presets.cfg file <https://github.com/galsci/pysm/blob/main/pysm3/data/presets.cfg>`_.
 
+Each :py:class:`~pysm3.Model` instance also knows about the maximum resolution available in the `max_nside` attribute.
+
 Input templates
 ===============
 

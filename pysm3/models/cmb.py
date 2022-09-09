@@ -11,7 +11,7 @@ class CMBMap(Model):
     """Load one or a set of 3 CMB maps"""
 
     def __init__(
-        self, nside, map_IQU=None, map_I=None, map_Q=None, map_U=None, map_dist=None
+        self, nside, max_nside=None, map_IQU=None, map_I=None, map_Q=None, map_U=None, map_dist=None
     ):
         """
         The input is assumed to be in `uK_CMB`
@@ -25,7 +25,7 @@ class CMBMap(Model):
         map_I, map_Q, map_U: `pathlib.Path` object
             Paths to the maps to be used as I, Q, U templates.
         """
-        super().__init__(nside=nside, map_dist=map_dist)
+        super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         if map_IQU is not None:
             self.map = self.read_map(map_IQU, unit=u.uK_CMB, field=(0, 1, 2))
         elif map_I is not None:
@@ -237,6 +237,7 @@ class CMBLensed(CMBMap):
         self,
         nside,
         cmb_spectra,
+        max_nside=None,
         cmb_seed=None,
         apply_delens=False,
         delensing_ells=None,
@@ -263,7 +264,7 @@ class CMBLensed(CMBMap):
             factor (1 for no suppression) in the second column
         """
         try:
-            super().__init__(nside=nside, map_dist=map_dist)
+            super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         except ValueError:
             pass  # suppress exception about not providing any input map
         self.cmb_spectra = self.read_txt(cmb_spectra, unpack=True)
