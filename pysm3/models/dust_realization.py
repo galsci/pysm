@@ -3,6 +3,7 @@ import healpy as hp
 
 from .. import units as u
 from .. import utils
+from .template import Model
 from .dust import ModifiedBlackBody
 
 
@@ -74,7 +75,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         map_dist: Map distribution
             Unsupported, this class doesn't support MPI Parallelization
         """
-        super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
+        Model.__init__(self, nside=nside, max_nside=max_nside, map_dist=map_dist)
         self.has_polarization = has_polarization
 
         self.freq_ref_I = u.Quantity(freq_ref).to(u.GHz)
