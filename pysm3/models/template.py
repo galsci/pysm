@@ -16,6 +16,12 @@ from .. import units as u
 from .. import mpi
 import gc
 
+try:
+    import pixell.enmap
+    import pixell.curvedsky
+except ImportError:
+    pass
+
 log = logging.getLogger("pysm3")
 
 
@@ -112,7 +118,15 @@ class Model:
 
 
 def apply_smoothing_and_coord_transform(
-    input_map, fwhm=None, rot=None, lmax=None, map_dist=None
+    input_map,
+    fwhm=None,
+    rot=None,
+    lmax=None,
+    output_nside=None,
+    output_car_resol=None,
+    return_healpix=True,
+    return_car=False,
+    map_dist=None,
 ):
     """Apply smoothing and coordinate rotation to an input map
 
@@ -134,15 +148,29 @@ def apply_smoothing_and_coord_transform(
         Apply a coordinate rotation give a healpy `Rotator`, e.g. if the
         inputs are in Galactic, `hp.Rotator(coord=("G", "C"))` rotates
         to Equatorial
+    output_nside : int
+        HEALPix output map Nside, if None, use the same as the input
+    output_car_resol : astropy.Quantity
+        CAR output map resolution, generally in arcmin, if None, estimated
+        from lmax
+    return_healpix : bool
+        Whether to return the HEALPix map
+    return_car : bool
+        Whether to return the CAR map
 
     Returns
     -------
-    smoothed_map : np.ndarray
-        Array containing the smoothed sky
+    smoothed_map : np.ndarray or tuple of np.ndarray
+        Array containing the smoothed sky or tuple of HEALPix and CAR maps
     """
 
+    nside = hp.get_nside(input_map)
+    if output_nside is None:
+        output_nside = nside
+
+    output_maps = []
+
     if map_dist is None:
-        nside = hp.get_nside(input_map)
         alm = hp.map2alm(
             input_map,
             lmax=lmax,
@@ -152,17 +180,25 @@ def apply_smoothing_and_coord_transform(
             hp.smoothalm(alm, fwhm=fwhm.to_value(u.rad), inplace=True, pol=True)
         if rot is not None:
             rot.rotate_alm(alm, inplace=True)
-        smoothed_map = hp.alm2map(alm, nside=nside, pixwin=False)
-
+        if return_healpix:
+            output_maps.append(hp.alm2map(alm, nside=output_nside, pixwin=False))
+        if return_car:
+            shape, wcs = pixell.enmap.fullsky_geometry(
+                output_car_resol.to_value(u.radian)
+            )
+            ainfo = sharp.alm_info(lmax=lmax, mmax=0)
+            output_maps.append(pixell.curvedsky.alm2map(alm, enmap.empty(shape, wcs)))
     else:
         assert (rot is None) or (
             rot.coordin == rot.coordout
         ), "No rotation supported in distributed smoothing"
-        smoothed_map = mpi.mpi_smoothing(input_map, fwhm, map_dist)
+        output_maps.append(mpi.mpi_smoothing(input_map, fwhm, map_dist))
+        assert not return_car, "No CAR output supported in Libsharp smoothing"
 
     if hasattr(input_map, "unit"):
-        smoothed_map <<= input_map.unit
-    return smoothed_map
+        for m in output_maps:
+            m <<= input_map.unit
+    return output_maps[0] if len(output_maps) == 1 else tuple(output_maps)
 
 
 def apply_normalization(freqs, weights):
