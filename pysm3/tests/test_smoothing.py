@@ -1,4 +1,16 @@
+from pysm3.models import apply_smoothing_and_coord_transform
+import pysm3.units as u
+import pytest
+import healpy as hp
+import numpy as np
+from astropy.tests.helper import assert_quantity_allclose
+
 """Test the `apply_smoothing_and_coord_transform` function"""
+
+FWHM = (5 * u.deg).to_value(u.radian)
+NSIDE = 128
+LMAX = int(NSIDE * 1.5)
+
 """
     input_map,
     fwhm=None,
@@ -11,16 +23,6 @@
     map_dist=None,
 """
 
-from pysm3.models import apply_smoothing_and_coord_transform
-import pysm3.units as u
-import pytest
-import healpy as hp
-import numpy as np
-from astropy.tests.helper import assert_quantity_allclose
-
-FWHM = (5 * u.deg).to_value(u.radian)
-NSIDE = 128
-LMAX = int(NSIDE * 1.5)
 
 # scope makes the fixture just run once per execution of this module
 @pytest.fixture(scope="module")
