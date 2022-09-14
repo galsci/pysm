@@ -1,15 +1,18 @@
-from pysm3.models import apply_smoothing_and_coord_transform
-import pysm3.units as u
-import pytest
-import healpy as hp
-import numpy as np
-from astropy.tests.helper import assert_quantity_allclose
-
 """Test the `apply_smoothing_and_coord_transform` function"""
 
-FWHM = (5 * u.deg).to_value(u.radian)
-NSIDE = 128
-LMAX = int(NSIDE * 1.5)
+import healpy as hp
+import numpy as np
+try:
+    import pixell.enmap
+    import pixell.reproject
+except ImportError:
+    pass
+
+from pysm3.models import apply_smoothing_and_coord_transform
+import pysm3.units as u
+
+from astropy.tests.helper import assert_quantity_allclose
+import pytest
 
 """
     input_map,
@@ -23,6 +26,11 @@ LMAX = int(NSIDE * 1.5)
     map_dist=None,
 """
 
+
+FWHM = (5 * u.deg).to_value(u.radian)
+NSIDE = 128
+CAR_RESOL = 12 * u.arcmin
+LMAX = int(NSIDE * 1.5)
 
 # scope makes the fixture just run once per execution of this module
 @pytest.fixture(scope="module")
@@ -50,3 +58,18 @@ def test_smoothing_healpix(input_map):
         actual=smoothed_map,
         desired=hp.smoothing(input_map, fwhm=FWHM, lmax=LMAX, use_pixel_weights=True),
     )
+
+
+def test_car_nosmoothing(input_map):
+
+    smoothed_map_car = apply_smoothing_and_coord_transform(
+        input_map,
+        fwhm=None,
+        return_healpix=False,
+        return_car=True,
+        output_car_resol=CAR_RESOL,
+    )
+    assert smoothed_map.shape == input_map.shape
+    shape, wcs = pixell.enmap.fullsky_geometry(car_res * utils.arcmin)
+    map_rep = pixell.reproject.enmap_from_healpix(input_map, shape, wcs)
+    assert_quantity_allclose(actual=smoothed_map, desired=map_rep)
