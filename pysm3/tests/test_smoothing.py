@@ -15,19 +15,6 @@ import pysm3.units as u
 from astropy.tests.helper import assert_quantity_allclose
 import pytest
 
-"""
-    input_map,
-    fwhm=None,
-    rot=None,
-    lmax=None,
-    output_nside=None,
-    output_car_resol=None,
-    return_healpix=True,
-    return_car=False,
-    map_dist=None,
-"""
-
-
 FWHM = (5 * u.deg).to_value(u.radian)
 NSIDE = 128
 CAR_RESOL = 12 * u.arcmin
