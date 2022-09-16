@@ -53,7 +53,8 @@ def test_smoothing_healpix(input_map):
     assert smoothed_map.shape == input_map.shape
     assert_quantity_allclose(
         actual=smoothed_map,
-        desired=hp.smoothing(input_map, fwhm=FWHM, lmax=LMAX, use_pixel_weights=True),
+        desired=hp.smoothing(input_map, fwhm=FWHM, lmax=LMAX, use_pixel_weights=True)
+        * input_map.unit,
     )
 
 
@@ -61,7 +62,10 @@ def test_car_nosmoothing(input_map):
 
     # `enmap_from_healpix` has no iteration or weights
     # so for test purpose we reproduce it here
-    alm = hp.map2alm(input_map, lmax=LMAX, iter=0, use_pixel_weights=False)
+    alm = (
+        hp.map2alm(input_map, lmax=LMAX, iter=0, use_pixel_weights=False)
+        * input_map.unit
+    )
     car_map = apply_smoothing_and_coord_transform(
         alm,
         input_alm=True,
@@ -73,8 +77,11 @@ def test_car_nosmoothing(input_map):
     )
     assert car_map.shape == (3, 901, 1800)
     shape, wcs = pixell.enmap.fullsky_geometry(CAR_RESOL.to_value(u.radian), dims=(3,))
-    map_rep = pixell.reproject.enmap_from_healpix(
-        input_map, shape, wcs, lmax=LMAX, rot=None, ncomp=3
+    map_rep = (
+        pixell.reproject.enmap_from_healpix(
+            input_map, shape, wcs, lmax=LMAX, rot=None, ncomp=3
+        )
+        * input_map.unit
     )
     assert_quantity_allclose(actual=car_map, desired=map_rep)
 
@@ -87,9 +94,12 @@ def test_healpix_output_nside(input_map):
     )
     assert output_map.shape == (3, hp.nside2npix(output_nside))
     alm = hp.map2alm(input_map, use_pixel_weights=True, lmax=LMAX)
-    desired = hp.alm2map(
-        alm,
-        nside=output_nside,
+    desired = (
+        hp.alm2map(
+            alm,
+            nside=output_nside,
+        )
+        * input_map.unit
     )
     assert_quantity_allclose(
         actual=output_map,

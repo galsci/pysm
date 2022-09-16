@@ -173,6 +173,11 @@ def apply_smoothing_and_coord_transform(
         if output_nside is None:
             output_nside = nside
 
+    if hasattr(input_map, "unit"):
+        unit = input_map.unit
+    else:
+        unit = 1
+
     output_maps = []
 
     if map_dist is None:
@@ -191,7 +196,7 @@ def apply_smoothing_and_coord_transform(
                 assert (
                     output_nside is not None
                 ), "If inputting Alms, specify output_nside"
-            output_maps.append(hp.alm2map(alm, nside=output_nside, pixwin=False))
+            output_maps.append(hp.alm2map(alm, nside=output_nside, pixwin=False) * unit)
         if return_car:
             shape, wcs = pixell.enmap.fullsky_geometry(
                 output_car_resol.to_value(u.radian), dims=(3,)
@@ -201,6 +206,7 @@ def apply_smoothing_and_coord_transform(
                 pixell.curvedsky.alm2map(
                     alm, pixell.enmap.empty(shape, wcs), ainfo=ainfo
                 )
+                * unit
             )
     else:
         assert (rot is None) or (
@@ -209,9 +215,6 @@ def apply_smoothing_and_coord_transform(
         output_maps.append(mpi.mpi_smoothing(input_map, fwhm, map_dist))
         assert not return_car, "No CAR output supported in Libsharp smoothing"
 
-    if hasattr(input_map, "unit"):
-        for m in output_maps:
-            m <<= input_map.unit
     return output_maps[0] if len(output_maps) == 1 else tuple(output_maps)
 
 
