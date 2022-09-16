@@ -168,25 +168,33 @@ def apply_smoothing_and_coord_transform(
         Array containing the smoothed sky or tuple of HEALPix and CAR maps
     """
 
-    nside = hp.get_nside(input_map)
-    if output_nside is None:
-        output_nside = nside
+    if not input_alm:
+        nside = hp.get_nside(input_map)
+        if output_nside is None:
+            output_nside = nside
 
     output_maps = []
 
     if map_dist is None:
-        alm = hp.map2alm(
-            input_map, lmax=lmax, use_pixel_weights=True if nside > 16 else False
-        )
+        if input_alm:
+            alm = input_map.copy()
+        else:
+            alm = hp.map2alm(
+                input_map, lmax=lmax, use_pixel_weights=True if nside > 16 else False
+            )
         if fwhm is not None:
             hp.smoothalm(alm, fwhm=fwhm.to_value(u.rad), inplace=True, pol=True)
         if rot is not None:
             rot.rotate_alm(alm, inplace=True)
         if return_healpix:
+            if input_alm:
+                assert (
+                    output_nside is not None
+                ), "If inputting Alms, specify output_nside"
             output_maps.append(hp.alm2map(alm, nside=output_nside, pixwin=False))
         if return_car:
             shape, wcs = pixell.enmap.fullsky_geometry(
-                output_car_resol.to_value(u.radian)
+                output_car_resol.to_value(u.radian), dims=(3,)
             )
             ainfo = pixell.sharp.alm_info(lmax=lmax)
             output_maps.append(

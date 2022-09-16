@@ -33,12 +33,15 @@ NSIDE = 128
 CAR_RESOL = 12 * u.arcmin
 LMAX = int(NSIDE * 1.5)
 
-# scope makes the fixture just run once per execution of this module
-@pytest.fixture(scope="module")
+
+@pytest.fixture(
+    scope="module"
+)  # scope makes the fixture just run once per execution of module
 def input_map():
     beam_window = hp.gauss_beam(fwhm=FWHM, lmax=LMAX) ** 2
     cl = np.zeros((6, len(beam_window)))
     cl[0:3] = beam_window
+    np.random.seed(7)
     m = hp.synfast(cl, NSIDE, lmax=LMAX, new=True) * u.uK_RJ
     return m
 
@@ -46,6 +49,7 @@ def input_map():
 def test_smoothing_healpix(input_map):
 
     smoothed_map = apply_smoothing_and_coord_transform(input_map, fwhm=FWHM * u.radian)
+    assert input_map.shape[0] == 3
     assert smoothed_map.shape == input_map.shape
     assert_quantity_allclose(
         actual=smoothed_map,
@@ -55,17 +59,21 @@ def test_smoothing_healpix(input_map):
 
 def test_car_nosmoothing(input_map):
 
-    smoothed_map = apply_smoothing_and_coord_transform(
-        input_map,
+    # `enmap_from_healpix` has no iteration or weights
+    # so for test purpose we reproduce it here
+    alm = hp.map2alm(input_map, lmax=LMAX, iter=0, use_pixel_weights=False)
+    car_map = apply_smoothing_and_coord_transform(
+        alm,
+        input_alm=True,
         fwhm=None,
         return_healpix=False,
         return_car=True,
         output_car_resol=CAR_RESOL,
         lmax=LMAX,
     )
-    assert smoothed_map.shape == (901, 1800)
-    shape, wcs = pixell.enmap.fullsky_geometry(CAR_RESOL.to_value(u.radian))
+    assert car_map.shape == (3, 901, 1800)
+    shape, wcs = pixell.enmap.fullsky_geometry(CAR_RESOL.to_value(u.radian), dims=(3,))
     map_rep = pixell.reproject.enmap_from_healpix(
-        input_map, shape, wcs, lmax=LMAX, rot=None
-    )[0]
-    assert_quantity_allclose(actual=smoothed_map, desired=map_rep)
+        input_map, shape, wcs, lmax=LMAX, rot=None, ncomp=3
+    )
+    assert_quantity_allclose(actual=car_map, desired=map_rep)
