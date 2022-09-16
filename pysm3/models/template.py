@@ -21,7 +21,7 @@ try:
     import pixell.curvedsky
     import pixell.sharp
 except ImportError:
-    pass
+    pixell = None
 
 log = logging.getLogger("pysm3")
 
