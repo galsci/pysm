@@ -77,3 +77,22 @@ def test_car_nosmoothing(input_map):
         input_map, shape, wcs, lmax=LMAX, rot=None, ncomp=3
     )
     assert_quantity_allclose(actual=car_map, desired=map_rep)
+
+
+def test_healpix_output_nside(input_map):
+
+    output_nside = 64
+    output_map = apply_smoothing_and_coord_transform(
+        input_map, fwhm=None, output_nside=output_nside, lmax=LMAX
+    )
+    assert output_map.shape == (3, hp.nside2npix(output_nside))
+    alm = hp.map2alm(input_map, use_pixel_weights=True, lmax=LMAX)
+    desired = hp.alm2map(
+        alm,
+        nside=output_nside,
+    )
+    assert_quantity_allclose(
+        actual=output_map,
+        desired=desired,
+        rtol=1e-7,
+    )
