@@ -187,7 +187,7 @@ def apply_smoothing_and_coord_transform(
             shape, wcs = pixell.enmap.fullsky_geometry(
                 output_car_resol.to_value(u.radian)
             )
-            ainfo = None # pixell.sharp.alm_info(lmax=lmax, mmax=lmax)
+            ainfo = pixell.sharp.alm_info(lmax=lmax)
             output_maps.append(
                 pixell.curvedsky.alm2map(
                     alm, pixell.enmap.empty(shape, wcs), ainfo=ainfo
