@@ -127,6 +127,7 @@ def apply_smoothing_and_coord_transform(
     output_car_resol=None,
     return_healpix=True,
     return_car=False,
+    input_alm=False,
     map_dist=None,
 ):
     """Apply smoothing and coordinate rotation to an input map
@@ -158,6 +159,8 @@ def apply_smoothing_and_coord_transform(
         Whether to return the HEALPix map
     return_car : bool
         Whether to return the CAR map
+    input_alm : np.array
+        Instead of starting from a map, `input_map` is a set of Alm
 
     Returns
     -------
