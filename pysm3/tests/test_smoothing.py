@@ -2,6 +2,7 @@
 
 import healpy as hp
 import numpy as np
+
 try:
     import pixell.enmap
     import pixell.reproject
@@ -38,15 +39,7 @@ def input_map():
     beam_window = hp.gauss_beam(fwhm=FWHM, lmax=LMAX) ** 2
     cl = np.zeros((6, len(beam_window)))
     cl[0:3] = beam_window
-    m = (
-        hp.synfast(
-            cl,
-            NSIDE,
-            lmax=LMAX,
-            new=True,
-        )
-        * u.uK_RJ
-    )
+    m = hp.synfast(cl, NSIDE, lmax=LMAX, new=True) * u.uK_RJ
     return m
 
 
@@ -62,14 +55,17 @@ def test_smoothing_healpix(input_map):
 
 def test_car_nosmoothing(input_map):
 
-    smoothed_map_car = apply_smoothing_and_coord_transform(
+    smoothed_map = apply_smoothing_and_coord_transform(
         input_map,
         fwhm=None,
         return_healpix=False,
         return_car=True,
         output_car_resol=CAR_RESOL,
+        lmax=LMAX,
     )
-    assert smoothed_map.shape == input_map.shape
-    shape, wcs = pixell.enmap.fullsky_geometry(car_res * utils.arcmin)
-    map_rep = pixell.reproject.enmap_from_healpix(input_map, shape, wcs)
+    assert smoothed_map.shape == (901, 1800)
+    shape, wcs = pixell.enmap.fullsky_geometry(CAR_RESOL.to_value(u.radian))
+    map_rep = pixell.reproject.enmap_from_healpix(
+        input_map, shape, wcs, lmax=LMAX, rot=None
+    )[0]
     assert_quantity_allclose(actual=smoothed_map, desired=map_rep)
