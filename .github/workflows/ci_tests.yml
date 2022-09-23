@@ -38,7 +38,7 @@ jobs:
             toxenv: py38-test-alldeps-cov
 
           - name: OS X - Python 3.8
-            os: macos-latest
+            os: macos-10.15
             python: 3.8
             toxenv: py38-test
 
