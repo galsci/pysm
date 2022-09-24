@@ -184,9 +184,16 @@ def apply_smoothing_and_coord_transform(
         if input_alm:
             alm = input_map.copy()
         else:
-            alm = hp.map2alm(
-                input_map, lmax=lmax, use_pixel_weights=True if nside > 16 else False
-            )
+            if lmax <= 1.5 * nside:
+                alm = hp.map2alm(
+                    input_map,
+                    lmax=lmax,
+                    use_pixel_weights=True if nside > 16 else False,
+                )
+            else:
+                alm, error, n_iter = hp.map2alm_lsq(
+                    input_map, lmax=lmax, mmax=lmax, tol=1e-6, maxiter=100
+                )
         if fwhm is not None:
             hp.smoothalm(alm, fwhm=fwhm.to_value(u.rad), inplace=True, pol=True)
         if rot is not None:
