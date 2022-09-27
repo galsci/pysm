@@ -35,7 +35,9 @@ def input_map():
 
 def test_smoothing_healpix(input_map):
 
-    smoothed_map = apply_smoothing_and_coord_transform(input_map, fwhm=FWHM * u.radian)
+    smoothed_map = apply_smoothing_and_coord_transform(
+        input_map, lmax=LMAX, fwhm=FWHM * u.radian
+    )
     assert input_map.shape[0] == 3
     assert smoothed_map.shape == input_map.shape
     assert_quantity_allclose(
