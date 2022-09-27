@@ -153,7 +153,7 @@ def apply_smoothing_and_coord_transform(
     output_nside : int
         HEALPix output map Nside, if None, use the same as the input
     lmax : int
-        lmax for the map2alm step, if None, it is set to 2.5 * output_nside
+        lmax for the map2alm step, if None, it is set to 2.5 * nside
         if output_nside is equal or higher than nside.
         It is set to 1.5 * nside if output_nside is lower than nside
     output_car_resol : astropy.Quantity
