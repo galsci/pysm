@@ -183,11 +183,11 @@ def apply_smoothing_and_coord_transform(
 
     if lmax is None:
         if nside == output_nside:
-            lmax = 2.5 * output_nside
+            lmax = int(2.5 * output_nside)
         elif output_nside > nside:
-            lmax = 2.5 * nside
+            lmax = int(2.5 * nside)
         elif output_nside < nside:
-            lmax = 1.5 * nside
+            lmax = int(1.5 * nside)
 
     output_maps = []
 
