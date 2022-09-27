@@ -90,6 +90,8 @@ jobs:
     - name: Test with tox
       run: |
         tox -e ${{ matrix.toxenv }}
+      env:
+        NUMBA_DISABLE_JIT="${{ runner.os == 'Linux' && '0' || '1' }}"
     - name: MPI test
       if: contains(matrix.toxenv, 'alldeps')
       run: |
