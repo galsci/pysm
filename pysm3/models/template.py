@@ -16,6 +16,13 @@ from .. import units as u
 from .. import mpi
 import gc
 
+try:
+    import pixell.enmap
+    import pixell.curvedsky
+    import pixell.sharp
+except ImportError:
+    pixell = None
+
 log = logging.getLogger("pysm3")
 
 
@@ -42,6 +49,9 @@ class Model:
             MPI communicator object (optional, default=None).
         nside: int
             Resolution parameter at which this model is to be calculated.
+        max_nside: int
+            Keeps track of the the maximum Nside this model is available at
+            by default 512 like PySM 2 models
         smoothing_lmax : int
             :math:`\\ell_{max}` for the smoothing step, by default :math:`2*N_{side}`
         """
@@ -112,7 +122,16 @@ class Model:
 
 
 def apply_smoothing_and_coord_transform(
-    input_map, fwhm=None, rot=None, lmax=None, map_dist=None
+    input_map,
+    fwhm=None,
+    rot=None,
+    lmax=None,
+    output_nside=None,
+    output_car_resol=None,
+    return_healpix=True,
+    return_car=False,
+    input_alm=False,
+    map_dist=None,
 ):
     """Apply smoothing and coordinate rotation to an input map
 
@@ -125,7 +144,7 @@ def apply_smoothing_and_coord_transform(
     input_map : ndarray
         Input map, of shape `(3, npix)`
         This is assumed to have no beam at this point, as the
-        simulated small scale tempatle on which the simulations are based
+        simulated small scale template on which the simulations are based
         have no beam.
     fwhm : astropy.units.Quantity
         Full width at half-maximum, defining the
@@ -134,35 +153,103 @@ def apply_smoothing_and_coord_transform(
         Apply a coordinate rotation give a healpy `Rotator`, e.g. if the
         inputs are in Galactic, `hp.Rotator(coord=("G", "C"))` rotates
         to Equatorial
+    output_nside : int
+        HEALPix output map Nside, if None, use the same as the input
+    lmax : int
+        lmax for the map2alm step, if None, it is set to 2.5 * nside
+        if output_nside is equal or higher than nside.
+        It is set to 1.5 * nside if output_nside is lower than nside
+    output_car_resol : astropy.Quantity
+        CAR output map resolution, generally in arcmin
+    return_healpix : bool
+        Whether to return the HEALPix map
+    return_car : bool
+        Whether to return the CAR map
+    input_alm : np.array
+        Instead of starting from a map, `input_map` is a set of Alm
 
     Returns
     -------
-    smoothed_map : np.ndarray
-        Array containing the smoothed sky
+    smoothed_map : np.ndarray or tuple of np.ndarray
+        Array containing the smoothed sky or tuple of HEALPix and CAR maps
     """
 
-    if map_dist is None:
+    if not input_alm:
         nside = hp.get_nside(input_map)
-        alm = hp.map2alm(
-            input_map,
-            lmax=lmax,
-            use_pixel_weights=True if nside > 16 else False,
-        )
+        if output_nside is None:
+            output_nside = nside
+
+    if hasattr(input_map, "unit"):
+        unit = input_map.unit
+    else:
+        unit = 1
+
+    if lmax is None:
+        if nside == output_nside:
+            lmax = int(2.5 * output_nside)
+        elif output_nside > nside:
+            lmax = int(2.5 * nside)
+        elif output_nside < nside:
+            lmax = int(1.5 * nside)
+
+    output_maps = []
+
+    if map_dist is None:
+        if input_alm:
+            alm = input_map.copy()
+        else:
+            if lmax <= 1.5 * nside:
+                log.info("Using map2alm with pixel weights")
+                alm = hp.map2alm(
+                    input_map,
+                    lmax=lmax,
+                    use_pixel_weights=True if nside > 16 else False,
+                )
+            else:
+                alm, error, n_iter = hp.map2alm_lsq(
+                    input_map, lmax=lmax, mmax=lmax, tol=1e-6, maxiter=100
+                )
+                log.info(
+                    "Used map2alm_lsq, converged in %d iterations, residual relative error %.2g",
+                    n_iter,
+                    error,
+                )
+                if n_iter == 100:
+                    log.warning(
+                        "hp.map2alm_lsq did not converge in %d iterations,"
+                        + " residual relative error is %.2g",
+                        n_iter,
+                        error,
+                    )
         if fwhm is not None:
             hp.smoothalm(alm, fwhm=fwhm.to_value(u.rad), inplace=True, pol=True)
         if rot is not None:
             rot.rotate_alm(alm, inplace=True)
-        smoothed_map = hp.alm2map(alm, nside=nside, pixwin=False)
-
+        if return_healpix:
+            if input_alm:
+                assert (
+                    output_nside is not None
+                ), "If inputting Alms, specify output_nside"
+            output_maps.append(hp.alm2map(alm, nside=output_nside, pixwin=False) * unit)
+        if return_car:
+            shape, wcs = pixell.enmap.fullsky_geometry(
+                output_car_resol.to_value(u.radian), dims=(3,)
+            )
+            ainfo = pixell.sharp.alm_info(lmax=lmax)
+            output_maps.append(
+                pixell.curvedsky.alm2map(
+                    alm, pixell.enmap.empty(shape, wcs), ainfo=ainfo
+                )
+                * unit
+            )
     else:
         assert (rot is None) or (
             rot.coordin == rot.coordout
         ), "No rotation supported in distributed smoothing"
-        smoothed_map = mpi.mpi_smoothing(input_map, fwhm, map_dist)
+        output_maps.append(mpi.mpi_smoothing(input_map, fwhm, map_dist))
+        assert not return_car, "No CAR output supported in Libsharp smoothing"
 
-    if hasattr(input_map, "unit"):
-        smoothed_map <<= input_map.unit
-    return smoothed_map
+    return output_maps[0] if len(output_maps) == 1 else tuple(output_maps)
 
 
 def apply_normalization(freqs, weights):
@@ -343,7 +430,7 @@ def read_txt(path, mpi_comm=None, **kwargs):
 
 
 def read_alm(path, has_polarization=True, unit=None, map_dist=None):
-    """Read :math:`a_{\ell m}` from a FITS file
+    """Read :math:`a_{\\ell m}` from a FITS file
 
     Parameters
     ----------
@@ -352,8 +439,8 @@ def read_alm(path, has_polarization=True, unit=None, map_dist=None):
     has_polarization : bool
         read only temperature alm from file or also polarization
     map_dist : pysm.MapDistribution
-        :math:`\ell_{max}` should be the same of the :math:`\ell_{max}` in the file
-        and :math:`m_{max}=\ell_{max}`.
+        :math:`\\ell_{max}` should be the same of the :math:`\\ell_{max}` in the file
+        and :math:`m_{max}=\\ell_{max}`.
     """
 
     filename = utils.RemoteData().get(path)
@@ -377,7 +464,7 @@ def read_alm(path, has_polarization=True, unit=None, map_dist=None):
 
 
 def read_cl(path, has_polarization=True, unit=None, map_dist=None):
-    """Read :math:`a_{\ell m}` from a FITS file
+    """Read :math:`a_{\\ell m}` from a FITS file
 
     Parameters
     ----------
@@ -386,8 +473,8 @@ def read_cl(path, has_polarization=True, unit=None, map_dist=None):
     has_polarization : bool
         read only temperature alm from file or also polarization
     map_dist : pysm.MapDistribution
-        :math:`\ell_{max}` should be the same of the :math:`\ell_{max}` in the file
-        and :math:`m_{max}=\ell_{max}`.
+        :math:`\\ell_{max}` should be the same of the :math:`\\ell_{max}` in the file
+        and :math:`m_{max}=\\ell_{max}`.
     """
 
     filename = utils.RemoteData().get(path)

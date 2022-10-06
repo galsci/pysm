@@ -73,7 +73,7 @@ def test_gnilc_857(model_tag):
         )
     )
     scaling = (freq / freq_ref) ** (beta - 2)
-    scaling *= blackbody_ratio(freq, freq_ref, Td.to_value(u.K))
+    scaling *= blackbody_ratio(freq.value, freq_ref.value, Td.to_value(u.K))
 
     assert_quantity_allclose(input_template * scaling, output, rtol=1e-6)
 

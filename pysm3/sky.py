@@ -60,6 +60,9 @@ PRESET_MODELS = toml.loads(pkg_resources.read_text(data, "presets.cfg"))
 class Sky(Model):
     """Sky is the main interface to PySM
 
+    Please read the 'Best practices for model execution' section in the
+    documentation homepage before running PySM 3 models.
+
     It accepts the configuration of the desired components in 3 different
     ways: `preset_strings`, `component_config` or `component_objects`,
     see details below.
@@ -95,6 +98,9 @@ class Sky(Model):
         nside : int
             Requested output NSIDE, inputs will be degraded
             using :func:`healpy.ud_grade`
+        max_nside: int
+            Keeps track of the the maximum Nside this model is available at
+            by default 512 like PySM 2 models
         preset_strings : list of str
             List of strings identifiers for the models included in PySM 3,
             these are exactly the same models included in PySM 2, e.g.
@@ -146,7 +152,7 @@ class Sky(Model):
         self.components.append(component)
 
     def get_emission(self, freq, weights=None):
-        """ This function returns the emission at a frequency, set of
+        """This function returns the emission at a frequency, set of
         frequencies, or over a bandpass.
         """
         output = self.components[0].get_emission(freq, weights=weights)

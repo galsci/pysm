@@ -7,7 +7,7 @@ from .template import Model
 
 
 class SpDust(Model):
-    """ Implementation of the SpDust2 code of (Ali-Haimoud et al 2012)
+    """Implementation of the SpDust2 code of (Ali-Haimoud et al 2012)
     evaluated for a Cold Neutral Medium.
     See:
     * https://arxiv.org/abs/1003.4732
@@ -26,7 +26,7 @@ class SpDust(Model):
         unit_I=None,
         map_dist=None,
     ):
-        """ This function initializes the spinning dust model
+        """This function initializes the spinning dust model
 
         Parameters
         ----------
@@ -149,7 +149,7 @@ class SpDustPol(SpDust):
                 self.freq_ref_I.value,
                 self.freq_peak.value,
                 self.emissivity,
-                self.pol_angle,
+                self.pol_angle.value,
                 self.pol_frac,
             )
             << u.uK_RJ
