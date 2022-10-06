@@ -216,7 +216,8 @@ def apply_smoothing_and_coord_transform(
                 )
                 if n_iter == 100:
                     log.warning(
-                        "hp.map2alm_lsq did not converge in %d iterations, residual relative error is %.2g",
+                        "hp.map2alm_lsq did not converge in %d iterations,"
+                        + " residual relative error is %.2g",
                         n_iter,
                         error,
                     )
