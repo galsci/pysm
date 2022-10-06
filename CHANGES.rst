@@ -1,8 +1,8 @@
 3.4.0 (unreleased)
 ==================
 
+- `apply_smoothing_and_coord_transform` now supports a different output resolution and supports doing both HEALPix and CAR in the same execution `PR 125 <https://github.com/galsci/pysm/pull/125>`_
 - Model has `max_nside` attribute which specifies its max resolution `PR 124 <https://github.com/galsci/pysm/pull/124>`_
-- Running unit tests (except MPI) on MAC OS X in Github actions `PR 122 <https://github.com/galsci/pysm/pull/122>`_
 
 3.4.0b3 (2022-03-28)
 ====================
