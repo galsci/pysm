@@ -429,7 +429,7 @@ def read_txt(path, mpi_comm=None, **kwargs):
 
 
 def read_alm(path, has_polarization=True, unit=None, map_dist=None):
-    """Read :math:`a_{\ell m}` from a FITS file
+    """Read :math:`a_{\\ell m}` from a FITS file
 
     Parameters
     ----------
@@ -438,8 +438,8 @@ def read_alm(path, has_polarization=True, unit=None, map_dist=None):
     has_polarization : bool
         read only temperature alm from file or also polarization
     map_dist : pysm.MapDistribution
-        :math:`\ell_{max}` should be the same of the :math:`\ell_{max}` in the file
-        and :math:`m_{max}=\ell_{max}`.
+        :math:`\\ell_{max}` should be the same of the :math:`\\ell_{max}` in the file
+        and :math:`m_{max}=\\ell_{max}`.
     """
 
     filename = utils.RemoteData().get(path)
@@ -463,7 +463,7 @@ def read_alm(path, has_polarization=True, unit=None, map_dist=None):
 
 
 def read_cl(path, has_polarization=True, unit=None, map_dist=None):
-    """Read :math:`a_{\ell m}` from a FITS file
+    """Read :math:`a_{\\ell m}` from a FITS file
 
     Parameters
     ----------
@@ -472,8 +472,8 @@ def read_cl(path, has_polarization=True, unit=None, map_dist=None):
     has_polarization : bool
         read only temperature alm from file or also polarization
     map_dist : pysm.MapDistribution
-        :math:`\ell_{max}` should be the same of the :math:`\ell_{max}` in the file
-        and :math:`m_{max}=\ell_{max}`.
+        :math:`\\ell_{max}` should be the same of the :math:`\\ell_{max}` in the file
+        and :math:`m_{max}=\\ell_{max}`.
     """
 
     filename = utils.RemoteData().get(path)
