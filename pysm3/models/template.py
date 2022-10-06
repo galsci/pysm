@@ -49,6 +49,9 @@ class Model:
             MPI communicator object (optional, default=None).
         nside: int
             Resolution parameter at which this model is to be calculated.
+        max_nside: int
+            Keeps track of the the maximum Nside this model is available at
+            by default 512 like PySM 2 models
         smoothing_lmax : int
             :math:`\\ell_{max}` for the smoothing step, by default :math:`2*N_{side}`
         """

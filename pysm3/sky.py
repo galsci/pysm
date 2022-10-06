@@ -95,6 +95,9 @@ class Sky(Model):
         nside : int
             Requested output NSIDE, inputs will be degraded
             using :func:`healpy.ud_grade`
+        max_nside: int
+            Keeps track of the the maximum Nside this model is available at
+            by default 512 like PySM 2 models
         preset_strings : list of str
             List of strings identifiers for the models included in PySM 3,
             these are exactly the same models included in PySM 2, e.g.
