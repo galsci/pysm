@@ -60,6 +60,9 @@ PRESET_MODELS = toml.loads(pkg_resources.read_text(data, "presets.cfg"))
 class Sky(Model):
     """Sky is the main interface to PySM
 
+    Please read the 'Best practices for model execution' section in the
+    documentation homepage before running PySM 3 models.
+
     It accepts the configuration of the desired components in 3 different
     ways: `preset_strings`, `component_config` or `component_objects`,
     see details below.
