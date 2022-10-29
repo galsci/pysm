@@ -44,6 +44,14 @@ class WebSkyCIB(InterpolatingComponent):
         verbose=False
     ):
         self.local_folder = local_folder
+        self.websky_freqs = [
+            "18.7", "21.6", "24.5", "27.3", "30.0", "35.9", "41.7", "44.0",
+            "47.4", "63.9", "67.8", "70.0", "73.7", "79.6", "90.2", "100",
+            "111", "129", "143", "153", "164", "189", "210", "217", "232",
+            "256", "275", "294", "306", "314", "340", "353", "375", "409",
+            "467", "525", "545", "584", "643", "729", "817", "857", "906",
+            "994", "1080"
+        ]
         super().__init__(
             path=websky_version,
             input_units=input_units,
@@ -63,18 +71,11 @@ class WebSkyCIB(InterpolatingComponent):
         """
 
         websky_version = path
-        str_freqs = [
-            "18.7", "21.6", "24.5", "27.3", "30.0", "35.9", "41.7", "44.0",
-            "47.4", "63.9", "67.8", "70.0", "73.7", "79.6", "90.2", "100",
-            "111", "129", "143", "153", "164", "189", "210", "217", "232",
-            "256", "275", "294", "306", "314", "340", "353", "375", "409",
-            "467", "525", "545", "584", "643", "729", "817", "857", "906", 
-            "994", "1080"
-        ]
 
         filenames = {
-            float(str_freq): f"websky/{websky_version}/cib_{str_freq}.fits"
-            for str_freq in str_freqs
+            float(str_freq):
+                f"websky/{websky_version}/cib/cib_{str_freq}.fits"
+            for str_freq in self.websky_freqs
         }
 
         if self.local_folder is not None:
@@ -86,6 +87,34 @@ class WebSkyCIB(InterpolatingComponent):
     def read_map_by_frequency(self, freq):
         filename = self.remote_data.get(self.maps[freq])
         return self.read_map_file(freq, filename)
+
+
+# radio galaxies are just like CIB, just interpolating
+class WebSkyRadioGalaxies(WebSkyCIB):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_filenames(self, path):
+        """Get filenames for a websky version
+        For a standard interpolating component, we list files in folder,
+        here we need to know the names in advance so that we can only download 
+        the required maps.
+        """
+
+        websky_version = path
+
+        filenames = {
+            float(str_freq):
+                f"websky/{websky_version}/radio/map_healpix_4096_f{str_freq}.fits"
+            for str_freq in self.websky_freqs
+        }
+
+        if self.local_folder is not None:
+            for freq in filenames:
+                filenames[freq] = os.path.join(
+                    self.local_folder, filenames[freq])
+        return filenames
 
 
 class WebSkySZ(Model):
@@ -154,4 +183,3 @@ def get_sz_emission_numba(freqs, weights, m, is_thermal):
             signal = m
         pysm.utils.trapz_step_inplace(freqs, weights, i, signal, output[0])
     return output
-
