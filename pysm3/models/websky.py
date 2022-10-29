@@ -8,6 +8,7 @@ import pysm3 as pysm
 import pysm3.units as u
 from .interpolating import InterpolatingComponent
 from .template import Model
+from .cmb import CMBMap
 from .. import utils
 
 
@@ -183,3 +184,33 @@ def get_sz_emission_numba(freqs, weights, m, is_thermal):
             signal = m
         pysm.utils.trapz_step_inplace(freqs, weights, i, signal, output[0])
     return output
+
+
+class WebSkyCMB(CMBMap):
+    def __init__(
+        self,
+        websky_version=0.4,
+        nside=4096,
+        seed=1,
+        lensed=True,
+        include_solar_dipole=False,
+        map_dist=None,
+        verbose=False
+    ):
+        template_nside = 512 if nside <= 512 else 4096
+        lens = "" if lensed else "un"
+        soldip = "solardipole_" if include_solar_dipole else ""
+        filenames = [
+            utils.RemoteData().get(
+                f"websky/{websky_version}/cmb/map_{pol}_{lens}" +
+                f"lensed_alm_seed{seed}_{soldip}nside{template_nside}.fits"
+            )
+            for pol in "IQU"
+        ]
+        super().__init__(
+            map_I=filenames[0],
+            map_Q=filenames[1],
+            map_U=filenames[2],
+            nside=nside,
+            map_dist=map_dist,
+        )
