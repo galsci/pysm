@@ -4,9 +4,12 @@ from pathlib import Path
 from numba import njit
 import numpy as np
 
+import pysm3 as pysm
 import pysm3.units as u
 from .interpolating import InterpolatingComponent
+from .template import Model
 from .. import utils
+
 
 @njit
 def y2uK_CMB(nu):
@@ -32,7 +35,7 @@ class WebSkyCIB(InterpolatingComponent):
     def __init__(
         self,
         local_folder=None,
-        websky_version="0.3",
+        websky_version="0.4",
         input_units="MJy / sr",
         nside=4096,
         max_nside=8192,
@@ -55,27 +58,100 @@ class WebSkyCIB(InterpolatingComponent):
     def get_filenames(self, path):
         """Get filenames for a websky version
         For a standard interpolating component, we list files in folder,
-        here we need to know the names in advance so that we can only download the required maps
+        here we need to know the names in advance so that we can only download 
+        the required maps.
         """
 
         websky_version = path
-        if websky_version in "0.3":
+        str_freqs = [
+            "18.7", "21.6", "24.5", "27.3", "30.0", "35.9", "41.7", "44.0",
+            "47.4", "63.9", "67.8", "70.0", "73.7", "79.6", "90.2", "100",
+            "111", "129", "143", "153", "164", "189", "210", "217", "232",
+            "256", "275", "294", "306", "314", "340", "353", "375", "409",
+            "467", "525", "545", "584", "643", "729", "817", "857", "906", 
+            "994", "1080"
+        ]
 
-            available_frequencies = [27, 39, 93, 100, 145, 217, 225, 280, 353, 545, 857]
+        filenames = {
+            float(str_freq): f"websky/{websky_version}/cib_{str_freq}.fits"
+            for str_freq in str_freqs
+        }
 
-            filenames = {
-                freq: "websky/0.3/cib_{:04d}.fits".format(freq)
-                                    # freq, nside="512/" if self.nside <= 512 else "")
-                for freq in available_frequencies
-            }
         if self.local_folder is not None:
             for freq in filenames:
-                filenames[freq] = os.path.join(self.local_folder, filenames[freq])
-
+                filenames[freq] = os.path.join(
+                    self.local_folder, filenames[freq])
         return filenames
 
     def read_map_by_frequency(self, freq):
         filename = self.remote_data.get(self.maps[freq])
         return self.read_map_file(freq, filename)
 
+
+class WebSkySZ(Model):
+    def __init__(
+        self,
+        version="0.4",
+        sz_type="kinetic",
+        nside=4096,
+        map_dist=None,
+        verbose=False
+    ):
+
+        super().__init__(nside=nside, map_dist=map_dist)
+        self.version = str(version)
+        self.sz_type = sz_type
+        self.verbose = verbose
+        self.remote_data = utils.RemoteData()
+        filename = self.remote_data.get(self.get_filename())
+        self.m = self.read_map(filename, field=0, unit=u.uK_CMB)
+
+    def get_filename(self):
+        """Get SZ filenames for a websky version"""
+
+        path = Path("websky") / self.version
+
+        if self.nside <= 512:
+            path /= "512"
+
+        if self.sz_type == "kinetic":
+            path = path / "ksz.fits"
+        elif self.sz_type == "thermal":
+            path = path / "tsz_8192_hp.fits"
+
+        return str(path)
+
+    @u.quantity_input
+    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
+
+        freqs = pysm.check_freq_input(freqs)
+        weights = pysm.normalize_weights(freqs, weights)
+
+        # input map is in uK_CMB, we multiply the weights which are
+        # in uK_RJ by the conversion factor of uK_CMB->uK_RJ
+        # this is the equivalent of
+        weights = (weights * u.uK_CMB).to_value(
+            u.uK_RJ, equivalencies=u.cmb_equivalencies(freqs * u.GHz)
+        )
+
+        is_thermal = self.sz_type == "thermal"
+        output = (
+            get_sz_emission_numba(
+                freqs, weights, self.m.value, is_thermal) << u.uK_RJ
+        )
+
+        # the output of out is always 2D, (IQU, npix)
+        return output
+
+
+@njit(parallel=True)
+def get_sz_emission_numba(freqs, weights, m, is_thermal):
+    output = np.zeros((3, len(m)), dtype=m.dtype)
+    for i in range(len(freqs)):
+        if is_thermal:
+            signal = m * m.dtype.type(y2uK_CMB(freqs[i]))
+        else:
+            signal = m
+        pysm.utils.trapz_step_inplace(freqs, weights, i, signal, output[0])
+    return output
 
