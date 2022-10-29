@@ -66,7 +66,7 @@ class WebSkyCIB(InterpolatingComponent):
     def get_filenames(self, path):
         """Get filenames for a websky version
         For a standard interpolating component, we list files in folder,
-        here we need to know the names in advance so that we can only download 
+        here we need to know the names in advance so that we can only download
         the required maps.
         """
 
@@ -98,7 +98,7 @@ class WebSkyRadioGalaxies(WebSkyCIB):
     def get_filenames(self, path):
         """Get filenames for a websky version
         For a standard interpolating component, we list files in folder,
-        here we need to know the names in advance so that we can only download 
+        here we need to know the names in advance so that we can only download
         the required maps.
         """
 
