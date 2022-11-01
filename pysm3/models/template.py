@@ -191,6 +191,7 @@ def apply_smoothing_and_coord_transform(
             lmax = int(2.5 * nside)
         elif output_nside < nside:
             lmax = int(1.5 * nside)
+        log.info("Setting lmax to %d", lmax)
 
     output_maps = []
 
