@@ -1,5 +1,4 @@
 import numpy as np
-from scipy import stats
 import healpy as hp
 import pytest
 
