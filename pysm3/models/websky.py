@@ -35,12 +35,12 @@ class WebSkyCIB(InterpolatingComponent):
 
     def __init__(
         self,
-        local_folder=None,
         websky_version="0.4",
         input_units="MJy / sr",
         nside=4096,
         max_nside=8192,
         interpolation_kind="linear",
+        local_folder=None,
         map_dist=None,
         verbose=False
     ):
