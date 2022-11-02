@@ -174,9 +174,6 @@ class WebSkySZ(Model):
 
         path = Path("websky") / self.version
 
-        if self.nside <= 512:
-            path /= "512"
-
         if self.sz_type == "kinetic":
             path = path / "ksz.fits"
         elif self.sz_type == "thermal":
