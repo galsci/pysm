@@ -9,6 +9,10 @@ from .. import utils
 from ..utils import trapz_step_inplace
 import warnings
 
+import logging
+
+log = logging.getLogger("pysm3")
+
 
 class InterpolatingComponent(Model):
     def __init__(
@@ -116,8 +120,7 @@ class InterpolatingComponent(Model):
 
         freq_range = self.freqs[first_freq_i:last_freq_i]
 
-        if self.verbose:
-            print("Frequencies considered:", freq_range)
+        log.info("Frequencies considered: %s", str(freq_range))
 
         for freq in freq_range:
             if freq not in self.cached_maps:
@@ -125,13 +128,12 @@ class InterpolatingComponent(Model):
                 if m.shape[0] != 3:
                     m = m.reshape((1, -1))
                 self.cached_maps[freq] = m.astype(np.float32)
-                if self.verbose:
-                    for i_pol, pol in enumerate("IQU" if m.shape[0] == 3 else "I"):
-                        print(
-                            "Mean emission at {} GHz in {}: {:.4g} uK_RJ".format(
-                                freq, pol, self.cached_maps[freq][i_pol].mean()
-                            )
+                for i_pol, pol in enumerate("IQU" if m.shape[0] == 3 else "I"):
+                    log.info(
+                        "Mean emission at {} GHz in {}: {:.4g} uK_RJ".format(
+                            freq, pol, self.cached_maps[freq][i_pol].mean()
                         )
+                    )
 
         out = compute_interpolated_emission_numba(
             nu, weights, freq_range, self.cached_maps
@@ -150,8 +152,7 @@ class InterpolatingComponent(Model):
         return self.read_map_file(freq, filename)
 
     def read_map_file(self, freq, filename):
-        if self.verbose:
-            print("Reading map {}".format(filename))
+        log.info("Reading map %s", filename)
 
         try:
             m = self.read_map(filename, field=(0, 1, 2), unit=self.input_units,)
