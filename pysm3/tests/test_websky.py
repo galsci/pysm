@@ -41,41 +41,26 @@ def test_cib(tmp_path):
     )
 
 
-def test_ksz(tmp_path, monkeypatch):
+@pytest.mark.parametrize("sz_type", ["thermal", "kinetic"])
+def test_sz(tmp_path, monkeypatch, sz_type):
 
-    monkeypatch.setattr(utils, "PREDEFINED_DATA_FOLDERS", {"C": [str(tmp_path)]})
+    monkeypatch.setattr(utils.data, "PREDEFINED_DATA_FOLDERS", [str(tmp_path)])
     nside = 4
     shape = hp.nside2npix(nside)
 
-    path = tmp_path / "websky" / "0.3" / "512"
+    path = tmp_path / "websky" / "0.4"
     path.mkdir(parents=True)
-    hp.write_map(path / "ksz.fits", np.ones(shape, dtype=np.float32))
+    filename = "tsz_8192_hp.fits" if sz_type == "thermal" else "ksz.fits"
+    test_map = np.ones(shape, dtype=np.float32)
+    if sz_type == "thermal":
+        test_map *= 1e-6
+    hp.write_map(path / filename, test_map)
 
-    ksz = WebSkySZ("0.3", sz_type="kinetic", nside=nside)
-
-    ksz_map = ksz.get_emission(100 * u.GHz)
-    np.testing.assert_allclose(
-        np.ones(ksz_map[0].shape) * 0.7772276 * u.uK_RJ, ksz_map[0], rtol=1e-4
-    )
-    np.testing.assert_allclose(np.zeros((2, len(ksz_map[0]))) * u.uK_RJ, ksz_map[1:])
-
-
-def test_tsz(tmp_path, monkeypatch):
-
-    monkeypatch.setattr(utils, "PREDEFINED_DATA_FOLDERS", {"C": [str(tmp_path)]})
-    nside = 4
-    shape = hp.nside2npix(nside)
-
-    path = tmp_path / "websky" / "0.3" / "512"
-    path.mkdir(parents=True)
-    hp.write_map(path / "tsz.fits", np.ones(shape, dtype=np.float32) * 1e-6)
-
-    tsz = WebSkySZ("0.3", sz_type="thermal", nside=nside)
+    tsz = WebSkySZ("0.4", sz_type=sz_type, nside=nside)
 
     tsz_map = tsz.get_emission(100 * u.GHz)
-    np.testing.assert_allclose(
-        np.ones(len(tsz_map[0])) * -3.193671 * u.uK_RJ, tsz_map[0], rtol=1e-4
-    )
+    value = -3.193671 * u.uK_RJ if sz_type == "thermal" else 0.7772276 * u.uK_RJ
+    np.testing.assert_allclose(np.ones(len(tsz_map[0])) * value, tsz_map[0], rtol=1e-4)
     np.testing.assert_allclose(np.zeros((2, len(tsz_map[0]))) * u.uK_RJ, tsz_map[1:])
 
 
