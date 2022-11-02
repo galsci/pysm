@@ -66,3 +66,4 @@ pip-wheel-metadata/
 
 *.log
 *.out
+obsolete
