@@ -155,9 +155,17 @@ class InterpolatingComponent(Model):
         log.info("Reading map %s", filename)
 
         try:
-            m = self.read_map(filename, field=(0, 1, 2), unit=self.input_units,)
+            m = self.read_map(
+                filename,
+                field=(0, 1, 2),
+                unit=self.input_units,
+            )
         except IndexError:
-            m = self.read_map(filename, field=0, unit=self.input_units,)
+            m = self.read_map(
+                filename,
+                field=0,
+                unit=self.input_units,
+            )
         return m.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz)).value
 
 
@@ -166,16 +174,18 @@ def compute_interpolated_emission_numba(freqs, weights, freq_range, all_maps):
     output = np.zeros(
         all_maps[freq_range[0]].shape, dtype=all_maps[freq_range[0]].dtype
     )
+    if len(freqs) > 1:
+        temp = np.zeros_like(output)
+    else:
+        temp = output
     index_range = np.arange(len(freq_range))
     for i in range(len(freqs)):
         interpolation_weight = np.interp(freqs[i], freq_range, index_range)
         int_interpolation_weight = int(interpolation_weight)
-        m = (interpolation_weight - int_interpolation_weight) * all_maps[
-            freq_range[int_interpolation_weight]
-        ]
-        m += (int_interpolation_weight + 1 - interpolation_weight) * all_maps[
-            freq_range[int_interpolation_weight + 1]
-        ]
+        relative_weight = interpolation_weight - int_interpolation_weight
+        temp[:] = (1 - relative_weight) * all_maps[freq_range[int_interpolation_weight]]
+        temp += relative_weight * all_maps[freq_range[int_interpolation_weight + 1]]
 
-        trapz_step_inplace(freqs, weights, i, m, output)
+        if len(freqs) > 1:
+            trapz_step_inplace(freqs, weights, i, temp, output)
     return output
