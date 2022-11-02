@@ -42,7 +42,6 @@ class WebSkyCIB(InterpolatingComponent):
         interpolation_kind="linear",
         local_folder=None,
         map_dist=None,
-        verbose=False
     ):
         self.local_folder = local_folder
         self.websky_freqs_float = [
@@ -100,7 +99,6 @@ class WebSkyCIB(InterpolatingComponent):
             max_nside=max_nside,
             interpolation_kind=interpolation_kind,
             map_dist=map_dist,
-            verbose=verbose,
         )
         self.remote_data = utils.RemoteData()
 
@@ -114,15 +112,13 @@ class WebSkyCIB(InterpolatingComponent):
         websky_version = path
 
         filenames = {
-            float(str_freq):
-                f"websky/{websky_version}/cib/cib_{str_freq}.fits"
+            float(str_freq): f"websky/{websky_version}/cib/cib_{str_freq}.fits"
             for str_freq in self.websky_freqs
         }
 
         if self.local_folder is not None:
             for freq in filenames:
-                filenames[freq] = os.path.join(
-                    self.local_folder, filenames[freq])
+                filenames[freq] = os.path.join(self.local_folder, filenames[freq])
         return filenames
 
     def read_map_by_frequency(self, freq):
@@ -132,7 +128,6 @@ class WebSkyCIB(InterpolatingComponent):
 
 # radio galaxies are just like CIB, just interpolating
 class WebSkyRadioGalaxies(WebSkyCIB):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -146,15 +141,15 @@ class WebSkyRadioGalaxies(WebSkyCIB):
         websky_version = path
 
         filenames = {
-            float(str_freq):
-                f"websky/{websky_version}/radio/map_healpix_4096_f{str_freq}.fits"
+            float(
+                str_freq
+            ): f"websky/{websky_version}/radio/map_healpix_4096_f{str_freq}.fits"
             for str_freq in self.websky_freqs
         }
 
         if self.local_folder is not None:
             for freq in filenames:
-                filenames[freq] = os.path.join(
-                    self.local_folder, filenames[freq])
+                filenames[freq] = os.path.join(self.local_folder, filenames[freq])
         return filenames
 
 
@@ -165,13 +160,11 @@ class WebSkySZ(Model):
         sz_type="kinetic",
         nside=4096,
         map_dist=None,
-        verbose=False
     ):
 
         super().__init__(nside=nside, map_dist=map_dist)
         self.version = str(version)
         self.sz_type = sz_type
-        self.verbose = verbose
         self.remote_data = utils.RemoteData()
         filename = self.remote_data.get(self.get_filename())
         self.m = self.read_map(filename, field=0, unit=u.uK_CMB)
@@ -206,8 +199,7 @@ class WebSkySZ(Model):
 
         is_thermal = self.sz_type == "thermal"
         output = (
-            get_sz_emission_numba(
-                freqs, weights, self.m.value, is_thermal) << u.uK_RJ
+            get_sz_emission_numba(freqs, weights, self.m.value, is_thermal) << u.uK_RJ
         )
 
         # the output of out is always 2D, (IQU, npix)
@@ -235,15 +227,14 @@ class WebSkyCMB(CMBMap):
         lensed=True,
         include_solar_dipole=False,
         map_dist=None,
-        verbose=False
     ):
         template_nside = 512 if nside <= 512 else 4096
         lens = "" if lensed else "un"
         soldip = "solardipole_" if include_solar_dipole else ""
         filenames = [
             utils.RemoteData().get(
-                f"websky/{websky_version}/cmb/map_{pol}_{lens}" +
-                f"lensed_alm_seed{seed}_{soldip}nside{template_nside}.fits"
+                f"websky/{websky_version}/cmb/map_{pol}_{lens}"
+                + f"lensed_alm_seed{seed}_{soldip}nside{template_nside}.fits"
             )
             for pol in "IQU"
         ]
