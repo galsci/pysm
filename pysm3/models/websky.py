@@ -13,6 +13,23 @@ from .. import utils
 
 
 @njit
+def SPT_CIB_map_scaling(nu):
+    """CIB maps correction based on SPT data
+
+    Parameters
+    ----------
+    nu : float or np.array
+        frequency in GHz
+
+    Returns
+    -------
+    correction : float or np.array
+        correction factor to be applied to the map
+    """
+    return np.sqrt(1 + (1.84 - 1) / (1 + np.exp((nu - 227) / 75)))
+
+
+@njit
 def y2uK_CMB(nu):
     """Compton-y distortion at a given frequency
     Parmeters:
