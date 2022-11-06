@@ -202,13 +202,14 @@ class WebSkyRadioGalaxies(WebSkyCIB):
 class WebSkySZ(Model):
     def __init__(
         self,
+        nside,
         version="0.4",
         sz_type="kinetic",
-        nside=4096,
+        max_nside=4096,
         map_dist=None,
     ):
 
-        super().__init__(nside=nside, map_dist=map_dist)
+        super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         self.version = str(version)
         self.sz_type = sz_type
         self.remote_data = utils.RemoteData()
@@ -264,8 +265,9 @@ def get_sz_emission_numba(freqs, weights, m, is_thermal):
 class WebSkyCMB(CMBMap):
     def __init__(
         self,
+        nside,
+        max_nside=4096,
         websky_version=0.4,
-        nside=4096,
         seed=1,
         lensed=True,
         include_solar_dipole=False,
@@ -286,5 +288,6 @@ class WebSkyCMB(CMBMap):
             map_Q=filenames[1],
             map_U=filenames[2],
             nside=nside,
+            max_nside=max_nside,
             map_dist=map_dist,
         )
