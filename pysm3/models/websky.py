@@ -52,10 +52,10 @@ class WebSkyCIB(InterpolatingComponent):
 
     def __init__(
         self,
+        nside,
         websky_version="0.4",
         input_units="MJy / sr",
-        nside=4096,
-        max_nside=8192,
+        max_nside=4096,
         interpolation_kind="linear",
         apply_SPT_correction=True,
         local_folder=None,
@@ -65,13 +65,25 @@ class WebSkyCIB(InterpolatingComponent):
 
         Parameters
         ---------
+        nside : nside
+            target nside of the output maps
         websky_version : str
             currently only 0.4 is supported
         input_units : str
             input units string, e.g. uK_CMB, K_RJ
-        nside : nside
-            target nside of the output maps
-
+        max_nside : int
+            maximum nside at which the input maps are available at
+            `nside` can be higher than this, but then PySM will use
+            `ud_grade` to create maps at higher resolution.
+        interpolation_kind : str
+            See the docstring of :py:class:`~pysm3.InterpolatingComponent`
+        apply_SPT_correction : bool
+            Apply the correction computed by comparison with the South
+            Pole Telescope maps.
+        local_folder : str
+            Override the input maps folder
+        map_dist : :py:class:`~pysm3.MapDistribution`
+            Required for partial sky or MPI, see the PySM docs
         """
         self.local_folder = local_folder
         self.websky_freqs_float = [
@@ -122,6 +134,7 @@ class WebSkyCIB(InterpolatingComponent):
             1080,
         ]
         self.websky_freqs = ["{:06.1f}".format(f) for f in self.websky_freqs_float]
+        self.apply_SPT_correction = apply_SPT_correction
         super().__init__(
             path=websky_version,
             input_units=input_units,
@@ -153,7 +166,10 @@ class WebSkyCIB(InterpolatingComponent):
 
     def read_map_by_frequency(self, freq):
         filename = self.remote_data.get(self.maps[freq])
-        return self.read_map_file(freq, filename)
+        m = self.read_map_file(freq, filename)
+        if self.apply_SPT_correction:
+            m *= SPT_CIB_map_scaling(freq)
+        return m
 
 
 # radio galaxies are just like CIB, just interpolating
