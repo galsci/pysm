@@ -57,9 +57,22 @@ class WebSkyCIB(InterpolatingComponent):
         nside=4096,
         max_nside=8192,
         interpolation_kind="linear",
+        apply_SPT_correction=True,
         local_folder=None,
         map_dist=None,
     ):
+        """Load and interpolate WebSky CIB maps
+
+        Parameters
+        ---------
+        websky_version : str
+            currently only 0.4 is supported
+        input_units : str
+            input units string, e.g. uK_CMB, K_RJ
+        nside : nside
+            target nside of the output maps
+
+        """
         self.local_folder = local_folder
         self.websky_freqs_float = [
             18.7,
