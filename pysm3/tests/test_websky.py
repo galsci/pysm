@@ -8,7 +8,12 @@ except ImportError:
     import pysm.units as u
 
 from .. import utils
-from .. import SPT_CIB_map_scaling, WebSkyCIB, WebSkySZ  # , WebSkyCMBTensor
+from .. import (
+    SPT_CIB_map_scaling,
+    WebSkyCIB,
+    WebSkySZ,
+    WebSkyRadioGalaxies,
+)  # , WebSkyCMBTensor
 
 
 def test_SPT_CIB_map_scaling():
@@ -27,6 +32,35 @@ def test_SPT_CIB_map_scaling():
     1.0002 1.0001 1.0000 1.0000 1.0000"""
     expected = np.array(list(map(float, expected_scaling.split())))
     np.testing.assert_allclose(SPT_CIB_map_scaling(freq), expected, rtol=1e-4)
+
+
+def test_radiogalaxies(tmp_path):
+
+    nside = 4
+    shape = hp.nside2npix(nside)
+
+    path = tmp_path / "websky" / "0.4" / "radio"
+    path.mkdir(parents=True)
+    hp.write_map(path / "radio_0090.2.fits", np.zeros(shape, dtype=np.float32))
+    hp.write_map(path / "radio_0100.0.fits", np.ones(shape, dtype=np.float32))
+
+    interp = WebSkyRadioGalaxies(
+        nside,
+        "0.4",
+        "uK_RJ",
+        interpolation_kind="linear",
+        local_folder=tmp_path,
+    )
+
+    interpolated_map = interp.get_emission(97 * u.GHz)
+    np.testing.assert_allclose(
+        np.interp(97, [90.2, 100], [0, 1]) * np.ones(shape) * u.uK_RJ,
+        interpolated_map[0],
+    )
+    np.testing.assert_allclose(
+        0 * u.uK_RJ,
+        interpolated_map[1:],
+    )
 
 
 def test_cib(tmp_path):
@@ -90,7 +124,7 @@ def test_sz(tmp_path, monkeypatch, sz_type):
         test_map *= 1e-6
     hp.write_map(path / filename, test_map)
 
-    tsz = WebSkySZ("0.4", sz_type=sz_type, nside=nside)
+    tsz = WebSkySZ(nside, "0.4", sz_type=sz_type)
 
     tsz_map = tsz.get_emission(100 * u.GHz)
     value = -3.193671 * u.uK_RJ if sz_type == "thermal" else 0.7772276 * u.uK_RJ

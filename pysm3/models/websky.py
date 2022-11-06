@@ -174,8 +174,27 @@ class WebSkyCIB(InterpolatingComponent):
 
 # radio galaxies are just like CIB, just interpolating
 class WebSkyRadioGalaxies(WebSkyCIB):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        nside,
+        websky_version="0.4",
+        input_units="MJy / sr",
+        max_nside=4096,
+        interpolation_kind="linear",
+        apply_SPT_correction=False,
+        local_folder=None,
+        map_dist=None,
+    ):
+        super().__init__(
+            nside=nside,
+            websky_version=websky_version,
+            input_units=input_units,
+            max_nside=max_nside,
+            interpolation_kind=interpolation_kind,
+            apply_SPT_correction=apply_SPT_correction,
+            local_folder=local_folder,
+            map_dist=map_dist,
+        )
 
     def get_filenames(self, path):
         """Get filenames for a websky version
@@ -187,9 +206,7 @@ class WebSkyRadioGalaxies(WebSkyCIB):
         websky_version = path
 
         filenames = {
-            float(
-                str_freq
-            ): f"websky/{websky_version}/radio/map_healpix_4096_f{str_freq}.fits"
+            float(str_freq): f"websky/{websky_version}/radio/radio_{str_freq}.fits"
             for str_freq in self.websky_freqs
         }
 
