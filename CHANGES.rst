@@ -1,6 +1,7 @@
 3.4.0 (unreleased)
 ==================
 
+- Imported WebSky extralactic components from `so_pysm_models`, now version 0.4, it also includes SPT based correction for CIB `PR 129 <https://github.com/galsci/pysm/pull/129>`_
 - `apply_smoothing_and_coord_transform` now supports a different output resolution and supports doing both HEALPix and CAR in the same execution, also added best practices for dealing with resolution in the docs `PR 125 <https://github.com/galsci/pysm/pull/125>`_
 - Model has `max_nside` attribute which specifies its max resolution `PR 124 <https://github.com/galsci/pysm/pull/124>`_
 
