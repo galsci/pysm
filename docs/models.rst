@@ -94,7 +94,13 @@ Free-free
 CMB
 ===
 
-- **c1**: A lensed CMB realisation is computed using Taylens, a code to compute a lensed CMB realisation using nearest-neighbour Taylor interpolation (`taylens <https://github.com/amaurea/taylens>`_; Naess, S. K. and Louis, T. JCAP 09 001, 2013, astro-ph/1307.0719). This code takes, as an input, a set of unlensed Cl's generated using `CAMB <http://www.camb.info/>`_. The params.ini is in the Ancillary directory. There is a pre-computed CMB map provided at Nside 512.
+- **c1**: A lensed CMB realisation is computed using Taylens, a code to compute a lensed CMB realisation using nearest-neighbour Taylor interpolation (`taylens <https://github.com/amaurea/taylens>`_; Naess, S. K. and Louis, T. JCAP 09 001, 2013, astro-ph/1307.0719). This code takes, as an input, a set of unlensed Cl's generated using `CAMB <http://www.camb.info/>`_. The params.ini is in the Ancillary directory.
+
+- **c2**: Precomputed lensed CMB map of the **c1** model at $N_{side}=512$.
+
+- **c3**: Unlensed CMB map with the same cosmological parameters of WebSky 0.4, available at $N_{side}=512$ and $N_{side}=4096$. For more details see :ref:`websky`.
+
+- **c4**: CMB map with the same cosmological parameters and lensed with the convergence map of WebSky 0.4 , available at $N_{side}=512$ and $N_{side}=4096$.
 
 CO line emission
 ================
@@ -107,3 +113,20 @@ CO line emission
 - **co1**: Galactic CO emission involving the first 3 CO rotational lines, i.e. :math:`J=1-0,2-1,3-2` whose center frequency is respectively at :math:`\nu_0 = 115.3, 230.5,345.8` GHz. The CO emission map templates are the CO Planck maps obtained with ``MILCA`` component separation algorithm (See `Planck paper <https://www.aanda.org/articles/aa/abs/2014/11/aa21553-13/aa21553-13.html>`). The CO maps have been released at the nominal resolution (10 and 5 arcminutes). However, to reduce  noise contamination from template maps (especially at intermediate and high Galactic latitudes), we  convolved them with a 1 deg gaussian beam.
 - **co2**: like **co1** with polarized emission at the level of 0.1%.
 - **co3**: like **co2** with a mock CO clouds map 20 degrees off the Galactic plane simulated with ``MCMole3D``.
+
+Cosmic Infrared Background
+==========================
+
+- **cib1**: Cosmic Infrared Background map built from the WebSky 0.4 simulation, it is generated at several input frequencies and then linearly interpolated in `uK_RJ` by PySM. Available at $N_{side}=4096$. It also includes an analytical correction to its amplitude to match the South Pole Telescope data. For more details see :ref:`websky`.
+
+Sunyaev–Zeldovich emission
+==========================
+
+- **tsz1**: Thermal SZ emission from WebSky 0.4. Available at $N_{side}=4096$. For more details see :ref:`websky`.
+
+- **ksz1**: Kinetic SZ emission from WebSky 0.4. Available at $N_{side}=4096$. For more details see :ref:`websky`.
+
+Radio galaxies
+==============
+
+- **rg1**: Emission from Radio Galaxies simulated with WebSky 0.4. Available at $N_{side}=4096$ at the same input frequencies of CIB and then interpolated. For more details see :ref:`websky`.
