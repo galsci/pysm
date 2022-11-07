@@ -185,6 +185,7 @@ def trapz_step_inplace(freqs, weights, i, m, output):
     # case for a single frequency, compensate for the .5 factor
     if i == 0 and len(freqs) == 1:
         delta_freq = 2
+        assert weights[i] == 1
     # first step of the integration
     elif i == 0:
         delta_freq = freqs[1] - freqs[0]
