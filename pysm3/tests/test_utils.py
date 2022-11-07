@@ -7,6 +7,17 @@ from astropy.tests.helper import assert_quantity_allclose
 from pysm3 import utils
 
 
+def test_get_relevant_frequencies():
+    freqs = [10, 11, 14, 16, 20]
+    assert utils.get_relevant_frequencies(freqs, 11, 14) == [11, 14]
+    assert utils.get_relevant_frequencies(freqs, 11.5, 14) == [11, 14]
+    assert utils.get_relevant_frequencies(freqs, 11.5, 13.9) == [11, 14]
+    assert utils.get_relevant_frequencies(freqs, 11, 14.1) == [11, 14, 16]
+    assert utils.get_relevant_frequencies(freqs, 10, 10.1) == [10, 11]
+    assert utils.get_relevant_frequencies(freqs, 10, 19) == freqs
+    assert utils.get_relevant_frequencies(freqs, 15, 19) == [14, 16, 20]
+
+
 def test_has_polarization():
     h = pysm3.utils.has_polarization
 

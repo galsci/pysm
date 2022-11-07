@@ -17,6 +17,40 @@ import logging
 log = logging.getLogger("pysm3")
 
 
+def get_relevant_frequencies(freqs, low, high):
+    """Get the frequencies necessary for interpolation in the
+    input list between a low and a high limit
+
+    Parameters
+    ----------
+    freqs : list
+        List of available frequencies
+    low : float
+        Lower limit
+    high : float
+        Higher limit
+
+    Returns
+    -------
+    freq_range : list
+        List of elements of freqs where the first element is
+        equal or just below `low` and the last is equal or just
+        above `high`
+
+    """
+    for first_freq_i, freq in enumerate(freqs):
+        if freq == low:
+            break
+        elif freq > low:
+            first_freq_i -= 1
+            break
+    for last_freq_i, freq in enumerate(freqs):
+        if freq >= high:
+            break
+    freq_range = freqs[first_freq_i : last_freq_i + 1]
+    return freq_range
+
+
 def has_polarization(m):
     """Checks if a map or a group of map is polarized
 

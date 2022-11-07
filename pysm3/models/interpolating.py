@@ -114,12 +114,7 @@ class InterpolatingComponent(Model):
             )
             return np.zeros((3, npix)) << u.uK_RJ
 
-        first_freq_i, last_freq_i = np.searchsorted(self.freqs, [nu[0], nu[-1]])
-        first_freq_i -= 1
-        last_freq_i += 1
-
-        freq_range = self.freqs[first_freq_i:last_freq_i]
-
+        freq_range = utils.get_relevant_frequencies(self.freqs, nu[0], nu[-1])
         log.info("Frequencies considered: %s", str(freq_range))
 
         for freq in freq_range:
