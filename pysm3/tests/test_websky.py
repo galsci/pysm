@@ -127,7 +127,7 @@ def test_sz(tmp_path, monkeypatch, sz_type):
     tsz = WebSkySZ(nside, "0.4", sz_type=sz_type)
 
     tsz_map = tsz.get_emission(100 * u.GHz)
-    value = -3.193671 * u.uK_RJ if sz_type == "thermal" else 0.7772276 * u.uK_RJ
+    value = -4.109055 * u.uK_RJ if sz_type == "thermal" else 1. * u.uK_RJ
     np.testing.assert_allclose(np.ones(len(tsz_map[0])) * value, tsz_map[0], rtol=1e-4)
     np.testing.assert_allclose(np.zeros((2, len(tsz_map[0]))) * u.uK_RJ, tsz_map[1:])
 
