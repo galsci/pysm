@@ -179,7 +179,8 @@ def compute_interpolated_emission_numba(freqs, weights, freq_range, all_maps):
         int_interpolation_weight = int(interpolation_weight)
         relative_weight = interpolation_weight - int_interpolation_weight
         temp[:] = (1 - relative_weight) * all_maps[freq_range[int_interpolation_weight]]
-        temp += relative_weight * all_maps[freq_range[int_interpolation_weight + 1]]
+        if relative_weight > 0:
+            temp += relative_weight * all_maps[freq_range[int_interpolation_weight + 1]]
 
         if len(freqs) > 1:
             trapz_step_inplace(freqs, weights, i, temp, output)
