@@ -18,6 +18,7 @@ Radio Galaxies
 --------------
 
 Emission from Radio Galaxies simulated by WebSky 0.4, the orignial maps are avaiable at https://portal.nersc.gov/project/sobs/users/Radio_WebSky/matched_maps/ in CAR and HEALPix format.
+For more information about abundance matching in the relevant paper at https://arxiv.org/abs/2110.15357.
 
 Thermal SZ Effect
 -----------------
