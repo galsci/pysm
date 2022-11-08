@@ -254,9 +254,10 @@ class WebSkySZ(Model):
         # input map is in uK_CMB, we multiply the weights which are
         # in uK_RJ by the conversion factor of uK_CMB->uK_RJ
         # this is the equivalent of
-        weights = (weights * u.uK_CMB).to_value(
-            u.uK_RJ, equivalencies=u.cmb_equivalencies(freqs * u.GHz)
-        )
+        if len(freqs) > 1:
+            weights = (weights * u.uK_CMB).to_value(
+                u.uK_RJ, equivalencies=u.cmb_equivalencies(freqs * u.GHz)
+            )
 
         is_thermal = self.sz_type == "thermal"
         output = (
