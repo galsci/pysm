@@ -7,6 +7,17 @@ from astropy.tests.helper import assert_quantity_allclose
 from pysm3 import utils
 
 
+def test_get_relevant_frequencies():
+    freqs = [10, 11, 14, 16, 20]
+    assert utils.get_relevant_frequencies(freqs, 11, 14) == [11, 14]
+    assert utils.get_relevant_frequencies(freqs, 11.5, 14) == [11, 14]
+    assert utils.get_relevant_frequencies(freqs, 11.5, 13.9) == [11, 14]
+    assert utils.get_relevant_frequencies(freqs, 11, 14.1) == [11, 14, 16]
+    assert utils.get_relevant_frequencies(freqs, 10, 10.1) == [10, 11]
+    assert utils.get_relevant_frequencies(freqs, 10, 19) == freqs
+    assert utils.get_relevant_frequencies(freqs, 15, 19) == [14, 16, 20]
+
+
 def test_has_polarization():
     h = pysm3.utils.has_polarization
 
@@ -46,6 +57,23 @@ def test_bandpass_integration_tophat():
     for i, (freq, weight) in enumerate(zip(freqs, weights)):
         utils.trapz_step_inplace(freqs, weights, i, input_map, output_map)
     np.testing.assert_allclose(input_map, output_map)
+
+
+@pytest.mark.parametrize("freq_spacing", ["uniform", "non-uniform"])
+def test_trapz(freq_spacing):
+    freqs = [99, 100, 101] * u.GHz
+    if freq_spacing == "non-uniform":
+        freqs[-1] += 30 * u.GHz
+    input_maps = np.array([1, 1.5, 1.2], dtype=np.double)
+    output_map = np.array([0], dtype=np.double)
+    weights = [0.3, 1, 0.3]
+    freqs = utils.check_freq_input(freqs)
+    weights = utils.normalize_weights(freqs, weights)
+    for i, (freq, weight) in enumerate(zip(freqs, weights)):
+        utils.trapz_step_inplace(freqs, weights, i, input_maps[i : i + 1], output_map)
+
+    expected = np.trapz(weights * input_maps, freqs)
+    np.testing.assert_allclose(expected, output_map)
 
 
 def test_bandpass_integration_weights():

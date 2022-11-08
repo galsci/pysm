@@ -34,6 +34,9 @@ class RemoteData:
         self.data_folders += PREDEFINED_DATA_FOLDERS
 
     def get(self, filename):
+        if os.path.exists(filename):
+            log.info(f"Access data from {filename}")
+            return filename
         for folder in self.data_folders:
             full_path = os.path.join(folder, filename)
             if os.path.exists(full_path):

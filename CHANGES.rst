@@ -1,6 +1,9 @@
 3.4.0 (unreleased)
 ==================
 
+- Fix bug in `InterpolatingComponent`, when the user requested a frequency between 2 available points, the weighting of the 2 relevant maps was switched, see `PR 129 <https://github.com/galsci/pysm/pull/129>`_
+- Implemented a proper unit test of the running `trapz` implementation used for bandpass integration against `np.trapz`, see `PR 129 <https://github.com/galsci/pysm/pull/129>`_
+- Imported WebSky extralactic components from `so_pysm_models`, now version 0.4, it also includes SPT based correction for CIB `PR 129 <https://github.com/galsci/pysm/pull/129>`_
 - `apply_smoothing_and_coord_transform` now supports a different output resolution and supports doing both HEALPix and CAR in the same execution, also added best practices for dealing with resolution in the docs `PR 125 <https://github.com/galsci/pysm/pull/125>`_
 - Model has `max_nside` attribute which specifies its max resolution `PR 124 <https://github.com/galsci/pysm/pull/124>`_
 

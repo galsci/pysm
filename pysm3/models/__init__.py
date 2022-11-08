@@ -11,3 +11,10 @@ from .dust_layers import ModifiedBlackBodyLayers
 from .co_lines import COLines
 from .dust_realization import ModifiedBlackBodyRealization
 from .power_law_realization import PowerLawRealization
+from .websky import (
+    SPT_CIB_map_scaling,
+    WebSkyCMB,
+    WebSkyCIB,
+    WebSkySZ,
+    WebSkyRadioGalaxies,
+)

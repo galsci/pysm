@@ -9,6 +9,10 @@ from .. import utils
 from ..utils import trapz_step_inplace
 import warnings
 
+import logging
+
+log = logging.getLogger("pysm3")
+
 
 class InterpolatingComponent(Model):
     def __init__(
@@ -110,14 +114,8 @@ class InterpolatingComponent(Model):
             )
             return np.zeros((3, npix)) << u.uK_RJ
 
-        first_freq_i, last_freq_i = np.searchsorted(self.freqs, [nu[0], nu[-1]])
-        first_freq_i -= 1
-        last_freq_i += 1
-
-        freq_range = self.freqs[first_freq_i:last_freq_i]
-
-        if self.verbose:
-            print("Frequencies considered:", freq_range)
+        freq_range = utils.get_relevant_frequencies(self.freqs, nu[0], nu[-1])
+        log.info("Frequencies considered: %s", str(freq_range))
 
         for freq in freq_range:
             if freq not in self.cached_maps:
@@ -125,13 +123,12 @@ class InterpolatingComponent(Model):
                 if m.shape[0] != 3:
                     m = m.reshape((1, -1))
                 self.cached_maps[freq] = m.astype(np.float32)
-                if self.verbose:
-                    for i_pol, pol in enumerate("IQU" if m.shape[0] == 3 else "I"):
-                        print(
-                            "Mean emission at {} GHz in {}: {:.4g} uK_RJ".format(
-                                freq, pol, self.cached_maps[freq][i_pol].mean()
-                            )
+                for i_pol, pol in enumerate("IQU" if m.shape[0] == 3 else "I"):
+                    log.info(
+                        "Mean emission at {} GHz in {}: {:.4g} uK_RJ".format(
+                            freq, pol, self.cached_maps[freq][i_pol].mean()
                         )
+                    )
 
         out = compute_interpolated_emission_numba(
             nu, weights, freq_range, self.cached_maps
@@ -150,13 +147,20 @@ class InterpolatingComponent(Model):
         return self.read_map_file(freq, filename)
 
     def read_map_file(self, freq, filename):
-        if self.verbose:
-            print("Reading map {}".format(filename))
+        log.info("Reading map %s", filename)
 
         try:
-            m = self.read_map(filename, field=(0, 1, 2), unit=self.input_units,)
+            m = self.read_map(
+                filename,
+                field=(0, 1, 2),
+                unit=self.input_units,
+            )
         except IndexError:
-            m = self.read_map(filename, field=0, unit=self.input_units,)
+            m = self.read_map(
+                filename,
+                field=0,
+                unit=self.input_units,
+            )
         return m.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz)).value
 
 
@@ -165,16 +169,19 @@ def compute_interpolated_emission_numba(freqs, weights, freq_range, all_maps):
     output = np.zeros(
         all_maps[freq_range[0]].shape, dtype=all_maps[freq_range[0]].dtype
     )
+    if len(freqs) > 1:
+        temp = np.zeros_like(output)
+    else:
+        temp = output
     index_range = np.arange(len(freq_range))
     for i in range(len(freqs)):
         interpolation_weight = np.interp(freqs[i], freq_range, index_range)
         int_interpolation_weight = int(interpolation_weight)
-        m = (interpolation_weight - int_interpolation_weight) * all_maps[
-            freq_range[int_interpolation_weight]
-        ]
-        m += (int_interpolation_weight + 1 - interpolation_weight) * all_maps[
-            freq_range[int_interpolation_weight + 1]
-        ]
+        relative_weight = interpolation_weight - int_interpolation_weight
+        temp[:] = (1 - relative_weight) * all_maps[freq_range[int_interpolation_weight]]
+        if relative_weight > 0:
+            temp += relative_weight * all_maps[freq_range[int_interpolation_weight + 1]]
 
-        trapz_step_inplace(freqs, weights, i, m, output)
+        if len(freqs) > 1:
+            trapz_step_inplace(freqs, weights, i, temp, output)
     return output
