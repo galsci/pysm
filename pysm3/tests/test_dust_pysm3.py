@@ -20,7 +20,7 @@ def test_dust_model_353(model_tag):
     output = model.get_emission(freq)
 
     input_template = pysm3.models.read_map(
-        "dust_gnilc/gnilc_dust_template_galplanefix_nside{nside}.fits".format(
+        "dust_gnilc/gnilc_dust_template_nside{nside}.fits".format(
             nside=nside
         ),
         nside=nside,
@@ -46,7 +46,7 @@ def test_gnilc_857(model_tag):
     output = model.get_emission(freq)
 
     input_template = pysm3.models.read_map(
-        "dust_gnilc/gnilc_dust_template_galplanefix_nside{nside}.fits".format(
+        "dust_gnilc/gnilc_dust_template_nside{nside}.fits".format(
             nside=2048
         ),
         nside=2048,
