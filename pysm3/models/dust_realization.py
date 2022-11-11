@@ -144,7 +144,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         )
 
         alm_small_scale = [
-            hp.almxfl(each, np.ones(min(synalm_lmax, 3 * self.nside - 1)))
+            hp.almxfl(each, np.ones(min(synalm_lmax, 2.5 * self.nside)))
             for each in alm_small_scale
         ]
         map_small_scale = hp.alm2map(alm_small_scale, nside=self.nside)
@@ -198,7 +198,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             )
 
             alm_small_scale = hp.almxfl(
-                alm_small_scale, np.ones(min(3 * self.nside - 1, synalm_lmax + 1))
+                alm_small_scale, np.ones(min(2.5 * self.nside, synalm_lmax + 1))
             )
             output[key] = hp.alm2map(alm_small_scale, nside=self.nside) * output_unit
             output[key] *= modulate_map_I
