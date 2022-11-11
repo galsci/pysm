@@ -95,16 +95,18 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
                     amplitude_modulation_pol_alm,
                 ]
             ]
-            self.small_scale_cl = self.read_cl(small_scale_cl).to(u.uK_RJ ** 2)
+            self.small_scale_cl = self.read_cl(small_scale_cl).to(u.uK_RJ**2)
         if galplane_fix is not None:
             self.galplane_fix_map = self.read_map(
                 galplane_fix, field=(0, 1, 2, 3)
             ).value
         else:
             self.galplane_fix_map = None
-        self.galactic_mask = self.read_map(
-                galactic_mask, field=0
-            ).value if galactic_mask is not None else None
+        self.galactic_mask = (
+            self.read_map(galactic_mask, field=0).value
+            if galactic_mask is not None
+            else None
+        )
         self.largescale_alm_mbb_index = self.read_alm(
             largescale_alm_mbb_index,
             has_polarization=False,
@@ -117,7 +119,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         ).to(u.K)
         self.small_scale_cl_mbb_temperature = self.read_cl(
             small_scale_cl_mbb_temperature
-        ).to(u.K ** 2)
+        ).to(u.K**2)
         self.nside = int(nside)
         (
             self.I_ref,
@@ -153,9 +155,13 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         modulate_map_I = hp.alm2map(self.modulate_alm[0].value, self.nside)
 
         if self.galactic_mask is not None:
-            gal_mask = (hp.ud_grade(self.galactic_mask, self.nside) == 1).astype(np.bool)
+            gal_mask = (hp.ud_grade(self.galactic_mask, self.nside) == 1).astype(
+                np.bool
+            )
             modulate_map_I[gal_mask == 0] = 1
-            map_small_scale[1:][gal_mask] *= hp.alm2map(self.modulate_alm[1].value, self.nside)[gal_mask]
+            map_small_scale[1:][gal_mask] *= hp.alm2map(
+                self.modulate_alm[1].value, self.nside
+            )[gal_mask]
             del gal_mask
         else:
             map_small_scale[1:] *= hp.alm2map(self.modulate_alm[1].value, self.nside)
