@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --qos=regular
-#SBATCH --time=2:00:00
+#SBATCH --time=4:00:00
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=1
 #SBATCH --constraint=knl
@@ -13,6 +13,6 @@ for NSIDE in 4096 8192
 do
     for NAME in "beta" "Td"
     do
-        $PAPERMILL $NB data/${NB/.ipynb/_$NSIDE.ipynb} -p output_nside $NSIDE -p name $NAME
+        $PAPERMILL $NB data/${NB/.ipynb/.$NSIDE.$NAME.ipynb} -p output_nside $NSIDE -p name $NAME
     done
 done
