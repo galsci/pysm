@@ -115,10 +115,11 @@ def test_synch_44(model_tag):
     psutil.virtual_memory().total * u.byte < 20 * u.GB,
     reason="Running s6 at high lmax requires 20 GB of RAM",
 )
-def test_s6_vs_s5():
+@pytest.mark.parametrize("freq", [23, 44])
+def test_s6_vs_s5(freq):
     nside = 2048
 
-    freq = 44 * u.GHz
+    freq = freq * u.GHz
 
     output_s5 = pysm3.Sky(preset_strings=["s5"], nside=nside).get_emission(freq)
     s6_configuration = pysm3.sky.PRESET_MODELS["s6"].copy()

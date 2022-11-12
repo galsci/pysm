@@ -96,19 +96,20 @@ class PowerLawRealization(PowerLaw):
             seeds = (None, None)
 
         if synalm_lmax is None:
-            synalm_lmax = min(16384, 3 * self.nside - 1)
+            synalm_lmax = int(min(16384, 2.5 * self.nside))
+
+        output_lmax = int(min(synalm_lmax, 2.5 * self.nside))
 
         np.random.seed(seeds[0])
 
         alm_small_scale = hp.synalm(
-            list(self.small_scale_cl.value)
-            + [np.zeros_like(self.small_scale_cl[0])] * 3,
+            list(self.small_scale_cl.value),
             lmax=synalm_lmax,
             new=True,
         )
 
         alm_small_scale = [
-            hp.almxfl(each, np.ones(min(synalm_lmax, 3 * self.nside - 1)))
+            hp.almxfl(each, np.ones(output_lmax+1))
             for each in alm_small_scale
         ]
         map_small_scale = hp.alm2map(alm_small_scale, nside=self.nside)
@@ -138,7 +139,7 @@ class PowerLawRealization(PowerLaw):
         )
 
         alm_small_scale = hp.almxfl(
-            alm_small_scale, np.ones(min(3 * self.nside - 1, synalm_lmax + 1))
+            alm_small_scale, np.ones(output_lmax + 1)
         )
         pl_index = hp.alm2map(alm_small_scale, nside=self.nside) * output_unit
         pl_index *= modulate_map_I
