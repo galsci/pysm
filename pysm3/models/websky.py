@@ -64,7 +64,7 @@ class WebSkyCIB(InterpolatingComponent):
         """Load and interpolate WebSky CIB maps
 
         Parameters
-        ---------
+        ----------
         nside : nside
             target nside of the output maps
         websky_version : str

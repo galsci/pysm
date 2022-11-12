@@ -20,6 +20,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         largescale_alm_mbb_temperature,
         small_scale_cl_mbb_temperature,
         nside,
+        galactic_mask=None,
         max_nside=None,
         galplane_fix=None,
         seeds=None,
@@ -52,6 +53,8 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         amplitude_modulation_temp_alm, amplitude_modulation_pol_alm: `pathlib.Path`
             Paths to the Alm expansion of the modulation maps used to rescale the small scales
             to make them more un-uniform, they are derived from highly smoothed input emission.
+        galactic_mask : `pathlib.Path`
+            Path to the galactic mask, inside the galactic mask, small scales are not modulated
         small_scale_cl, small_scale_cl_mbb_index, small_scale_cl_mbb_temperature: `pathlib.Path`
             Paths to the power spectra of the small scale fluctuations for logpoltens iqu and
             the black body spectral index and temperature
@@ -92,13 +95,18 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
                     amplitude_modulation_pol_alm,
                 ]
             ]
-            self.small_scale_cl = self.read_cl(small_scale_cl).to(u.uK_RJ ** 2)
+            self.small_scale_cl = self.read_cl(small_scale_cl).to(u.uK_RJ**2)
         if galplane_fix is not None:
             self.galplane_fix_map = self.read_map(
                 galplane_fix, field=(0, 1, 2, 3)
-            ).value
+            )
         else:
             self.galplane_fix_map = None
+        self.galactic_mask = (
+            self.read_map(galactic_mask, field=0).value
+            if galactic_mask is not None
+            else None
+        )
         self.largescale_alm_mbb_index = self.read_alm(
             largescale_alm_mbb_index,
             has_polarization=False,
@@ -111,7 +119,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         ).to(u.K)
         self.small_scale_cl_mbb_temperature = self.read_cl(
             small_scale_cl_mbb_temperature
-        ).to(u.K ** 2)
+        ).to(u.K**2)
         self.nside = int(nside)
         (
             self.I_ref,
@@ -127,19 +135,18 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             seeds = (None, None, None)
 
         if synalm_lmax is None:
-            synalm_lmax = min(16384, 3 * self.nside - 1)
+            synalm_lmax = min(16384, 2.5 * self.nside)
 
         np.random.seed(seeds[0])
 
         alm_small_scale = hp.synalm(
-            list(self.small_scale_cl.value)
-            + [np.zeros_like(self.small_scale_cl[0])] * 3,
+            list(self.small_scale_cl.value),
             lmax=synalm_lmax,
             new=True,
         )
 
         alm_small_scale = [
-            hp.almxfl(each, np.ones(min(synalm_lmax, 3 * self.nside - 1)))
+            hp.almxfl(each, np.ones(int(min(synalm_lmax, 2.5 * self.nside))))
             for each in alm_small_scale
         ]
         map_small_scale = hp.alm2map(alm_small_scale, nside=self.nside)
@@ -147,24 +154,35 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         # need later for beta, Td
         modulate_map_I = hp.alm2map(self.modulate_alm[0].value, self.nside)
 
+        if self.galactic_mask is not None:
+            gal_mask = hp.ud_grade(self.galactic_mask, self.nside) == 1
+            modulate_map_I[gal_mask == 0] = 1
+            map_small_scale[1:, gal_mask] *= hp.alm2map(
+                self.modulate_alm[1].value, self.nside
+            )[gal_mask]
+            del gal_mask
+        else:
+            map_small_scale[1:] *= hp.alm2map(self.modulate_alm[1].value, self.nside)
+
         map_small_scale[0] *= modulate_map_I
-        map_small_scale[1:] *= hp.alm2map(self.modulate_alm[1].value, self.nside)
 
         map_small_scale += hp.alm2map(
             self.template_largescale_alm.value,
             nside=self.nside,
         )
 
-        if self.galplane_fix_map is not None:
-            map_small_scale *= hp.ud_grade(self.galplane_fix_map[3], self.nside)
-            map_small_scale += hp.ud_grade(
-                self.galplane_fix_map[:3] * (1 - self.galplane_fix_map[3]), self.nside
-            )
-
         output_IQU = (
             utils.log_pol_tens_to_map(map_small_scale)
             * self.template_largescale_alm.unit
-        ) * 0.911  # includes color correction
+        )
+
+        if self.galplane_fix_map is not None:
+            output_IQU *= hp.ud_grade(self.galplane_fix_map[3].value, self.nside)
+            output_IQU += hp.ud_grade(
+                self.galplane_fix_map[:3].value * (1 - self.galplane_fix_map[3].value), self.nside
+            ) * self.galplane_fix_map.unit
+
+        output_IQU *= 0.911  # color correction
         # See https://github.com/galsci/pysm/issues/99
 
         # Fixed values for comparison with d9
@@ -184,7 +202,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             )
 
             alm_small_scale = hp.almxfl(
-                alm_small_scale, np.ones(min(3 * self.nside - 1, synalm_lmax + 1))
+                alm_small_scale, np.ones(int(min(2.5 * self.nside, synalm_lmax + 1)))
             )
             output[key] = hp.alm2map(alm_small_scale, nside=self.nside) * output_unit
             output[key] *= modulate_map_I
