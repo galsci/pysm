@@ -135,7 +135,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             seeds = (None, None, None)
 
         if synalm_lmax is None:
-            synalm_lmax = min(16384, 3 * self.nside - 1)
+            synalm_lmax = min(16384, 2.5 * self.nside)
 
         np.random.seed(seeds[0])
 
