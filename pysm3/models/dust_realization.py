@@ -99,7 +99,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         if galplane_fix is not None:
             self.galplane_fix_map = self.read_map(
                 galplane_fix, field=(0, 1, 2, 3)
-            ).value
+            )
         else:
             self.galplane_fix_map = None
         self.galactic_mask = (
@@ -155,11 +155,9 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         modulate_map_I = hp.alm2map(self.modulate_alm[0].value, self.nside)
 
         if self.galactic_mask is not None:
-            gal_mask = (hp.ud_grade(self.galactic_mask, self.nside) == 1).astype(
-                np.bool
-            )
+            gal_mask = hp.ud_grade(self.galactic_mask, self.nside) == 1
             modulate_map_I[gal_mask == 0] = 1
-            map_small_scale[1:][gal_mask] *= hp.alm2map(
+            map_small_scale[1:, gal_mask] *= hp.alm2map(
                 self.modulate_alm[1].value, self.nside
             )[gal_mask]
             del gal_mask
@@ -179,10 +177,10 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         )
 
         if self.galplane_fix_map is not None:
-            output_IQU *= hp.ud_grade(self.galplane_fix_map[3], self.nside)
+            output_IQU *= hp.ud_grade(self.galplane_fix_map[3].value, self.nside)
             output_IQU += hp.ud_grade(
-                self.galplane_fix_map[:3] * (1 - self.galplane_fix_map[3]), self.nside
-            )
+                self.galplane_fix_map[:3].value * (1 - self.galplane_fix_map[3].value), self.nside
+            ) * self.galplane_fix_map.unit
 
         output_IQU *= 0.911  # color correction
         # See https://github.com/galsci/pysm/issues/99
