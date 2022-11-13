@@ -165,7 +165,7 @@ def apply_smoothing_and_coord_transform(
         Whether to return the HEALPix map
     return_car : bool
         Whether to return the CAR map
-    input_alm : np.array
+    input_alm : bool
         Instead of starting from a map, `input_map` is a set of Alm
 
     Returns
