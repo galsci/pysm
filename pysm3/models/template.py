@@ -207,21 +207,24 @@ def apply_smoothing_and_coord_transform(
                     use_pixel_weights=True if nside > 16 else False,
                 )
             else:
-                alm, error, n_iter = hp.map2alm_lsq(
-                    input_map, lmax=lmax, mmax=lmax, tol=1e-6, maxiter=100
-                )
-                log.info(
-                    "Used map2alm_lsq, converged in %d iterations, residual relative error %.2g",
-                    n_iter,
-                    error,
-                )
-                if n_iter == 100:
-                    log.warning(
-                        "hp.map2alm_lsq did not converge in %d iterations,"
-                        + " residual relative error is %.2g",
-                        n_iter,
-                        error,
-                    )
+                alm = hp.map2alm(input_map, lmax=lmax, iter=0)
+                # map2alm_lsq_maxiter = 10
+                # alm, error, n_iter = hp.map2alm_lsq(
+                #     input_map, lmax=lmax, mmax=lmax, tol=1e-6, maxiter=map2alm_lsq_maxiter
+                # )
+                # if n_iter == map2alm_lsq_maxiter:
+                #     log.warning(
+                #         "hp.map2alm_lsq did not converge in %d iterations,"
+                #         + " residual relative error is %.2g",
+                #         n_iter,
+                #         error,
+                #     )
+                # else:
+                #     log.info(
+                #         "Used map2alm_lsq, converged in %d iterations, residual relative error %.2g",
+                #         n_iter,
+                #         error,
+                #     )
         if fwhm is not None:
             hp.smoothalm(alm, fwhm=fwhm.to_value(u.rad), inplace=True, pol=True)
         if rot is not None:
