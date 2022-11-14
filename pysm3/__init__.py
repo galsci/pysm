@@ -16,7 +16,7 @@ except PackageNotFoundError:  # pragma: no cover
     __version__ = "unknown"
 
 from .models import *
-from .sky import Sky
+from .sky import Sky, get_pysm_emission
 from . import units
 from .distribution import MapDistribution
 from .mpi import mpi_smoothing

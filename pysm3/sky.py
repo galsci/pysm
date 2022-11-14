@@ -57,6 +57,25 @@ except ImportError:
 PRESET_MODELS = toml.loads(pkg_resources.read_text(data, "presets.cfg"))
 
 
+def get_pysm_emission(preset_string, nside):
+    """Get one of PySM preset emissions
+
+    Parameters
+    ----------
+    preset_string : str
+        PySM 2 or 3 model string, for example "d10"
+    nside : int
+        Requested Nside
+
+    Returns
+    -------
+    comp : subclass of pysm3.Model
+        PySM Model object
+    """
+    component_config = PRESET_MODELS[preset_string]
+    return create_components_from_config(component_config, nside=nside)
+
+
 class Sky(Model):
     """Sky is the main interface to PySM
 
