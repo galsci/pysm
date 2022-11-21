@@ -178,7 +178,7 @@ class WebSkyRadioGalaxies(WebSkyCIB):
         self,
         nside,
         websky_version="0.4",
-        input_units="MJy / sr",
+        input_units="Jy / sr",
         max_nside=4096,
         interpolation_kind="linear",
         apply_SPT_correction=False,
