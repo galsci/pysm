@@ -210,7 +210,11 @@ def apply_smoothing_and_coord_transform(
                 # alm = hp.map2alm(input_map, lmax=lmax, iter=0)
                 map2alm_lsq_maxiter = 10
                 alm, error, n_iter = hp.map2alm_lsq(
-                    input_map, lmax=lmax, mmax=lmax, tol=1e-7, maxiter=map2alm_lsq_maxiter
+                    input_map,
+                    lmax=lmax,
+                    mmax=lmax,
+                    tol=1e-7,
+                    maxiter=map2alm_lsq_maxiter,
                 )
                 if n_iter == map2alm_lsq_maxiter:
                     log.warning(
@@ -221,7 +225,8 @@ def apply_smoothing_and_coord_transform(
                     )
                 else:
                     log.info(
-                        "Used map2alm_lsq, converged in %d iterations, residual relative error %.2g",
+                        "Used map2alm_lsq, converged in %d iterations,"
+                        + "residual relative error %.2g",
                         n_iter,
                         error,
                     )
