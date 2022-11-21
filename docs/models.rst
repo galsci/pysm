@@ -98,9 +98,9 @@ CMB
 
 - **c2**: Precomputed lensed CMB map of the **c1** model at $N_{side}=512$.
 
-- **c3**: Unlensed CMB map with the same cosmological parameters of WebSky 0.4, available at $N_{side}=512$ and $N_{side}=4096$. For more details see :ref:`websky`.
+- **c3**: Unlensed CMB map with the same cosmological parameters of WebSky 0.4, available at $N_{side}=512$ and $N_{side}=4096$. Maps are generated with $\ell_{max}=8250$. For more details see :ref:`websky`.
 
-- **c4**: CMB map with the same cosmological parameters and lensed with the convergence map of WebSky 0.4 , available at $N_{side}=512$ and $N_{side}=4096$.
+- **c4**: CMB map with the same cosmological parameters and lensed with the convergence map of WebSky 0.4 , available at $N_{side}=512$ and $N_{side}=4096$. Maps are generated with $\ell_{max}=8250$.
 
 CO line emission
 ================
