@@ -72,7 +72,7 @@ def get_pysm_emission(preset_string, nside):
     comp : subclass of pysm3.Model
         PySM Model object
     """
-    component_config = PRESET_MODELS[preset_string]
+    component_config = {preset_string: PRESET_MODELS[preset_string]}
     return create_components_from_config(component_config, nside=nside)
 
 
