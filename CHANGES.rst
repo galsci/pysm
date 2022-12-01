@@ -1,9 +1,12 @@
 3.4.0 (unreleased)
 ==================
 
+- Implementation of color correction (multiply by a factor of 0.911) in `d12` https://github.com/galsci/pysm/pull/141
+
 3.4.0b4 (2022-11-21)
 ====================
 
+- **Known issue**: `d12` was missing color correction, see https://github.com/galsci/pysm/issues/128#issuecomment-1332843288
 - Brand new implementation of small scales injection for Synchrotron `PR 134 <https://github.com/galsci/pysm/pull/134>`_, affects `s4`, `s5`, `s6`, `s7`
 - Brand new implementation of small scales injection for GNILC Dust `PR 133 <https://github.com/galsci/pysm/pull/133>`_, affects `d9`, `d10`, `d11`
 - Fix bug in `InterpolatingComponent`, when the user requested a frequency between 2 available points, the weighting of the 2 relevant maps was switched, see `PR 129 <https://github.com/galsci/pysm/pull/129>`_
