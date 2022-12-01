@@ -18,6 +18,7 @@ class ModifiedBlackBodyLayers(Model):
         map_mbb_index,
         map_mbb_temperature,
         nside,
+        color_correction=1,
         max_nside=None,
         num_layers=1,
         unit_layers=None,
@@ -51,6 +52,9 @@ class ModifiedBlackBodyLayers(Model):
             Alternatively an array of shape (num_layers, num_pix)
         nside: int
             Resolution parameter at which this model is to be calculated (with `ud_grade`)
+        color_correction: float
+            Scalar correction factor multiplied to the maps, implemented to add
+            a color correction factor to Planck HFI 353 GHz maps
         """
         super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         num_pix = hp.nside2npix(nside)
@@ -65,6 +69,9 @@ class ModifiedBlackBodyLayers(Model):
                 )
         else:
             self.layers = u.Quantity(map_layers, unit_layers)
+
+        self.color_correction = color_correction
+        self.layers *= self.color_correction
 
         self.freq_ref = u.Quantity(freq_ref).to(u.GHz)
 
