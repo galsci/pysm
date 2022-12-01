@@ -65,6 +65,7 @@ jobs:
     - name: Install required system packages
       run: |
         if [ "$RUNNER_OS" == "Linux" ]; then
+        sudo sed -i -e 's/azure.archive.ubuntu.com/us.archive.ubuntu.com/g' /etc/apt/sources.list
         sudo apt-get update
         sudo apt-get install -o Acquire::Retries=3 graphviz texlive-latex-extra dvipng libopenmpi-dev openmpi-bin pandoc
         fi
