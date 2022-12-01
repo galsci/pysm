@@ -54,6 +54,6 @@ def test_model_d12(freq):
         8,
         unit=u.MJy / u.sr,
         field=(0, 1, 2),
-    )
+    ) * 0.911
 
     assert_quantity_allclose(expected_map, emission, rtol=1e-5)
