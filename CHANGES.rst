@@ -1,6 +1,9 @@
 3.4.0 (unreleased)
 ==================
 
+3.4.0b5 (2022-12-05)
+====================
+
 - Implementation of color correction (multiply by a factor of 0.911) in `d12` https://github.com/galsci/pysm/pull/141
 
 3.4.0b4 (2022-11-21)
