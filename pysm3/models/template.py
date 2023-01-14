@@ -131,6 +131,7 @@ def apply_smoothing_and_coord_transform(
     return_healpix=True,
     return_car=False,
     input_alm=False,
+    map2alm_lsq_maxiter=10,
     map_dist=None,
 ):
     """Apply smoothing and coordinate rotation to an input map
@@ -167,6 +168,11 @@ def apply_smoothing_and_coord_transform(
         Whether to return the CAR map
     input_alm : bool
         Instead of starting from a map, `input_map` is a set of Alm
+    map2alm_lsq_maxiter : int
+        Number of iteration for the least squares map to Alm transform,
+        setting it to 0 uses the standard map2alm, the default of 10
+        makes the transform slow if the input map is not band limited,
+        for example if has point sources or sharp features
 
     Returns
     -------
@@ -206,9 +212,10 @@ def apply_smoothing_and_coord_transform(
                     lmax=lmax,
                     use_pixel_weights=True if nside > 16 else False,
                 )
+            elif map2alm_lsq_maxiter == 0:
+                alm = hp.map2alm(input_map, lmax=lmax, iter=0)
+                log.info("Using map2alm with no weights and no iterations")
             else:
-                # alm = hp.map2alm(input_map, lmax=lmax, iter=0)
-                map2alm_lsq_maxiter = 10
                 alm, error, n_iter = hp.map2alm_lsq(
                     input_map,
                     lmax=lmax,
