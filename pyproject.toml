@@ -10,6 +10,7 @@ build-backend = 'setuptools.build_meta'
 filterwarnings = [
     'ignore:may indicate binary incompatibility:RuntimeWarning',
 ]
+durations = 10
 
 ## For debugging purposes, enable printing of logging calls
 
