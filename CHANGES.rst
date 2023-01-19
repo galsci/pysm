@@ -1,6 +1,8 @@
 3.4.0 (unreleased)
 ==================
 
+- Support specifying number of iterations in `map2alm`, default is 10, 0 is for standard `map2alm` https://github.com/galsci/pysm/pull/144
+
 3.4.0b5 (2022-12-05)
 ====================
 
