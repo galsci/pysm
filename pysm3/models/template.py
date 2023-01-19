@@ -172,7 +172,9 @@ def apply_smoothing_and_coord_transform(
         Number of iteration for the least squares map to Alm transform,
         setting it to 0 uses the standard map2alm, the default of 10
         makes the transform slow if the input map is not band limited,
-        for example if has point sources or sharp features
+        for example if has point sources or sharp features.
+        If ell_max is <= 1.5 nside, this setting is ignored
+        and `map2alm` with pixel weights is used.
 
     Returns
     -------
