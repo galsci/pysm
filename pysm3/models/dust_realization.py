@@ -20,7 +20,6 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         largescale_alm_mbb_temperature,
         small_scale_cl_mbb_temperature,
         nside,
-        galactic_mask=None,
         max_nside=None,
         galplane_fix=None,
         seeds=None,
@@ -53,8 +52,6 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         amplitude_modulation_temp_alm, amplitude_modulation_pol_alm: `pathlib.Path`
             Paths to the Alm expansion of the modulation maps used to rescale the small scales
             to make them more un-uniform, they are derived from highly smoothed input emission.
-        galactic_mask : `pathlib.Path`
-            Path to the galactic mask, inside the galactic mask, small scales are not modulated
         small_scale_cl, small_scale_cl_mbb_index, small_scale_cl_mbb_temperature: `pathlib.Path`
             Paths to the power spectra of the small scale fluctuations for logpoltens iqu and
             the black body spectral index and temperature
@@ -102,11 +99,6 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             )
         else:
             self.galplane_fix_map = None
-        self.galactic_mask = (
-            self.read_map(galactic_mask, field=0).value
-            if galactic_mask is not None
-            else None
-        )
         self.largescale_alm_mbb_index = self.read_alm(
             largescale_alm_mbb_index,
             has_polarization=False,
@@ -154,15 +146,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         # need later for beta, Td
         modulate_map_I = hp.alm2map(self.modulate_alm[0].value, self.nside)
 
-        if self.galactic_mask is not None:
-            gal_mask = hp.ud_grade(self.galactic_mask, self.nside) == 1
-            modulate_map_I[gal_mask == 0] = 1
-            map_small_scale[1:, gal_mask] *= hp.alm2map(
-                self.modulate_alm[1].value, self.nside
-            )[gal_mask]
-            del gal_mask
-        else:
-            map_small_scale[1:] *= hp.alm2map(self.modulate_alm[1].value, self.nside)
+        map_small_scale[1:] *= hp.alm2map(self.modulate_alm[1].value, self.nside)
 
         map_small_scale[0] *= modulate_map_I
 
