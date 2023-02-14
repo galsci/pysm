@@ -22,6 +22,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         nside,
         max_nside=None,
         galplane_fix=None,
+        galplane_fix_beta_Td=None,
         seeds=None,
         synalm_lmax=None,
         has_polarization=True,
@@ -64,6 +65,8 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             excess power in the full sky spectra due to the generated small scales being
             too strong on the galactic plane.
             By default in d9,d10,d11 we use the input GNILC map with a resolution of 21.8'
+        galplane_fix_beta_Td: `pathlib.Path`
+            Equivalent of `galplane_fix` for spectral index and dust temperature.
         seeds: list of ints
             List of seeds used for generating the small scales, first is used for the template,
             the second for the spectral index, the third for the black body temperature.
@@ -92,13 +95,20 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
                     amplitude_modulation_pol_alm,
                 ]
             ]
-            self.small_scale_cl = self.read_cl(small_scale_cl).to(u.uK_RJ**2)
+            self.small_scale_cl = self.read_cl(small_scale_cl).to(u.uK_RJ ** 2)
         if galplane_fix is not None:
-            self.galplane_fix_map = self.read_map(
-                galplane_fix, field=(0, 1, 2, 3)
-            )
+            self.galplane_fix_map = self.read_map(galplane_fix, field=(0, 1, 2, 3))
         else:
             self.galplane_fix_map = None
+        if galplane_fix_beta_Td is not None:
+            self.galplane_fix_beta_Td_map = dict(
+                zip(
+                    ["mbb_index", "mbb_temperature"],
+                    self.read_map(galplane_fix_beta_Td, field=(0, 1)),
+                )
+            )
+        else:
+            self.galplane_fix_beta_Td_map = None
         self.largescale_alm_mbb_index = self.read_alm(
             largescale_alm_mbb_index,
             has_polarization=False,
@@ -111,7 +121,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         ).to(u.K)
         self.small_scale_cl_mbb_temperature = self.read_cl(
             small_scale_cl_mbb_temperature
-        ).to(u.K**2)
+        ).to(u.K ** 2)
         self.nside = int(nside)
         (
             self.I_ref,
@@ -162,9 +172,14 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
 
         if self.galplane_fix_map is not None:
             output_IQU *= hp.ud_grade(self.galplane_fix_map[3].value, self.nside)
-            output_IQU += hp.ud_grade(
-                self.galplane_fix_map[:3].value * (1 - self.galplane_fix_map[3].value), self.nside
-            ) * self.galplane_fix_map.unit
+            output_IQU += (
+                hp.ud_grade(
+                    self.galplane_fix_map[:3].value
+                    * (1 - self.galplane_fix_map[3].value),
+                    self.nside,
+                )
+                * self.galplane_fix_map.unit
+            )
 
         output_IQU *= 0.911  # color correction
         # See https://github.com/galsci/pysm/issues/99
@@ -197,6 +212,16 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
                 )
                 * output_unit
             )
+            if self.galplane_fix_map is not None:
+                output[key] *= hp.ud_grade(self.galplane_fix_map[3].value, self.nside)
+                output[key] += (
+                    hp.ud_grade(
+                        self.galplane_fix_beta_Td_map[key].value
+                        * (1 - self.galplane_fix_map[3].value),
+                        self.nside,
+                    )
+                    * self.galplane_fix_beta_Td_map[key].unit
+                )
 
         return (
             output_IQU[0],
