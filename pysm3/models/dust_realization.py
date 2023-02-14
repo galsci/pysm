@@ -101,12 +101,10 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         else:
             self.galplane_fix_map = None
         if galplane_fix_beta_Td is not None:
-            self.galplane_fix_beta_Td_map = dict(
-                zip(
-                    ["mbb_index", "mbb_temperature"],
-                    self.read_map(galplane_fix_beta_Td, field=(0, 1)),
-                )
-            )
+            self.galplane_fix_beta_Td_map = {
+                k: self.read_map(galplane_fix_beta_Td, field=i)
+                for i, k in enumerate(["mbb_index", "mbb_temperature"])
+            }
         else:
             self.galplane_fix_beta_Td_map = None
         self.largescale_alm_mbb_index = self.read_alm(
