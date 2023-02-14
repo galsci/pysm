@@ -361,7 +361,7 @@ def read_map(path, nside, unit=None, field=0, map_dist=None):
             output_map = hp.ud_grade(output_map, nside_out=nside)
         output_map = output_map.astype(dtype, copy=False)
         if unit is None:
-            unit = extract_hdu_unit(filename, field)
+            unit = extract_hdu_unit(filename, field=field)
         shape = output_map.shape
     elif mpi_comm is not None and mpi_comm.rank > 0:
         npix = hp.nside2npix(nside)
