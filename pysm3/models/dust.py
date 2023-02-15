@@ -143,14 +143,15 @@ def get_emission_numba(
         temp[I, :] = I_ref
         temp[Q, :] = Q_ref
         temp[U, :] = U_ref
-        # -2 because black body is in flux unit and not K_RJ
-        temp[I] *= (freq / freq_ref_I) ** (mbb_index - 2.0)
-        temp[I] *= blackbody_ratio(freq, freq_ref_I, mbb_temperature)
-        freq_scaling_P = (freq / freq_ref_P) ** (mbb_index - 2.0) * blackbody_ratio(
-            freq, freq_ref_P, mbb_temperature
-        )
-        for P in [Q, U]:
-            temp[P] *= freq_scaling_P
+        if freq != freq_ref_I:
+            # -2 because black body is in flux unit and not K_RJ
+            temp[I] *= (freq / freq_ref_I) ** (mbb_index - 2.0)
+            temp[I] *= blackbody_ratio(freq, freq_ref_I, mbb_temperature)
+            freq_scaling_P = (freq / freq_ref_P) ** (mbb_index - 2.0) * blackbody_ratio(
+                freq, freq_ref_P, mbb_temperature
+            )
+            for P in [Q, U]:
+                temp[P] *= freq_scaling_P
         if len(freqs) > 1:
             utils.trapz_step_inplace(freqs, weights, i, temp, output)
     return output

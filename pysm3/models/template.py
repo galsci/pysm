@@ -291,20 +291,27 @@ def apply_normalization(freqs, weights):
     return freqs, weights / np.trapz(weights, freqs)
 
 
-def extract_hdu_unit(path):
+def extract_hdu_unit(path, hdu=1, field=0):
     """Function to extract unit from an hdu.
     Parameters
     ----------
     path: Path object
         Path to the fits file.
+    hdu: int
+        HDU index
+    field: int
+        Column index
     Returns
     -------
     string
         String specifying the unit of the fits data.
     """
+    if not np.isscalar(field):
+        field = field[0]
     with fits.open(path) as hdul:
         try:
-            unit = hdul[1].header["TUNIT1"]
+            field_num = field + 1
+            unit = hdul[hdu].header[f"TUNIT{field_num}"]
         except KeyError:
             # in the case that TUNIT1 does not exist, assume unitless quantity.
             unit = ""
@@ -354,7 +361,7 @@ def read_map(path, nside, unit=None, field=0, map_dist=None):
             output_map = hp.ud_grade(output_map, nside_out=nside)
         output_map = output_map.astype(dtype, copy=False)
         if unit is None:
-            unit = extract_hdu_unit(filename)
+            unit = extract_hdu_unit(filename, field=field)
         shape = output_map.shape
     elif mpi_comm is not None and mpi_comm.rank > 0:
         npix = hp.nside2npix(nside)
