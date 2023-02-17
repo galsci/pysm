@@ -18,6 +18,7 @@ class PowerLawRealization(PowerLaw):
         largescale_alm_pl_index,
         small_scale_cl_pl_index,
         nside,
+        amplitude_modulation_beta_alm=None,
         max_nside=None,
         seeds=None,
         synalm_lmax=None,
@@ -42,7 +43,9 @@ class PowerLawRealization(PowerLaw):
             or a string (e.g. "1500 MHz") compatible with GHz.
         amplitude_modulation_temp_alm, amplitude_modulation_pol_alm: `pathlib.Path`
             Paths to the Alm expansion of the modulation maps used to rescale the small scales
-            to make them more un-uniform, they are derived from highly smoothed input emission.
+            to make them more un-uniform.
+        amplitude_modulation_beta_alm: `pathlib.Path`
+            Potentially, a different modulation map to be used for beta
         small_scale_cl, small_scale_cl_pl_index: `pathlib.Path`
             Paths to the power spectra of the small scale fluctuations for logpoltens iqu and
             the spectral index
@@ -74,7 +77,11 @@ class PowerLawRealization(PowerLaw):
                     amplitude_modulation_pol_alm,
                 ]
             ]
-            self.small_scale_cl = self.read_cl(small_scale_cl).to(u.uK_RJ ** 2)
+            if amplitude_modulation_beta_alm is not None:
+                self.modulate_alm.append(
+                    self.read_alm(amplitude_modulation_beta_alm, has_polarization=False)
+                )
+            self.small_scale_cl = self.read_cl(small_scale_cl).to(u.uK_RJ**2)
         self.largescale_alm_pl_index = self.read_alm(
             largescale_alm_pl_index,
             has_polarization=False,
@@ -109,8 +116,7 @@ class PowerLawRealization(PowerLaw):
         )
 
         alm_small_scale = [
-            hp.almxfl(each, np.ones(output_lmax+1))
-            for each in alm_small_scale
+            hp.almxfl(each, np.ones(output_lmax + 1)) for each in alm_small_scale
         ]
         map_small_scale = hp.alm2map(alm_small_scale, nside=self.nside)
 
@@ -119,6 +125,9 @@ class PowerLawRealization(PowerLaw):
 
         map_small_scale[0] *= modulate_map_I
         map_small_scale[1:] *= hp.alm2map(self.modulate_alm[1].value, self.nside)
+
+        if len(self.modulate_alm == 3):
+            modulate_map_I = hp.alm2map(self.modulate_alm[2].value, self.nside)
 
         map_small_scale += hp.alm2map(
             self.template_largescale_alm.value,
@@ -138,9 +147,7 @@ class PowerLawRealization(PowerLaw):
             new=True,
         )
 
-        alm_small_scale = hp.almxfl(
-            alm_small_scale, np.ones(output_lmax + 1)
-        )
+        alm_small_scale = hp.almxfl(alm_small_scale, np.ones(output_lmax + 1))
         pl_index = hp.alm2map(alm_small_scale, nside=self.nside) * output_unit
         pl_index *= modulate_map_I
         pl_index += (
