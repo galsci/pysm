@@ -1,6 +1,10 @@
 3.4.0 (unreleased)
 ==================
 
+3.4.0b6 (2023-02-17)
+====================
+
+- New implementation of small scale modulation for Synchrotron models, impacts `s4`, `s5`, `s6`, `s7` https://github.com/galsci/pysm/pull/152
 - New implementation of small scale modulation for GNILC dust models, impacts `d9`, `d10`, `d11` https://github.com/galsci/pysm/pull/150
 - Support specifying number of iterations in `map2alm`, default is 10, 0 is for standard `map2alm` https://github.com/galsci/pysm/pull/144
 
