@@ -19,7 +19,7 @@ def test_synch_model_s7_noscaling(model_tag):
     output = model.get_emission(freq)
 
     input_template = pysm3.models.read_map(
-        "synch/synch_template_nside{nside}.fits".format(nside=nside),
+        "synch/synch_template_nside{nside}_2023.02.24.fits".format(nside=nside),
         nside=nside,
         field=(0, 1, 2),
     )
@@ -39,7 +39,7 @@ def test_synch_model_s7_44(model_tag):
     output = model.get_emission(freq)
 
     input_template = pysm3.models.read_map(
-        "synch/synch_template_nside{nside}.fits".format(nside=nside),
+        "synch/synch_template_nside{nside}_2023.02.24.fits".format(nside=nside),
         nside=nside,
         field=(0, 1, 2),
     )
@@ -72,7 +72,7 @@ def test_synch_model_noscaling(model_tag):
     output = model.get_emission(freq)
 
     input_template = pysm3.models.read_map(
-        "synch/synch_template_nside{nside}.fits".format(nside=nside),
+        "synch/synch_template_nside{nside}_2023.02.24.fits".format(nside=nside),
         nside=nside,
         field=(0, 1, 2),
     )
@@ -91,7 +91,7 @@ def test_synch_44(model_tag):
     output = model.get_emission(freq)
 
     input_template = pysm3.models.read_map(
-        "synch/synch_template_nside{nside}.fits".format(nside=nside),
+        "synch/synch_template_nside{nside}_2023.02.24.fits".format(nside=nside),
         nside=nside,
         field=(0, 1, 2),
     )

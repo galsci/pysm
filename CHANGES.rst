@@ -1,6 +1,11 @@
 3.4.0 (unreleased)
 ==================
 
+3.4.0b7 (2023-02-25)
+====================
+
+- Bug fix of small scale modulation for Synchrotron models, impacts `s4`, `s5`, `s6`, `s7` https://github.com/galsci/pysm/pull/154
+
 3.4.0b6 (2023-02-17)
 ====================
 
