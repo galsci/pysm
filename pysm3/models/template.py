@@ -251,7 +251,9 @@ def apply_smoothing_and_coord_transform(
             output_maps.append(hp.alm2map(alm, nside=output_nside, pixwin=False) * unit)
         if return_car:
             shape, wcs = pixell.enmap.fullsky_geometry(
-                output_car_resol.to_value(u.radian), dims=(3,)
+                output_car_resol.to_value(u.radian),
+                dims=(3,),
+                variant="fejer1",
             )
             ainfo = pixell.sharp.alm_info(lmax=lmax)
             output_maps.append(
