@@ -1,6 +1,7 @@
 import numpy as np
 import healpy as hp
 import pytest
+import os
 
 try:  # PySM >= 3.2.1
     import pysm3.units as u
@@ -112,6 +113,7 @@ def test_cib(tmp_path):
 @pytest.mark.parametrize("sz_type", ["thermal", "kinetic"])
 def test_sz(tmp_path, monkeypatch, sz_type):
 
+    os.environ.pop("PYSM_LOCAL_DATA", None)
     monkeypatch.setattr(utils.data, "PREDEFINED_DATA_FOLDERS", [str(tmp_path)])
     nside = 4
     shape = hp.nside2npix(nside)
