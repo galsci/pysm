@@ -64,8 +64,10 @@ def test_car_nosmoothing(input_map):
         output_car_resol=CAR_RESOL,
         lmax=LMAX,
     )
-    assert car_map.shape == (3, 901, 1800)
-    shape, wcs = pixell.enmap.fullsky_geometry(CAR_RESOL.to_value(u.radian), dims=(3,))
+    assert car_map.shape == (3, 900, 1800)
+    shape, wcs = pixell.enmap.fullsky_geometry(
+        CAR_RESOL.to_value(u.radian), dims=(3,), variant="fejer1"
+    )
     map_rep = (
         pixell.reproject.enmap_from_healpix(
             input_map, shape, wcs, lmax=LMAX, rot=None, ncomp=3
