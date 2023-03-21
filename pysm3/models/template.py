@@ -370,7 +370,7 @@ def read_map(path, nside, unit=None, field=0, map_dist=None):
         nside_in = hp.get_nside(output_map)
         if nside < nside_in:  # do downgrading in double precision
             output_map = hp.ud_grade(output_map.astype(np.float64), nside_out=nside)
-        else:
+        elif nside > nside_in:
             output_map = hp.ud_grade(output_map, nside_out=nside)
         output_map = output_map.astype(dtype, copy=False)
         if unit is None:
@@ -486,7 +486,6 @@ def read_alm(path, has_polarization=True, unit=None, map_dist=None):
     mpi_comm = None if map_dist is None else map_dist.mpi_comm
 
     if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
-
         alm = np.complex128(
             hp.read_alm(filename, hdu=(1, 2, 3) if has_polarization else 1)
         )
@@ -520,7 +519,6 @@ def read_cl(path, has_polarization=True, unit=None, map_dist=None):
     mpi_comm = None if map_dist is None else map_dist.mpi_comm
 
     if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
-
         cl = hp.read_cl(filename)
         if unit is None:
             unit = u.Unit(extract_hdu_unit(filename))
