@@ -240,16 +240,20 @@ def apply_smoothing_and_coord_transform(
                         error,
                     )
         if fwhm is not None:
+            log.info("Smoothing with fwhm of %s", str(fwhm))
             hp.smoothalm(alm, fwhm=fwhm.to_value(u.rad), inplace=True, pol=True)
         if rot is not None:
+            log.info("Rotate Alm")
             rot.rotate_alm(alm, inplace=True)
         if return_healpix:
+            log.info("Alm to map HEALPix")
             if input_alm:
                 assert (
                     output_nside is not None
                 ), "If inputting Alms, specify output_nside"
-            output_maps.append(hp.alm2map(alm, nside=output_nside, pixwin=False) * unit)
+            output_maps.append(u.Quantity(hp.alm2map(alm, nside=output_nside, pixwin=False), unit, copy=False))
         if return_car:
+            log.info("Alm to map CAR")
             shape, wcs = pixell.enmap.fullsky_geometry(
                 output_car_resol.to_value(u.radian),
                 dims=(3,),
@@ -257,10 +261,10 @@ def apply_smoothing_and_coord_transform(
             )
             ainfo = pixell.sharp.alm_info(lmax=lmax)
             output_maps.append(
+                    u.Quantity(
                 pixell.curvedsky.alm2map(
                     alm, pixell.enmap.empty(shape, wcs), ainfo=ainfo
-                )
-                * unit
+                ) , unit, copy=False)
             )
     else:
         assert (rot is None) or (
