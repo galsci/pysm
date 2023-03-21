@@ -106,16 +106,6 @@ class ModifiedBlackBody(Model):
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
-        mbb_index = (
-            self.mbb_index.value
-            if np.ndim(self.mbb_index.value) == 1
-            else np.array([self.mbb_index.value])
-        )
-        mbb_temperature = (
-            self.mbb_temperature.value
-            if np.ndim(self.mbb_temperature.value) == 1
-            else np.array([self.mbb_temperature.value])
-        )
         outputs = get_emission_numba(
             freqs,
             weights,
@@ -124,8 +114,8 @@ class ModifiedBlackBody(Model):
             self.U_ref.value,
             self.freq_ref_I.value,
             self.freq_ref_P.value,
-            mbb_index,
-            mbb_temperature,
+            self.mbb_index.value,
+            self.mbb_temperature.value,
         )
         return outputs << u.uK_RJ
 
@@ -155,48 +145,45 @@ def get_emission_numba(
         temp[U, :] = U_ref
         if freq != freq_ref_I:
             # -2 because black body is in flux unit and not K_RJ
-            if len(mbb_index) == 1 and len(mbb_temperature) == 1:
+            if np.ndim(mbb_index) == 0 and np.ndim(mbb_temperature) == 0:
                 for pix in prange(temp.shape[1]):
                     temp[I, pix] *= (freq / freq_ref_I) ** (
-                        mbb_index[0] - 2.0
-                    ) * blackbody_ratio(freq, freq_ref_I, mbb_temperature[0])
+                        mbb_index - 2.0
+                    ) * blackbody_ratio(freq, freq_ref_I, mbb_temperature)
                     freq_scaling_P = (freq / freq_ref_P) ** (
-                        mbb_index[0] - 2.0
-                    ) * blackbody_ratio(freq, freq_ref_P, mbb_temperature[0])
+                        mbb_index - 2.0
+                    ) * blackbody_ratio(freq, freq_ref_P, mbb_temperature)
                     for P in [Q, U]:
                         temp[P, pix] *= freq_scaling_P
-                    if len(freqs) > 1:
-                        utils.trapz_step_inplace(
-                            freqs, weights, i, temp[:, pix], output[:, pix]
-                        )
-            elif len(mbb_index) == 1:
+                    utils.trapz_step_inplace(
+                        freqs, weights, i, temp[:, pix], output[:, pix]
+                    )
+            elif np.ndim(mbb_index) == 0:
                 for pix in prange(temp.shape[1]):
                     temp[I, pix] *= (freq / freq_ref_I) ** (
-                        mbb_index[0] - 2.0
+                        mbb_index - 2.0
                     ) * blackbody_ratio(freq, freq_ref_I, mbb_temperature[pix])
                     freq_scaling_P = (freq / freq_ref_P) ** (
-                        mbb_index[0] - 2.0
+                        mbb_index - 2.0
                     ) * blackbody_ratio(freq, freq_ref_P, mbb_temperature[pix])
                     for P in [Q, U]:
                         temp[P, pix] *= freq_scaling_P
-                    if len(freqs) > 1:
-                        utils.trapz_step_inplace(
-                            freqs, weights, i, temp[:, pix], output[:, pix]
-                        )
-            elif len(mbb_temperature) == 0:
+                    utils.trapz_step_inplace(
+                        freqs, weights, i, temp[:, pix], output[:, pix]
+                    )
+            elif np.ndim(mbb_temperature) == 0:
                 for pix in prange(temp.shape[1]):
                     temp[I, pix] *= (freq / freq_ref_I) ** (
                         mbb_index[pix] - 2.0
-                    ) * blackbody_ratio(freq, freq_ref_I, mbb_temperature[0])
+                    ) * blackbody_ratio(freq, freq_ref_I, mbb_temperature)
                     freq_scaling_P = (freq / freq_ref_P) ** (
                         mbb_index[pix] - 2.0
-                    ) * blackbody_ratio(freq, freq_ref_P, mbb_temperature[0])
+                    ) * blackbody_ratio(freq, freq_ref_P, mbb_temperature)
                     for P in [Q, U]:
                         temp[P, pix] *= freq_scaling_P
-                    if len(freqs) > 1:
-                        utils.trapz_step_inplace(
-                            freqs, weights, i, temp[:, pix], output[:, pix]
-                        )
+                    utils.trapz_step_inplace(
+                        freqs, weights, i, temp[:, pix], output[:, pix]
+                    )
             else:  # both index and temp are maps
                 for pix in prange(temp.shape[1]):
                     temp[I, pix] *= (freq / freq_ref_I) ** (
@@ -207,10 +194,9 @@ def get_emission_numba(
                     ) * blackbody_ratio(freq, freq_ref_P, mbb_temperature[pix])
                     for P in [Q, U]:
                         temp[P, pix] *= freq_scaling_P
-                    if len(freqs) > 1:
-                        utils.trapz_step_inplace(
-                            freqs, weights, i, temp[:, pix], output[:, pix]
-                        )
+                    utils.trapz_step_inplace(
+                        freqs, weights, i, temp[:, pix], output[:, pix]
+                    )
     return output
 
 
