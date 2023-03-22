@@ -251,7 +251,11 @@ def apply_smoothing_and_coord_transform(
                 assert (
                     output_nside is not None
                 ), "If inputting Alms, specify output_nside"
-            output_maps.append(u.Quantity(hp.alm2map(alm, nside=output_nside, pixwin=False), unit, copy=False))
+            output_maps.append(
+                u.Quantity(
+                    hp.alm2map(alm, nside=output_nside, pixwin=False), unit, copy=False
+                )
+            )
         if return_car:
             log.info("Alm to map CAR")
             shape, wcs = pixell.enmap.fullsky_geometry(
@@ -261,10 +265,13 @@ def apply_smoothing_and_coord_transform(
             )
             ainfo = pixell.sharp.alm_info(lmax=lmax)
             output_maps.append(
-                    u.Quantity(
-                pixell.curvedsky.alm2map(
-                    alm, pixell.enmap.empty(shape, wcs), ainfo=ainfo
-                ) , unit, copy=False)
+                u.Quantity(
+                    pixell.curvedsky.alm2map(
+                        alm, pixell.enmap.empty(shape, wcs), ainfo=ainfo
+                    ),
+                    unit,
+                    copy=False,
+                )
             )
     else:
         assert (rot is None) or (
