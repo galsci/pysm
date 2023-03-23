@@ -1,6 +1,12 @@
 3.4.0 (unreleased)
 ==================
 
+3.4.0b8 (2023-03-22)
+====================
+
+- Set Fejer1 CAR variant by default, as advised by Simons Observatory, requires `pixell` 0.17.3 https://github.com/galsci/pysm/pull/157
+- Bug fix in `ksz` and `tsz`, conversion was broken for single frequency channel, was fine for bandpass https://github.com/galsci/pysm/pull/158/
+
 3.4.0b7 (2023-02-25)
 ====================
 
