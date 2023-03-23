@@ -7,6 +7,9 @@ The Websky suite of simulated extragalactic component maps, determined from larg
 
 The cosmological parameters used for the websky simulations are available at `on the websky website <https://mocks.cita.utoronto.ca/data/websky/v0.0/cosmology.py>`_.
 
+Both CIB and Radio galaxies have been provided as input maps at discrete frequencies to be interpolated over, the frequency span is 18.7 GHz to 1080 GHz.
+As a temporary fix in order to support frequencies below 18.7 GHz, we have copied the 18.7 GHz map and renamed to 1 GHz.
+
 Cosmic Infrared Background
 --------------------------
 

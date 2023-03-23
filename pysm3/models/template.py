@@ -240,16 +240,24 @@ def apply_smoothing_and_coord_transform(
                         error,
                     )
         if fwhm is not None:
+            log.info("Smoothing with fwhm of %s", str(fwhm))
             hp.smoothalm(alm, fwhm=fwhm.to_value(u.rad), inplace=True, pol=True)
         if rot is not None:
+            log.info("Rotate Alm")
             rot.rotate_alm(alm, inplace=True)
         if return_healpix:
+            log.info("Alm to map HEALPix")
             if input_alm:
                 assert (
                     output_nside is not None
                 ), "If inputting Alms, specify output_nside"
-            output_maps.append(hp.alm2map(alm, nside=output_nside, pixwin=False) * unit)
+            output_maps.append(
+                u.Quantity(
+                    hp.alm2map(alm, nside=output_nside, pixwin=False), unit, copy=False
+                )
+            )
         if return_car:
+            log.info("Alm to map CAR")
             shape, wcs = pixell.enmap.fullsky_geometry(
                 output_car_resol.to_value(u.radian),
                 dims=(3,),
@@ -257,10 +265,13 @@ def apply_smoothing_and_coord_transform(
             )
             ainfo = pixell.sharp.alm_info(lmax=lmax)
             output_maps.append(
-                pixell.curvedsky.alm2map(
-                    alm, pixell.enmap.empty(shape, wcs), ainfo=ainfo
+                u.Quantity(
+                    pixell.curvedsky.alm2map(
+                        alm, pixell.enmap.empty(shape, wcs), ainfo=ainfo
+                    ),
+                    unit,
+                    copy=False,
                 )
-                * unit
             )
     else:
         assert (rot is None) or (
@@ -359,7 +370,7 @@ def read_map(path, nside, unit=None, field=0, map_dist=None):
         nside_in = hp.get_nside(output_map)
         if nside < nside_in:  # do downgrading in double precision
             output_map = hp.ud_grade(output_map.astype(np.float64), nside_out=nside)
-        else:
+        elif nside > nside_in:
             output_map = hp.ud_grade(output_map, nside_out=nside)
         output_map = output_map.astype(dtype, copy=False)
         if unit is None:
@@ -475,7 +486,6 @@ def read_alm(path, has_polarization=True, unit=None, map_dist=None):
     mpi_comm = None if map_dist is None else map_dist.mpi_comm
 
     if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
-
         alm = np.complex128(
             hp.read_alm(filename, hdu=(1, 2, 3) if has_polarization else 1)
         )
@@ -509,7 +519,6 @@ def read_cl(path, has_polarization=True, unit=None, map_dist=None):
     mpi_comm = None if map_dist is None else map_dist.mpi_comm
 
     if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
-
         cl = hp.read_cl(filename)
         if unit is None:
             unit = u.Unit(extract_hdu_unit(filename))

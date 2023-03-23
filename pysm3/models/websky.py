@@ -87,6 +87,7 @@ class WebSkyCIB(InterpolatingComponent):
         """
         self.local_folder = local_folder
         self.websky_freqs_float = [
+            1.0,
             18.7,
             21.6,
             24.5,
@@ -254,10 +255,9 @@ class WebSkySZ(Model):
         # input map is in uK_CMB, we multiply the weights which are
         # in uK_RJ by the conversion factor of uK_CMB->uK_RJ
         # this is the equivalent of
-        if len(freqs) > 1:
-            weights = (weights * u.uK_CMB).to_value(
-                u.uK_RJ, equivalencies=u.cmb_equivalencies(freqs * u.GHz)
-            )
+        weights = (weights * u.uK_CMB).to_value(
+            u.uK_RJ, equivalencies=u.cmb_equivalencies(freqs * u.GHz)
+        )
 
         is_thermal = self.sz_type == "thermal"
         output = (
