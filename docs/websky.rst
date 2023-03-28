@@ -54,6 +54,7 @@ For convenience, see the parameters below:
    & \Omega_c = 0.261 \\
    & \Omega_m = \Omega_b + \Omega_c \\
    & h = 0.68 \\
+   & \sigma_8 = 0.81 \\
    & n_s = 0.965 \\
    & A_s = 2.022 e^{-9} \\
    & N_{eff} = 3.046 \\
