@@ -53,6 +53,7 @@ For convenience, see the parameters below:
    & \Omega_b = 0.049 \\
    & \Omega_c = 0.261 \\
    & \Omega_m = \Omega_b + \Omega_c \\
+   & \Omega_{\Lambda} = 1 - \Omega_b - \Omega_c  \\
    & h = 0.68 \\
    & \sigma_8 = 0.81 \\
    & n_s = 0.965 \\
