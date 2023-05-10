@@ -26,12 +26,13 @@ For more information about abundance matching in the relevant paper at https://a
 Thermal SZ Effect
 -----------------
 
-Provided is a map of the Compton-y parameter and is based on Battaglia et al. (2012) pressure profiles, and can be found at `/project/projectdirs/cmb/pysm-data/websky/0.4/tsz_8192_hp.fits`.
+Provided is a map of the Compton-y parameter and is based on Battaglia et al. (2012) pressure profiles, it is available at $N_{side}=8192$ , and can be found [in the Websky 0.4 folder at NERSC](https://portal.nersc.gov/project/cmb/pysm-data/websky/0.4/).
 
 Kinetic SZ Effect
 -----------------
 
-Provided is a map of the temperature fluctuation due to line of sight peculiar velocities of electrons along the line of sight. Electrons are assumed to follow a Navarro Frenk and White (NFW) profile interior to halos and second order Lagrangian Perturbation Theory (LPT) outside. The ksz map can be found at `/project/projectdirs/cmb/pysm-data/websky/0.4/tsz.fits`
+Provided is a map of the temperature fluctuation due to line of sight peculiar velocities of electrons along the line of sight. Electrons are assumed to follow a Navarro Frenk and White (NFW) profile interior to halos and second order Lagrangian Perturbation Theory (LPT) outside. The ksz map at $N_{side}=4096$ can be found [in the Websky 0.4 folder at NERSC](https://portal.nersc.gov/project/cmb/pysm-data/websky/0.4/).
+
 
 Lensing Convergence
 -------------------
