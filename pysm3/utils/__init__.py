@@ -99,7 +99,7 @@ def normalize_weights(freqs, weights):
         return np.array([1.0])
     else:
         if weights is None:
-            weights = np.ones(len(freqs), dtype=np.float)
+            weights = np.ones(len(freqs), dtype=np.float64)
         weights = weights / np.trapz(weights, freqs)
         weights = (weights * u.uK_RJ).to_value(
             (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
