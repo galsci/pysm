@@ -54,7 +54,7 @@ def test_gnilc_857(model_tag):
         1.48
         if model_tag == "d9"
         else pysm3.models.read_map(
-            "dust_gnilc/gnilc_dust_beta_nside{nside}.fits".format(nside=2048),
+            "dust_gnilc/gnilc_dust_beta_nside{nside}_2023.06.06.fits".format(nside=2048),
             nside=2048,
             field=0,
         )
@@ -63,7 +63,7 @@ def test_gnilc_857(model_tag):
         19.6 * u.K
         if model_tag == "d9"
         else pysm3.models.read_map(
-            "dust_gnilc/gnilc_dust_Td_nside{nside}.fits".format(nside=2048),
+            "dust_gnilc/gnilc_dust_Td_nside{nside}_2023.06.06.fits".format(nside=2048),
             nside=2048,
             field=0,
         )
