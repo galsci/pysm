@@ -5,7 +5,7 @@ from astropy.utils import data
 
 DATAURL = "https://portal.nersc.gov/project/cmb/pysm-data/"
 
-PREDEFINED_DATA_FOLDERS = ["/global/project/projectdirs/cmb/www/pysm-data/"]  # NERSC
+PREDEFINED_DATA_FOLDERS = ["/global/cfs/cdirs/cmb/www/pysm-data/"]  # NERSC
 
 log = logging.getLogger("pysm3")
 
