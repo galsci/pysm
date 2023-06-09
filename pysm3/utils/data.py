@@ -1,5 +1,7 @@
 import os
 import logging
+from urllib.error import URLError
+
 
 from astropy.utils import data
 
@@ -46,5 +48,11 @@ class RemoteData:
             "remote_timeout", 90
         ):
             log.info(f"Retrieve data for {filename} (if not cached already)")
-            full_path = data.get_pkg_data_filename(filename, show_progress=True)
+            try:
+                full_path = data.get_pkg_data_filename(filename, show_progress=True)
+            except URLError as e:
+                log.error(
+                    "File not found, please make sure you are using the latest version of PySM 3"
+                )
+                raise e
         return full_path

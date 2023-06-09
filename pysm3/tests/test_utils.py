@@ -5,6 +5,7 @@ import pysm3.units as u
 from astropy.io import fits
 from astropy.tests.helper import assert_quantity_allclose
 from pysm3 import utils
+from urllib.error import URLError
 
 
 def test_get_relevant_frequencies():
@@ -148,3 +149,8 @@ def test_add_metadata_different_units(test_fits_file):
         assert f[1].header["TUNIT2"] == "mK_RJ"
         assert f[1].header["TUNIT3"] == "K_CMB"
         assert f[1].header["REF_FREQ"] == "353 GHz"
+
+
+def test_data_raise():
+    with pytest.raises(URLError):
+        pysm3.utils.RemoteData().get("doesntexist.txt")
