@@ -1,6 +1,13 @@
 3.4.0 (unreleased)
 ==================
 
+3.4.0b9 (2023-06-27)
+====================
+
+- Bugfix: Fix dust beta and Td ellmax that were erroneously set to 2048 https://github.com/galsci/pysm/pull/164
+- Print warning if templates are not found suggesting to update PySM https://github.com/galsci/pysm/pull/165
+- Document features in the spectrum of d9 d10 d11 s4 s5 s6 and s7 due to the "Galactic plane fix" https://github.com/galsci/pysm/pull/168/ and https://github.com/galsci/pysm/pull/170
+
 3.4.0b8 (2023-03-22)
 ====================
 
