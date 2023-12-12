@@ -46,12 +46,12 @@ def test_synch_model_s7_44(model_tag):
 
     freq_ref = 23 * u.GHz
     beta = pysm3.models.read_map(
-        "synch/synch_beta_nside{nside}.fits".format(nside=nside),
+        "synch/synch_beta_nside{nside}_2023.02.16.fits".format(nside=nside),
         nside=nside,
         field=0,
     )
     curvature = pysm3.models.read_map(
-        "synch/synch_curvature_nside{nside}.fits".format(nside=nside),
+        "synch/synch_curvature_nside{nside}_2023.02.17.fits".format(nside=nside),
         nside=nside,
         field=0,
     )
@@ -101,7 +101,7 @@ def test_synch_44(model_tag):
         -3.1
         if model_tag == "s4"
         else pysm3.models.read_map(
-            "synch/synch_beta_nside{nside}.fits".format(nside=nside),
+            "synch/synch_beta_nside{nside}_2023.02.16.fits".format(nside=nside),
             nside=nside,
             field=0,
         )
