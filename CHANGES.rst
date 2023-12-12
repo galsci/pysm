@@ -1,5 +1,12 @@
-3.4.0 (unreleased)
+3.4.1 (unreleased)
 ==================
+
+3.4.0 (2023-12-11)
+==================
+
+- No model changes compared to `b9`
+- Added `pysm_tag_filename` script to add datestamp to filenames to avoid caching errors
+- Added datestamp to Dust and Synchrotron templates to avoid caching errors if users had previously used a beta version of PySM 3.4.0 see commit 694653e6a582a4051e8cc7629c69f2ccd0e195ff
 
 3.4.0b9 (2023-06-27)
 ====================
