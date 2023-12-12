@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import datetime
+from pathlib import Path
+
+if len(sys.argv) < 2:
+    print(
+        """pysm_tag_filename
+
+    Modify a filename to add a datestamp based on the last modification date
+    e.g. `myfile.txt` becomes `myfile_2022.06.22.txt`"""
+    )
+
+for filename in sys.argv[1:]:
+    filename = Path(filename)
+    file_modification_date = datetime.datetime.fromtimestamp(
+        os.path.getmtime(filename)
+    ).strftime("%Y.%m.%d")
+    new_filename = f"{filename.stem}_{file_modification_date}{filename.suffix}"
+    print(filename, "=>", new_filename)
+    filename.rename(new_filename)
