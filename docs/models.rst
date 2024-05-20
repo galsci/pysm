@@ -122,7 +122,7 @@ Cosmic Infrared Background
 Sunyaev–Zeldovich emission
 ==========================
 
-- **tsz1**: Thermal SZ emission from WebSky 0.4. Available at $N_{side}=4096$. For more details see :ref:`websky`.
+- **tsz1**: Thermal SZ emission from WebSky 0.4. Available at $N_{side}=8192$. For more details see :ref:`websky`.
 
 - **ksz1**: Kinetic SZ emission from WebSky 0.4. Available at $N_{side}=4096$. For more details see :ref:`websky`.
 
