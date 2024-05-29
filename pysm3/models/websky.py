@@ -228,9 +228,9 @@ class WebSkySZ(Model):
     ):
 
         if max_nside is None:
-            if sz_type=='kinetic':
+            if sz_type == "kinetic":
                 max_nside = 4096
-            if sz_type=='thermal':
+            if sz_type == "thermal":
                 max_nside = 8192
         super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         self.version = str(version)
