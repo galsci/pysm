@@ -19,7 +19,6 @@ import gc
 try:
     import pixell.enmap
     import pixell.curvedsky
-    import pixell.sharp
 except ImportError:
     pixell = None
 
@@ -263,7 +262,7 @@ def apply_smoothing_and_coord_transform(
                 dims=(3,),
                 variant="fejer1",
             )
-            ainfo = pixell.sharp.alm_info(lmax=lmax)
+            ainfo = pixell.curvedsky.alm_info(lmax=lmax)
             output_maps.append(
                 u.Quantity(
                     pixell.curvedsky.alm2map(
