@@ -22,6 +22,15 @@ def remove_class_from_dict(d):
 
 def create_components_from_config(config, nside, map_dist=None):
     output_components = []
+    if "class" in config:
+        class_name = config["class"]
+        component_class = globals()[class_name]
+        output_component = component_class(
+            **remove_class_from_dict(config), nside=nside, map_dist=map_dist
+        )
+        output_components.append(output_component)
+        return output_components
+
     for model_name, model_config in config.items():
         try:
             class_name = model_config["class"]
@@ -43,7 +52,9 @@ def create_components_from_config(config, nside, map_dist=None):
         else:
             component_class = globals()[class_name]
             output_component = component_class(
-                **remove_class_from_dict(model_config), nside=nside, map_dist=map_dist
+                **remove_class_from_dict(model_config),
+                nside=nside,
+                map_dist=map_dist,
             )
         output_components.append(output_component)
     return output_components
