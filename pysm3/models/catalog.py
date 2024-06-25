@@ -45,15 +45,15 @@ def evaluate_model(freqs, weights, coeff):
     """
     n_sources = coeff.shape[0]
     logfreqs = np.log(freqs)
-    out = np.zeros((n_sources, 1), dtype=np.float64)
+    out = np.zeros(n_sources, dtype=np.float64)
     assert len(freqs) == len(weights)
     if len(freqs) == 1:
         for i_source in range(n_sources):
-            out[i_source, 0] = evaluate_poly(coeff[i_source, :], logfreqs[0])
+            out[i_source] = evaluate_poly(coeff[i_source, :], logfreqs[0])
     else:
         flux = np.zeros(len(freqs), dtype=np.float64)
         for i_source in range(n_sources):
             for i_freq in range(len(freqs)):
                 flux[i_freq] = evaluate_poly(coeff[i_source, :], logfreqs[i_freq])
-            out[i_source, 0] = np.trapz(flux * weights, x=freqs)
+            out[i_source] = np.trapz(flux * weights, x=freqs)
     return out
