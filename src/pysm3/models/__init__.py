@@ -17,6 +17,7 @@ from .websky import (
     WebSkyCIB,
     WebSkySZ,
     WebSkyRadioGalaxies,
+    AgoraSZ
 )
 from .catalog import PointSourceCatalog
 from .dipole import CMBDipole
