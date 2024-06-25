@@ -20,30 +20,29 @@ def remove_class_from_dict(d):
 
 def create_components_from_config(config, nside, map_dist=None):
     output_components = []
-    for model_name, model_config in config.items():
-        try:
-            class_name = model_config["class"]
-        except KeyError:  # multiple components
-            partial_components = []
-            for each_config in model_config.values():
-                class_name = each_config["class"]
-                component_class = globals()[class_name]
-                partial_components.append(
-                    component_class(
-                        **remove_class_from_dict(each_config),
-                        nside=nside,
-                        map_dist=map_dist
-                    )
-                )
-            output_component = Sky(
-                component_objects=partial_components, nside=nside, map_dist=map_dist
-            )
-        else:
+    try:
+        class_name = config["class"]
+    except KeyError:  # multiple components
+        partial_components = []
+        for each_config in config.values():
+            class_name = each_config["class"]
             component_class = globals()[class_name]
-            output_component = component_class(
-                **remove_class_from_dict(model_config), nside=nside, map_dist=map_dist
+            partial_components.append(
+                component_class(
+                    **remove_class_from_dict(each_config),
+                    nside=nside,
+                    map_dist=map_dist
+                )
             )
-        output_components.append(output_component)
+        output_component = Sky(
+            component_objects=partial_components, nside=nside, map_dist=map_dist
+        )
+    else:
+        component_class = globals()[class_name]
+        output_component = component_class(
+            **remove_class_from_dict(config), nside=nside, map_dist=map_dist
+        )
+    output_components.append(output_component)
     return output_components
 
 
