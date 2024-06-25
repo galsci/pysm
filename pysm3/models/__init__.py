@@ -17,4 +17,5 @@ from .websky import (
     WebSkyCIB,
     WebSkySZ,
     WebSkyRadioGalaxies,
+    AgoraSZ
 )
