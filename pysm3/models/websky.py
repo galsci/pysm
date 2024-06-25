@@ -314,3 +314,56 @@ class WebSkyCMB(CMBMap):
             max_nside=max_nside,
             map_dist=map_dist,
         )
+
+
+class AgoraSZ(Model):
+    def __init__(
+        self,
+        nside,
+        sz_type="kinetic",
+        max_nside=None,
+        map_dist=None,
+    ):
+
+        if max_nside is None:
+            if sz_type == "kinetic":
+                max_nside = 8192
+            if sz_type == "thermal":
+                max_nside = 8192
+        super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
+        self.sz_type = sz_type
+        # self.remote_data = utils.RemoteData()
+        # filename = self.remote_data.get(self.get_filename())
+        filename = self.get_filename()
+        self.m = self.read_map(filename, field=0, unit=u.uK_CMB)
+
+    def get_filename(self):
+        """Get SZ filenames for an agora version"""
+
+        if self.sz_type == "kinetic":
+            path = "/Users/kristen/Documents/GitHub/ACT-Simulations/agora/agora_lkszNGbahamas80_nside8192_uk.fits"
+        elif self.sz_type == "thermal":
+            path = "/Users/kristen/Documents/GitHub/ACT-Simulations/agora/agora_ltszNGbahamas80_nside8192_uk.fits"
+
+        return str(path)
+
+    @u.quantity_input
+    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
+
+        freqs = pysm.check_freq_input(freqs)
+        weights = pysm.normalize_weights(freqs, weights)
+
+        # input map is in uK_CMB, we multiply the weights which are
+        # in uK_RJ by the conversion factor of uK_CMB->uK_RJ
+        # this is the equivalent of
+        weights = (weights * u.uK_CMB).to_value(
+            u.uK_RJ, equivalencies=u.cmb_equivalencies(freqs * u.GHz)
+        )
+
+        is_thermal = self.sz_type == "thermal"
+        output = (
+            get_sz_emission_numba(freqs, weights, self.m.value, is_thermal) << u.uK_RJ
+        )
+
+        # the output of out is always 2D, (IQU, npix)
+        return output
