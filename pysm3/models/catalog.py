@@ -1,12 +1,10 @@
-from pathlib import Path
-
-import numpy as np
+# import numpy as np
 from numba import njit
-from astropy import constants as const
-
-from .. import units as u
-from .. import utils
-from .template import Model
+# from astropy import constants as const
+#
+# from .. import units as u
+# from .. import utils
+# from .template import Model
 
 
 @njit
