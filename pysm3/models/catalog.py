@@ -74,8 +74,8 @@ class PointSourceCatalog(Model):
     any order. (source_index, pol_order). Unit needs to be Jy
     each field should have an attribute units which is checked when loading
     a model. No conversion is performed.
-    See the documentation for an example on how to create a catalog
-    file with `xarray`.
+    See the documentation and the unit tests for examples on how to create a
+    catalog file with `xarray`.
 
     Parameters
     ----------
