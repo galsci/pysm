@@ -1,8 +1,10 @@
 import pysm3 as pysm
 from numpy.testing import assert_allclose
+import pytest
 
-from pysm3.models.catalog import evaluate_poly, evaluate_model
+from pysm3.models.catalog import evaluate_poly, evaluate_model, PointSourceCatalog
 import numpy as np
+import xarray as xr
 
 
 def test_evaluate_poly():
@@ -44,3 +46,35 @@ def test_evaluate_model_2freq_lin():
     assert flux > 6
     assert flux < 8
     assert flux == np.trapz(weights * np.array([6, 8]), x=freqs)
+
+
+@pytest.fixture(scope="session")
+def generate_test_catalog(tmp_path_factory):
+    num_sources = 2
+    indices = np.arange(num_sources)
+
+    dims = ("index", "power")
+    catalog = xr.Dataset(
+        {
+            "logpolycoefflux": (dims, np.zeros((len(indices), 5), dtype=np.float64)),
+            "logpolycoefpolflux": (dims, np.zeros((len(indices), 5), dtype=np.float64)),
+        },
+        coords={
+            "index": indices,
+            "power": np.arange(5),
+            "theta": ("index", np.zeros(num_sources)),
+            "phi": ("index", np.zeros(num_sources)),
+        },
+    )
+    for field in ["theta", "phi"]:
+        catalog[field].attrs["units"] = "rad"
+    for field in ["logpolycoefflux", "logpolycoefpolflux"]:
+        catalog[field].attrs["units"] = "Jy"
+    fn = tmp_path_factory.mktemp("data") / "test_catalog.h5"
+    catalog.to_netcdf(str(fn), format="NETCDF4")  # requires netcdf4 package
+    return str(fn)
+
+
+def test_catalog_class(generate_test_catalog):
+    nside = 64
+    catalog = PointSourceCatalog(generate_test_catalog, nside=nside)
