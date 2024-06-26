@@ -1,11 +1,11 @@
 import numpy as np
 from numba import njit
 
+
 # from astropy import constants as const
 #
 from .. import units as u
 
-# from .. import utils
 from .template import Model
 
 import h5py
@@ -106,6 +106,7 @@ class PointSourceCatalog(Model):
 
     def get_fluxes(self, freqs: u.GHz, coeff="logpolycoefflux", weights=None):
         """Get catalog fluxes integrated over a bandpass"""
+        weights /= np.trapz(weights, x=freqs.to_value(u.GHz))
         with h5py.File(self.catalog_filename) as f:
             flux = evaluate_model(freqs.to_value(u.GHz), weights, np.array(f[coeff]))
         return flux
@@ -118,4 +119,4 @@ class PointSourceCatalog(Model):
         weights=None,
         output_units=u.uK_RJ,
     ):
-        raise NotImplemented()
+        raise NotImplementedError()
