@@ -1,5 +1,4 @@
 import os.path
-from pathlib import Path
 
 import numpy as np
 from numba import njit

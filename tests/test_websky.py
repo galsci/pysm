@@ -127,7 +127,9 @@ def test_sz(tmp_path, monkeypatch, sz_type):
         test_map *= 1e-6
     hp.write_map(path / filename, test_map)
 
-    tsz = SimpleSZ(nside, template_name=str(path/filename), sz_type=sz_type, max_nside=8192)
+    tsz = SimpleSZ(
+        nside, template_name=str(path / filename), sz_type=sz_type, max_nside=8192
+    )
 
     freq = 100 * u.GHz
     tsz_map = tsz.get_emission(freq).to(
