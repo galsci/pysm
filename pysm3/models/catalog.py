@@ -1,4 +1,5 @@
 import numpy as np
+import healpy as hp
 from numba import njit
 
 
@@ -119,4 +120,22 @@ class PointSourceCatalog(Model):
         weights=None,
         output_units=u.uK_RJ,
     ):
-        raise NotImplementedError()
+        with h5py.File(self.catalog_filename) as f:
+            pix = hp.ang2pix(self.nside, f["theta"], f["phi"])
+            fluxes_I = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefflux")
+            output_map = np.zeros(self.shape, dtype=np.float32)
+            if fwhm is None:
+                output_map[0, pix] += fluxes_I
+            del fluxes_I
+            fluxes_P = self.get_fluxes(
+                freqs, weights=weights, coeff="logpolycoefpolflux"
+            )
+            # set seed so that the polarization angle is always the same for each run
+            # could expose to the interface if useful
+            np.random.seed(56567)
+            psirand = np.random.uniform(
+                low=-np.pi / 2.0, high=np.pi / 2.0, size=len(fluxes_P)
+            )
+            if fwhm is None:
+                output_map[1, pix] += fluxes_P * np.cos(2 * psirand)
+                output_map[2, pix] += fluxes_P * np.sin(2 * psirand)
