@@ -1,6 +1,7 @@
 import numpy as np
 import healpy as hp
 from numba import njit
+from .. import utils
 
 
 # from astropy import constants as const
@@ -88,13 +89,12 @@ class PointSourceCatalog(Model):
         self,
         catalog_filename,
         nside=None,
-        target_shape=None,
         target_wcs=None,
         map_dist=None,
     ):
         self.catalog_filename = catalog_filename
         self.nside = nside
-        self.shape = target_shape
+        self.shape = (3, hp.nside2npix(nside))
         self.wcs = target_wcs
 
         with h5py.File(self.catalog_filename) as f:
@@ -106,11 +106,11 @@ class PointSourceCatalog(Model):
         assert map_dist is None, "Distributed execution not supported"
 
     def get_fluxes(self, freqs: u.GHz, coeff="logpolycoefflux", weights=None):
-        """Get catalog fluxes integrated over a bandpass"""
+        """Get catalog fluxes in Jy integrated over a bandpass"""
         weights /= np.trapz(weights, x=freqs.to_value(u.GHz))
         with h5py.File(self.catalog_filename) as f:
             flux = evaluate_model(freqs.to_value(u.GHz), weights, np.array(f[coeff]))
-        return flux
+        return flux * u.Jy
 
     @u.quantity_input
     def get_emission(
@@ -122,20 +122,32 @@ class PointSourceCatalog(Model):
     ):
         with h5py.File(self.catalog_filename) as f:
             pix = hp.ang2pix(self.nside, f["theta"], f["phi"])
-            fluxes_I = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefflux")
-            output_map = np.zeros(self.shape, dtype=np.float32)
-            if fwhm is None:
-                output_map[0, pix] += fluxes_I
-            del fluxes_I
-            fluxes_P = self.get_fluxes(
-                freqs, weights=weights, coeff="logpolycoefpolflux"
-            )
-            # set seed so that the polarization angle is always the same for each run
-            # could expose to the interface if useful
-            np.random.seed(56567)
-            psirand = np.random.uniform(
-                low=-np.pi / 2.0, high=np.pi / 2.0, size=len(fluxes_P)
-            )
-            if fwhm is None:
-                output_map[1, pix] += fluxes_P * np.cos(2 * psirand)
-                output_map[2, pix] += fluxes_P * np.sin(2 * psirand)
+        scaling_factor = utils.bandpass_unit_conversion(
+            freqs, weights, output_unit=output_units, input_unit=u.Jy / u.sr
+        )
+        pix_size = hp.nside2resol(self.nside) * u.sr
+        surface_brightness_I = (
+            self.get_fluxes(freqs, weights=weights, coeff="logpolycoefflux")
+            / pix_size
+            * scaling_factor
+        )
+        output_map = np.zeros(self.shape, dtype=np.float32) * output_units
+        if fwhm is None:
+            # sum, what if we have 2 sources on the same pixel?
+            output_map[0, pix] += surface_brightness_I
+        del surface_brightness_I
+        surface_brightness_P = (
+            self.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
+            / pix_size
+            * scaling_factor
+        )
+        # set seed so that the polarization angle is always the same for each run
+        # could expose to the interface if useful
+        np.random.seed(56567)
+        psirand = np.random.uniform(
+            low=-np.pi / 2.0, high=np.pi / 2.0, size=len(surface_brightness_P)
+        )
+        if fwhm is None:
+            output_map[1, pix] += surface_brightness_P * np.cos(2 * psirand)
+            output_map[2, pix] += surface_brightness_P * np.sin(2 * psirand)
+        return output_map
