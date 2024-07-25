@@ -125,3 +125,30 @@ def test_catalog_class_map_no_beam(test_catalog):
     )
     assert_allclose(output_map[1, pix], surface_brightness_P * np.cos(2 * psirand))
     assert_allclose(output_map[2, pix], surface_brightness_P * np.sin(2 * psirand))
+
+
+def test_catalog_class_map(test_catalog):
+    nside = 8
+    catalog = PointSourceCatalog(test_catalog, nside=nside)
+    freqs = np.exp(np.array([3, 4])) * u.GHz  # ~ 20 and ~ 55 GHz
+    weights = np.array([1, 1], dtype=np.float64)
+    weights /= np.trapz(weights, x=freqs.to_value(u.GHz))
+
+    scaling_factor = utils.bandpass_unit_conversion(
+        freqs, weights, output_unit=u.uK_RJ, input_unit=u.Jy / u.sr
+    ) / (hp.nside2resol(nside) * u.sr)
+    surface_brigthness = catalog.get_fluxes(freqs, weights=weights) * scaling_factor
+
+    surface_brightness_P = (
+        catalog.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
+        * scaling_factor
+    )
+    output_map = catalog.get_emission(
+        freqs, weights=weights, output_units=u.uK_RJ, fwhm=None
+    )
+    with h5py.File(test_catalog) as f:
+        pix = hp.ang2pix(nside, f["theta"], f["phi"])
+    assert_allclose(
+        output_map[0, pix],
+        surface_brigthness,
+    )

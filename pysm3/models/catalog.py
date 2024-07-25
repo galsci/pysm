@@ -13,6 +13,15 @@ from .template import Model
 import h5py
 
 
+def fwhm2sigma(fwhm):
+    return fwhm / (2.0 * np.sqrt(2.0 * np.log(2.0)))
+
+
+def flux2amp(flux, fwhm):
+    sigma = fwhm2sigma(fwhm)
+    return flux / (2 * np.pi * sigma**2)
+
+
 @njit
 def evaluate_poly(p, x):
     """Low level polynomial evaluation, both input are 1D
@@ -120,7 +129,8 @@ class PointSourceCatalog(Model):
         fwhm: [u.arcmin, None] = None,
         weights=None,
         output_units=u.uK_RJ,
-        car_map_resolution=None,
+        car_map_resolution: [u.arcmin, None] = None,
+        return_car=False,
     ):
         """Generate a HEALPix or CAR map of the catalog emission integrated on the bandpass
         and convolved with the beam
@@ -139,6 +149,8 @@ class PointSourceCatalog(Model):
             Output units of the map
         car_map_resolution: float
             Resolution of the CAR map used by pixell to generate the map
+        return_car: bool
+            If True return a CAR map, if False return a HEALPix map
 
         Returns
         -------
@@ -149,24 +161,42 @@ class PointSourceCatalog(Model):
         scaling_factor = utils.bandpass_unit_conversion(
             freqs, weights, output_unit=output_units, input_unit=u.Jy / u.sr
         )
-        pix_size = hp.nside2resol(self.nside) * u.sr
-        surface_brightness_I = (
-            self.get_fluxes(freqs, weights=weights, coeff="logpolycoefflux")
-            / pix_size
-            * scaling_factor
-        )
-        output_map = np.zeros(self.shape, dtype=np.float32) * output_units
+        pix_size = hp.nside2resol(self.nside) * u.sr  # fix units
+        if car_map_resolution is None:
+            car_map_resolution = pix_size / 2  # HERE
+        fluxes_I = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefflux")
+
         if fwhm is None:
+            output_map = np.zeros(self.shape, dtype=np.float32) * output_units
             # sum, what if we have 2 sources on the same pixel?
-            output_map[0, pix] += surface_brightness_I
+            output_map[0, pix] += fluxes_I / pix_size * scaling_factor
         else:
 
-            shape, wcs = pixell.enmap.fullsky_geometry(
-                output_car_resol.to_value(u.radian),
+            from pixell import (
+                enmap,
+                resample,
+                curvedsky as cs,
+                reproject,
+                pointsrcs,
+            )
+
+            shape, wcs = enmap.fullsky_geometry(
+                car_map_resolution.to_value(u.radian),
                 dims=(3,),
                 variant="fejer1",
             )
-        del surface_brightness_I
+            output_map = np.zeros(shape, dtype=np.float32) * output_units
+            r, p = pointsrcs.expand_beam(fwhm2sigma(fwhm))
+            output_map[0] = pointsrcs.sim_objects(
+                shape,
+                wcs,
+                np.column_stack((f["phi"], np.pi / 2 - f["theta"])),
+                flux2amp(fluxes_I, fwhm)
+                * scaling_factor,  # to peak amplitude and to output units
+                ((r, p)),
+            )
+
+        del fluxes_I
         surface_brightness_P = (
             self.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
             / pix_size
