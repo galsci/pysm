@@ -67,6 +67,7 @@ def evaluate_model(freqs, weights, coeff):
 class PointSourceCatalog(Model):
     """Model for a Catalog of point sources defined with their coordinates and
     a model of their emission based on a logpolynomial of frequency.
+    The beam convolution is performed in map domain with `pixell`.
 
     The catalog should be in HDF5 format, with the fields:
     theta: colatitude in radians
@@ -119,7 +120,30 @@ class PointSourceCatalog(Model):
         fwhm: [u.arcmin, None] = None,
         weights=None,
         output_units=u.uK_RJ,
+        car_map_resolution=None,
     ):
+        """Generate a HEALPix or CAR map of the catalog emission integrated on the bandpass
+        and convolved with the beam
+
+        Parameters
+        ----------
+        freqs: np.array
+            Array of frequencies in GHz
+        fwhm: float or None
+            Full Width Half Maximum of the beam in arcminutes, if None, each source is assigned
+            to a single pixel
+        weights: np.array
+            Array of relative bandpass weights already normalized
+            Same length of freqs, if None, uniform weights are assumed
+        output_units: astropy.units
+            Output units of the map
+        car_map_resolution: float
+            Resolution of the CAR map used by pixell to generate the map
+
+        Returns
+        -------
+        output_map: np.array
+            Output HEALPix or CAR map"""
         with h5py.File(self.catalog_filename) as f:
             pix = hp.ang2pix(self.nside, f["theta"], f["phi"])
         scaling_factor = utils.bandpass_unit_conversion(
@@ -135,6 +159,13 @@ class PointSourceCatalog(Model):
         if fwhm is None:
             # sum, what if we have 2 sources on the same pixel?
             output_map[0, pix] += surface_brightness_I
+        else:
+
+            shape, wcs = pixell.enmap.fullsky_geometry(
+                output_car_resol.to_value(u.radian),
+                dims=(3,),
+                variant="fejer1",
+            )
         del surface_brightness_I
         surface_brightness_P = (
             self.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
