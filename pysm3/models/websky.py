@@ -1,5 +1,4 @@
 import os.path
-from pathlib import Path
 
 from numba import njit
 import numpy as np
@@ -217,39 +216,38 @@ class WebSkyRadioGalaxies(WebSkyCIB):
         return filenames
 
 
-class WebSkySZ(Model):
+class SimpleSZ(Model):
+    """Simple SZ model with a single frequency-independent map
+
+    Parameters
+    ----------
+
+    nside : int
+        HEALPix NSIDE of the output maps
+    template_path : str
+        path to the FITS file containing the template
+    sz_type : str
+        "kinetic" or "thermal"
+    max_nside : int
+        maximum NSIDE at which the input maps are available
+    """
+
     def __init__(
         self,
         nside,
-        version="0.4",
-        sz_type="kinetic",
-        max_nside=None,
+        template_name,
+        sz_type,
+        max_nside,
+        version=None,
         map_dist=None,
     ):
 
-        if max_nside is None:
-            if sz_type == "kinetic":
-                max_nside = 4096
-            if sz_type == "thermal":
-                max_nside = 8192
         super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         self.version = str(version)
         self.sz_type = sz_type
         self.remote_data = utils.RemoteData()
-        filename = self.remote_data.get(self.get_filename())
+        filename = self.remote_data.get(template_name)
         self.m = self.read_map(filename, field=0, unit=u.uK_CMB)
-
-    def get_filename(self):
-        """Get SZ filenames for a websky version"""
-
-        path = Path("websky") / self.version
-
-        if self.sz_type == "kinetic":
-            path = path / "ksz.fits"
-        elif self.sz_type == "thermal":
-            path = path / "tsz_8192_hp.fits"
-
-        return str(path)
 
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
