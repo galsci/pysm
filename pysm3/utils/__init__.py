@@ -217,3 +217,14 @@ def check_freq_input(freqs):
     if freqs.isscalar:
         freqs = freqs[None]
     return freqs.to_value(u.GHz)
+
+
+def wrap_wcs(m, wcs):
+    """Function to attach wcs to a map if we are working with CAR maps"""
+
+    if wcs is not None:
+        from pixell import enmap
+
+        return enmap.enmap(m.value, wcs=wcs)
+    else:
+        return m
