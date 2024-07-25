@@ -116,5 +116,5 @@ def test_catalog_class_emission(test_catalog):
         pix = hp.ang2pix(nside, f["theta"], f["phi"])
     assert_allclose(
         output_map[0, pix],
-        surface_brigthness.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freqs.mean())),
+        surface_brigthness,
     )
