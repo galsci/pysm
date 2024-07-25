@@ -82,7 +82,7 @@ def test_catalog(tmp_path_factory):
 
 
 def test_catalog_class_fluxes(test_catalog):
-    nside = 64
+    nside = 8
     catalog = PointSourceCatalog(test_catalog, nside=nside)
     freqs = np.exp(np.array([3, 4])) * u.GHz  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
@@ -95,7 +95,7 @@ def test_catalog_class_fluxes(test_catalog):
 
 
 def test_catalog_class_map_no_beam(test_catalog):
-    nside = 64
+    nside = 8
     catalog = PointSourceCatalog(test_catalog, nside=nside)
     freqs = np.exp(np.array([3, 4])) * u.GHz  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
