@@ -1,5 +1,6 @@
 3.4.1 (unreleased)
 ==================
+- Updated `pixell` from 0.17.3 to 0.26.0 https://github.com/galsci/pysm/pull/183
 
 3.4.0 (2023-12-11)
 ==================
