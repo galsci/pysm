@@ -13,11 +13,27 @@ from .template import Model
 import h5py
 
 
+@njit
 def fwhm2sigma(fwhm):
+    """Converts the Full Width Half Maximum of a Gaussian beam to its standard deviation"""
     return fwhm / (2.0 * np.sqrt(2.0 * np.log(2.0)))
 
 
+@njit
 def flux2amp(flux, fwhm):
+    """Converts the total flux of a radio source to the peak amplitude of its Gaussian beam representation, taking into account the width of the beam as specified by its FWHM
+
+    Parameters
+    ----------
+    flux: float
+        Total flux of the radio source
+    fwhm: float
+        Full Width Half Maximum of the beam in radians
+
+    Returns
+    -------
+    amp: float
+        Peak amplitude of the Gaussian beam representation of the radio source"""
     sigma = fwhm2sigma(fwhm)
     return flux / (2 * np.pi * sigma**2)
 
@@ -193,14 +209,14 @@ class PointSourceCatalog(Model):
                 variant="fejer1",
             )
             output_map = enmap.enmap(np.zeros(shape, dtype=np.float32), wcs)
-            r, p = pointsrcs.expand_beam(fwhm2sigma(fwhm))
+            r, p = pointsrcs.expand_beam(fwhm2sigma(fwhm.to_value(u.rad)))
             with h5py.File(self.catalog_filename) as f:
                 output_map[0] = (
                     pointsrcs.sim_objects(
                         shape,
                         wcs,
                         np.column_stack(
-                            (np.array(f["phi"]), np.pi / 2 - np.array(f["theta"]))
+                            (np.pi / 2 - np.array(f["theta"]), np.array(f["phi"]))
                         ),
                         flux2amp(fluxes_I.to_value(u.Jy), fwhm.to_value(u.rad))
                         * scaling_factor.value,  # to peak amplitude and to output units
