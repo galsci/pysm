@@ -148,7 +148,8 @@ class PointSourceCatalog(Model):
         output_units: astropy.units
             Output units of the map
         car_map_resolution: float
-            Resolution of the CAR map used by pixell to generate the map
+            Resolution of the CAR map used by pixell to generate the map, if None,
+            it is set to half of the resolution of the HEALPix map given by `self.nside`
         return_car: bool
             If True return a CAR map, if False return a HEALPix map
 
@@ -161,9 +162,9 @@ class PointSourceCatalog(Model):
         scaling_factor = utils.bandpass_unit_conversion(
             freqs, weights, output_unit=output_units, input_unit=u.Jy / u.sr
         )
-        pix_size = hp.nside2resol(self.nside) * u.sr  # fix units
+        pix_size = hp.nside2pixarea(self.nside) * u.sr
         if car_map_resolution is None:
-            car_map_resolution = pix_size / 2  # HERE
+            car_map_resolution = hp.nside2resol(self.nside) * u.rad / 2
         fluxes_I = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefflux")
 
         if fwhm is None:

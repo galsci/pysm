@@ -103,28 +103,23 @@ def test_catalog_class_map_no_beam(test_catalog):
 
     scaling_factor = utils.bandpass_unit_conversion(
         freqs, weights, output_unit=u.uK_RJ, input_unit=u.Jy / u.sr
-    ) / (hp.nside2resol(nside) * u.sr)
-    surface_brigthness = catalog.get_fluxes(freqs, weights=weights) * scaling_factor
+    ) / (hp.nside2pixarea(nside) * u.sr)
+    flux_I = catalog.get_fluxes(freqs, weights=weights)
 
-    surface_brightness_P = (
-        catalog.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
-        * scaling_factor
-    )
+    flux_P = catalog.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
     output_map = catalog.get_emission(
         freqs, weights=weights, output_units=u.uK_RJ, fwhm=None
     )
     with h5py.File(test_catalog) as f:
         pix = hp.ang2pix(nside, f["theta"], f["phi"])
     assert_allclose(
-        output_map[0, pix],
-        surface_brigthness,
+        output_map[0, pix] / scaling_factor,  # convert to flux
+        flux_I,
     )
     np.random.seed(56567)
-    psirand = np.random.uniform(
-        low=-np.pi / 2.0, high=np.pi / 2.0, size=len(surface_brightness_P)
-    )
-    assert_allclose(output_map[1, pix], surface_brightness_P * np.cos(2 * psirand))
-    assert_allclose(output_map[2, pix], surface_brightness_P * np.sin(2 * psirand))
+    psirand = np.random.uniform(low=-np.pi / 2.0, high=np.pi / 2.0, size=len(flux_P))
+    assert_allclose(output_map[1, pix] / scaling_factor, flux_P * np.cos(2 * psirand))
+    assert_allclose(output_map[2, pix] / scaling_factor, flux_P * np.sin(2 * psirand))
 
 
 def test_catalog_class_map(test_catalog):
