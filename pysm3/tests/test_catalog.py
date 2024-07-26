@@ -1,4 +1,5 @@
 from pysm3 import units as u
+from pysm3.utils import car_aperture_photometry
 import h5py
 import healpy as hp
 from numpy.testing import assert_allclose
@@ -126,7 +127,7 @@ def test_catalog_class_map_no_beam(test_catalog):
 def test_catalog_class_map_small_beam(test_catalog):
     # resolution of the map is 7 degrees, beam is 0.5 degrees
     # all flux should be in the central pixel
-    nside = 8
+    nside = 32
     catalog = PointSourceCatalog(test_catalog, nside=nside)
     freqs = np.exp(np.array([3, 4])) * u.GHz  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
@@ -137,11 +138,12 @@ def test_catalog_class_map_small_beam(test_catalog):
     ) / (hp.nside2pixarea(nside) * u.sr)
     surface_brigthness = catalog.get_fluxes(freqs, weights=weights) * scaling_factor
 
+    fwhm = 1 * u.deg
     output_map = catalog.get_emission(
-        freqs, weights=weights, output_units=u.uK_RJ, fwhm=0.5 * u.deg
+        freqs, weights=weights, output_units=u.uK_RJ, fwhm=fwhm
     )
     with h5py.File(test_catalog) as f:
-        pix = np.floor(
+        pix = np.round(
             enmap.sky2pix(
                 output_map.shape,
                 output_map.wcs,
@@ -149,6 +151,17 @@ def test_catalog_class_map_small_beam(test_catalog):
             )
         ).astype(int)
     assert_allclose(
-        output_map[0, pix],
-        surface_brigthness,
+        output_map[0].argmax(unit="coord"), np.array([0, 0]), atol=1e-2, rtol=1e-3
     )
+
+    box_half_size_rad = 2 * fwhm.to_value(u.rad)
+    box_center = [0, 0]
+    box = np.array(
+        [
+            [box_center[0] - box_half_size_rad, box_center[1] - box_half_size_rad],
+            [box_center[0] + box_half_size_rad, box_center[1] + box_half_size_rad],
+        ]
+    )  # in radians
+    cutout = output_map[0].submap(box)
+    flux = car_aperture_photometry(cutout, 2 * fwhm.to_value(u.rad))
+    assert_allclose(flux, surface_brigthness[0].to_value(u.uK_RJ), rtol=1e-3)
