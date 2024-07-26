@@ -7,6 +7,7 @@ import pytest
 from pysm3.models.catalog import evaluate_poly, evaluate_model, PointSourceCatalog
 import numpy as np
 import xarray as xr
+from pixell import enmap
 
 from pysm3 import utils
 
@@ -122,7 +123,9 @@ def test_catalog_class_map_no_beam(test_catalog):
     assert_allclose(output_map[2, pix] / scaling_factor, flux_P * np.sin(2 * psirand))
 
 
-def test_catalog_class_map(test_catalog):
+def test_catalog_class_map_small_beam(test_catalog):
+    # resolution of the map is 7 degrees, beam is 0.5 degrees
+    # all flux should be in the central pixel
     nside = 8
     catalog = PointSourceCatalog(test_catalog, nside=nside)
     freqs = np.exp(np.array([3, 4])) * u.GHz  # ~ 20 and ~ 55 GHz
@@ -131,18 +134,20 @@ def test_catalog_class_map(test_catalog):
 
     scaling_factor = utils.bandpass_unit_conversion(
         freqs, weights, output_unit=u.uK_RJ, input_unit=u.Jy / u.sr
-    ) / (hp.nside2resol(nside) * u.sr)
+    ) / (hp.nside2pixarea(nside) * u.sr)
     surface_brigthness = catalog.get_fluxes(freqs, weights=weights) * scaling_factor
 
-    surface_brightness_P = (
-        catalog.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
-        * scaling_factor
-    )
     output_map = catalog.get_emission(
-        freqs, weights=weights, output_units=u.uK_RJ, fwhm=None
+        freqs, weights=weights, output_units=u.uK_RJ, fwhm=0.5 * u.deg
     )
     with h5py.File(test_catalog) as f:
-        pix = hp.ang2pix(nside, f["theta"], f["phi"])
+        pix = np.floor(
+            enmap.sky2pix(
+                output_map.shape,
+                output_map.wcs,
+                np.column_stack((np.pi / 2 - np.array(f["theta"]), f["phi"])),
+            )
+        ).astype(int)
     assert_allclose(
         output_map[0, pix],
         surface_brigthness,

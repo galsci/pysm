@@ -164,7 +164,13 @@ class PointSourceCatalog(Model):
         )
         pix_size = hp.nside2pixarea(self.nside) * u.sr
         if car_map_resolution is None:
-            car_map_resolution = hp.nside2resol(self.nside) * u.rad / 2
+            car_map_resolution = (hp.nside2resol(self.nside) * u.rad) / 2
+
+        # Make sure the resolution evenly divides the map vertically
+        if (car_map_resolution.to_value(u.rad) % np.pi) > 1e-8:
+            car_map_resolution = (
+                np.pi / np.round(np.pi / car_map_resolution.to_value(u.rad))
+            ) * u.rad
         fluxes_I = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefflux")
 
         if fwhm is None:
@@ -186,16 +192,22 @@ class PointSourceCatalog(Model):
                 dims=(3,),
                 variant="fejer1",
             )
-            output_map = np.zeros(shape, dtype=np.float32) * output_units
+            output_map = enmap.enmap(np.zeros(shape, dtype=np.float32), wcs)
             r, p = pointsrcs.expand_beam(fwhm2sigma(fwhm))
-            output_map[0] = pointsrcs.sim_objects(
-                shape,
-                wcs,
-                np.column_stack((f["phi"], np.pi / 2 - f["theta"])),
-                flux2amp(fluxes_I, fwhm)
-                * scaling_factor,  # to peak amplitude and to output units
-                ((r, p)),
-            )
+            with h5py.File(self.catalog_filename) as f:
+                output_map[0] = (
+                    pointsrcs.sim_objects(
+                        shape,
+                        wcs,
+                        np.column_stack(
+                            (np.array(f["phi"]), np.pi / 2 - np.array(f["theta"]))
+                        ),
+                        flux2amp(fluxes_I.to_value(u.Jy), fwhm.to_value(u.rad))
+                        * scaling_factor.value,  # to peak amplitude and to output units
+                        ((r, p)),
+                    )
+                    * output_units
+                )
 
         del fluxes_I
         surface_brightness_P = (
