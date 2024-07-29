@@ -78,6 +78,7 @@ def test_catalog(tmp_path_factory):
         catalog[field].attrs["units"] = "Jy"
     catalog["logpolycoefflux"].loc[dict(index=0, power=0)] = 3.7
     catalog["logpolycoefflux"].loc[dict(index=1, power=1)] = 2
+    catalog["logpolycoefpolflux"].loc[dict(index=1, power=0)] = 5
     fn = tmp_path_factory.mktemp("data") / "test_catalog.h5"
     catalog.to_netcdf(str(fn), format="NETCDF4")  # requires netcdf4 package
     return str(fn)
@@ -124,7 +125,7 @@ def test_catalog_class_map_no_beam(test_catalog):
     assert_allclose(output_map[2, pix] / scaling_factor, flux_P * np.sin(2 * psirand))
 
 
-def test_catalog_class_map_small_beam(test_catalog):
+def test_catalog_class_map_beam(test_catalog):
     # resolution of the map is 7 degrees, beam is 0.5 degrees
     # all flux should be in the central pixel
     nside = 32
@@ -165,3 +166,16 @@ def test_catalog_class_map_small_beam(test_catalog):
     cutout = output_map[0].submap(box) * scaling_factor.value
     flux = car_aperture_photometry(cutout, 2 * fwhm.to_value(u.rad)) * u.Jy
     assert_allclose(flux, catalog_flux.max(), rtol=1e-3)
+
+    catalog_flux_P = catalog.get_fluxes(
+        freqs, weights=weights, coeff="logpolycoefpolflux"
+    )
+    np.random.seed(56567)
+    psirand = np.random.uniform(low=-np.pi / 2.0, high=np.pi / 2.0, size=2)
+    cutout = output_map[1].submap(box) * scaling_factor.value
+    flux = car_aperture_photometry(cutout, 2 * fwhm.to_value(u.rad)) * u.Jy
+    assert_allclose(flux, catalog_flux_P[1] * np.cos(2 * psirand[1]), rtol=1e-3)
+
+    cutout = output_map[2].submap(box) * scaling_factor.value
+    flux = car_aperture_photometry(cutout, 2 * fwhm.to_value(u.rad)) * u.Jy
+    assert_allclose(flux, catalog_flux_P[1] * np.sin(2 * psirand[1]), rtol=1e-3)

@@ -211,35 +211,49 @@ class PointSourceCatalog(Model):
             output_map = enmap.enmap(np.zeros(shape, dtype=np.float32), wcs)
             r, p = pointsrcs.expand_beam(fwhm2sigma(fwhm.to_value(u.rad)))
             with h5py.File(self.catalog_filename) as f:
-                output_map[0] = (
-                    pointsrcs.sim_objects(
-                        shape,
-                        wcs,
-                        np.column_stack(
-                            (np.pi / 2 - np.array(f["theta"]), np.array(f["phi"]))
-                        ),
-                        flux2amp(
-                            fluxes_I.to_value(u.Jy) * scaling_factor.value,
-                            fwhm.to_value(u.rad),
-                        ),  # to peak amplitude and to output units
-                        ((r, p)),
-                    )
-                    * output_units
+                pointing = np.column_stack(
+                    (np.pi / 2 - np.array(f["theta"]), np.array(f["phi"]))
                 )
+            output_map[0] = pointsrcs.sim_objects(
+                shape,
+                wcs,
+                pointing,
+                flux2amp(
+                    fluxes_I.to_value(u.Jy) * scaling_factor.value,
+                    fwhm.to_value(u.rad),
+                ),  # to peak amplitude and to output units
+                ((r, p)),
+            )
 
         del fluxes_I
-        surface_brightness_P = (
-            self.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
-            / pix_size
-            * scaling_factor
-        )
+        fluxes_P = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
         # set seed so that the polarization angle is always the same for each run
         # could expose to the interface if useful
         np.random.seed(56567)
         psirand = np.random.uniform(
-            low=-np.pi / 2.0, high=np.pi / 2.0, size=len(surface_brightness_P)
+            low=-np.pi / 2.0, high=np.pi / 2.0, size=len(fluxes_P)
         )
         if fwhm is None:
-            output_map[1, pix] += surface_brightness_P * np.cos(2 * psirand)
-            output_map[2, pix] += surface_brightness_P * np.sin(2 * psirand)
+            output_map[1, pix] += (
+                fluxes_P / pix_size * scaling_factor * np.cos(2 * psirand)
+            )
+            output_map[2, pix] += (
+                fluxes_P / pix_size * scaling_factor * np.sin(2 * psirand)
+            )
+        else:
+            pols = [(1, np.cos)]
+            pols.append((2, np.sin))
+            for i_pol, sincos in pols:
+                output_map[i_pol] = pointsrcs.sim_objects(
+                    shape,
+                    wcs,
+                    pointing,
+                    flux2amp(
+                        fluxes_P.to_value(u.Jy)
+                        * scaling_factor.value
+                        * sincos(2 * psirand),
+                        fwhm.to_value(u.rad),
+                    ),
+                    ((r, p)),
+                )
         return output_map
