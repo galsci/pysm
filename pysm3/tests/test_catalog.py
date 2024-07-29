@@ -8,7 +8,6 @@ import pytest
 from pysm3.models.catalog import evaluate_poly, evaluate_model, PointSourceCatalog
 import numpy as np
 import xarray as xr
-from pixell import enmap
 
 from pysm3 import utils
 
@@ -143,14 +142,6 @@ def test_catalog_class_map_beam(test_catalog):
     output_map = catalog.get_emission(
         freqs, weights=weights, output_units=u.uK_RJ, fwhm=fwhm
     )
-    with h5py.File(test_catalog) as f:
-        pix = np.round(
-            enmap.sky2pix(
-                output_map.shape,
-                output_map.wcs,
-                np.column_stack((np.pi / 2 - np.array(f["theta"]), f["phi"])),
-            )
-        ).astype(int)
     assert_allclose(
         output_map[0].argmax(unit="coord"), np.array([0, 0]), atol=1e-2, rtol=1e-3
     )

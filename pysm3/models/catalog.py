@@ -21,7 +21,9 @@ def fwhm2sigma(fwhm):
 
 @njit
 def flux2amp(flux, fwhm):
-    """Converts the total flux of a radio source to the peak amplitude of its Gaussian beam representation, taking into account the width of the beam as specified by its FWHM
+    """Converts the total flux of a radio source to the peak amplitude of its Gaussian
+    beam representation, taking into account the width of the beam as specified
+    by its FWHM
 
     Parameters
     ----------
@@ -197,9 +199,6 @@ class PointSourceCatalog(Model):
 
             from pixell import (
                 enmap,
-                resample,
-                curvedsky as cs,
-                reproject,
                 pointsrcs,
             )
 
