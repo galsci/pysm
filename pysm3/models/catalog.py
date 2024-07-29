@@ -218,8 +218,10 @@ class PointSourceCatalog(Model):
                         np.column_stack(
                             (np.pi / 2 - np.array(f["theta"]), np.array(f["phi"]))
                         ),
-                        flux2amp(fluxes_I.to_value(u.Jy), fwhm.to_value(u.rad))
-                        * scaling_factor.value,  # to peak amplitude and to output units
+                        flux2amp(
+                            fluxes_I.to_value(u.Jy) * scaling_factor.value,
+                            fwhm.to_value(u.rad),
+                        ),  # to peak amplitude and to output units
                         ((r, p)),
                     )
                     * output_units

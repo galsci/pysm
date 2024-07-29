@@ -134,11 +134,11 @@ def test_catalog_class_map_small_beam(test_catalog):
     weights /= np.trapz(weights, x=freqs.to_value(u.GHz))
 
     scaling_factor = utils.bandpass_unit_conversion(
-        freqs, weights, output_unit=u.uK_RJ, input_unit=u.Jy / u.sr
-    ) / (hp.nside2pixarea(nside) * u.sr)
-    surface_brigthness = catalog.get_fluxes(freqs, weights=weights) * scaling_factor
+        freqs, weights, input_unit=u.uK_RJ, output_unit=u.Jy / u.sr
+    )
+    catalog_flux = catalog.get_fluxes(freqs, weights=weights)
 
-    fwhm = 1 * u.deg
+    fwhm = 2 * u.deg
     output_map = catalog.get_emission(
         freqs, weights=weights, output_units=u.uK_RJ, fwhm=fwhm
     )
@@ -154,7 +154,7 @@ def test_catalog_class_map_small_beam(test_catalog):
         output_map[0].argmax(unit="coord"), np.array([0, 0]), atol=1e-2, rtol=1e-3
     )
 
-    box_half_size_rad = 2 * fwhm.to_value(u.rad)
+    box_half_size_rad = 3 * fwhm.to_value(u.rad)
     box_center = [0, 0]
     box = np.array(
         [
@@ -162,6 +162,6 @@ def test_catalog_class_map_small_beam(test_catalog):
             [box_center[0] + box_half_size_rad, box_center[1] + box_half_size_rad],
         ]
     )  # in radians
-    cutout = output_map[0].submap(box)
-    flux = car_aperture_photometry(cutout, 2 * fwhm.to_value(u.rad))
-    assert_allclose(flux, surface_brigthness[0].to_value(u.uK_RJ), rtol=1e-3)
+    cutout = output_map[0].submap(box) * scaling_factor.value
+    flux = car_aperture_photometry(cutout, 2 * fwhm.to_value(u.rad)) * u.Jy
+    assert_allclose(flux, catalog_flux.max(), rtol=1e-3)
