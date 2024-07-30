@@ -255,4 +255,9 @@ class PointSourceCatalog(Model):
                     ),
                     ((r, p)),
                 )
-        return output_map
+        if return_car:
+            return output_map
+        else:
+            from pixell import reproject
+
+            return reproject.map2healpix(output_map, self.nside)

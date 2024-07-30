@@ -1,5 +1,5 @@
 from pysm3 import units as u
-from pysm3.utils import car_aperture_photometry
+from pysm3.utils import car_aperture_photometry, healpix_aperture_photometry
 import h5py
 import healpy as hp
 from numpy.testing import assert_allclose
@@ -113,7 +113,7 @@ def test_catalog_class_map_no_beam(test_catalog):
 
     flux_P = catalog.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
     output_map = catalog.get_emission(
-        freqs, weights=weights, output_units=u.uK_RJ, fwhm=None
+        freqs, weights=weights, output_units=u.uK_RJ, fwhm=None, return_car=True
     )
     with h5py.File(test_catalog) as f:
         pix = hp.ang2pix(nside, f["theta"], f["phi"])
@@ -143,7 +143,11 @@ def test_catalog_class_map_beam(test_catalog):
 
     fwhm = 2 * u.deg
     output_map = catalog.get_emission(
-        freqs, weights=weights, output_units=u.uK_RJ, fwhm=fwhm
+        freqs,
+        weights=weights,
+        output_units=u.uK_RJ,
+        fwhm=fwhm,
+        return_car=True,
     )
     assert_allclose(
         output_map[0].argmax(unit="coord"), np.array([0, 0]), atol=1e-2, rtol=1e-3
@@ -173,3 +177,40 @@ def test_catalog_class_map_beam(test_catalog):
     cutout = output_map[2].submap(box) * scaling_factor.value
     flux = car_aperture_photometry(cutout, 2 * fwhm.to_value(u.rad)) * u.Jy
     assert_allclose(flux, catalog_flux_P[1] * np.sin(2 * psirand[1]), rtol=1e-3)
+
+
+def test_catalog_class_map_healpix(test_catalog):
+    # resolution of the map is 7 degrees, beam is 0.5 degrees
+    # all flux should be in the central pixel
+    nside = 32
+    catalog = PointSourceCatalog(test_catalog, nside=nside)
+    freqs = np.exp(np.array([3, 4])) * u.GHz  # ~ 20 and ~ 55 GHz
+    weights = np.array([1, 1], dtype=np.float64)
+    weights /= np.trapz(weights, x=freqs.to_value(u.GHz))
+
+    scaling_factor = utils.bandpass_unit_conversion(
+        freqs, weights, input_unit=u.uK_RJ, output_unit=u.Jy / u.sr
+    )
+    catalog_flux = catalog.get_fluxes(freqs, weights=weights)
+
+    fwhm = 2 * u.deg
+    output_map = catalog.get_emission(
+        freqs,
+        weights=weights,
+        output_units=u.uK_RJ,
+        fwhm=fwhm,
+        return_car=False,
+    )
+    with h5py.File(test_catalog) as f:
+        pix = hp.ang2pix(nside, f["theta"], f["phi"])
+        theta = np.array(f["theta"])
+        phi = np.array(f["phi"])
+    assert output_map.argmax() == pix[1]
+
+    flux = healpix_aperture_photometry(
+        (output_map[0] * scaling_factor.value),
+        aperture_radius=2 * fwhm.to_value(u.rad),
+        theta=theta[1],
+        phi=phi[1],
+    )
+    assert_allclose(flux, catalog_flux.max().value, rtol=4e-2)  # loose 4%
