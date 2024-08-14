@@ -18,3 +18,4 @@ from .websky import (
     WebSkySZ,
     WebSkyRadioGalaxies,
 )
+from .catalog import PointSourceCatalog
