@@ -1,3 +1,7 @@
+# Important: it is important to import netCDF4 before `h4py` is imported
+# to avoid "HDF Error" under Ubuntu with pip
+# This does not happen with conda packages
+import netCDF4
 from pysm3 import units as u
 from pysm3.utils import car_aperture_photometry, healpix_aperture_photometry
 import h5py
