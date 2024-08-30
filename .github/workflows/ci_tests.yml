@@ -78,6 +78,8 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install tox psutil codecov
+    - name: Setup upterm session
+      uses: lhotari/action-upterm@v1
     - name: Test with tox
       run: |
         tox -e ${{ matrix.toxenv }}
