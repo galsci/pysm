@@ -83,8 +83,6 @@ def test_catalog(tmp_path_factory):
     catalog["logpolycoefflux"].loc[dict(index=1, power=1)] = 2
     catalog["logpolycoefpolflux"].loc[dict(index=1, power=0)] = 5
     fn = tmp_path_factory.mktemp("data") / "test_catalog.h5"
-    import netCDF4
-
     print(netCDF4.__version__)
     catalog.to_netcdf(str(fn), format="NETCDF4")  # requires netcdf4 package
     return str(fn)
