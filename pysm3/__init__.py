@@ -1,19 +1,9 @@
-# flake8: noqa
-from ._astropy_init import *  # noqa
 import warnings
 from astropy.utils.exceptions import AstropyDeprecationWarning
 
 warnings.filterwarnings("ignore", message="may indicate binary incompatibility")
 
-try:
-    from importlib.metadata import version, PackageNotFoundError  # type: ignore
-except ImportError:  # pragma: no cover
-    from importlib_metadata import version, PackageNotFoundError  # type: ignore
-
-try:
-    __version__ = version(__name__)
-except PackageNotFoundError:  # pragma: no cover
-    __version__ = "unknown"
+from ._version import __version__, __version_tuple__
 
 from .models import *
 from .sky import Sky, get_pysm_emission

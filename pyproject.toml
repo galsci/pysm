@@ -1,10 +1,77 @@
 [build-system]
+requires = ["hatchling",
+"hatch-vcs"]
+build-backend = "hatchling.build"
 
-requires = ["setuptools",
-            "setuptools_scm",
-            "wheel"]
+[project]
+name = "pysm3"
+dynamic = ["version"]
+description = "PySM generates full-sky simulations of Galactic emissions in intensity and polarization"
+readme = "README.rst"
+license.file = "LICENSE"
+requires-python = ">=3.7"
+authors = [
+    { name = "Andrea Zonca", email = "code@andreazonca.com" },
+]
+dependencies = [
+    "astropy",
+    "h5py",
+    "healpy >= 1.16.0",
+    "importlib_metadata;python_version<'3.8'",
+    "numba",
+    "numpy < 2",
+    "toml",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: BSD License",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Physics",
+]
 
-build-backend = 'setuptools.build_meta'
+[project.urls]
+Homepage = "https://github.com/galsci/pysm"
+Documentation = "https://pysm3.readthedocs.io/"
+"Bug Tracker" = "https://github.com/galsci/pysm/issues"
+Changelog = "https://github.com/galsci/pysm/blob/main/CHANGES.rst"
+
+[project.optional-dependencies]
+docs = [
+    "ipykernel",
+    "nbsphinx",
+    "pandoc",
+    "sphinx-astropy",
+    "sphinx-math-dollar",
+]
+mpi = [
+    "mpi4py",
+]
+test = [
+    "netcdf4",
+    "pixell == 0.26.0",
+    "psutil",
+    "pytest",
+    "pytest-astropy",
+    "tox",
+    "xarray",
+]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "pysm3/_version.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/pysm3",
+]
 
 [tool.pytest.ini_options]
 filterwarnings = [
