@@ -6,6 +6,7 @@ from astropy.io import fits
 from astropy.tests.helper import assert_quantity_allclose
 from pysm3 import utils
 from urllib.error import URLError
+import pixell.enmap
 
 
 def test_get_relevant_frequencies():
@@ -154,3 +155,30 @@ def test_add_metadata_different_units(test_fits_file):
 def test_data_raise():
     with pytest.raises(URLError):
         pysm3.utils.RemoteData().get("doesntexist.txt")
+
+
+class ReturnsCar:
+    def __init__(self, wcs):
+        self.wcs = wcs
+
+    def get_emission(self):
+        emission = np.ones(12) * u.uK_RJ
+        return utils.wrap_wcs(emission, self.wcs)
+
+
+def test_wrap_wcs_no_wcs():
+    EmissionModel = ReturnsCar(wcs=None)
+    emission = EmissionModel.get_emission()
+    assert emission.unit == u.uK_RJ
+    assert not hasattr(emission, "wcs")
+
+
+def test_wrap_wcs_with_wcs():
+    shape, wcs = pixell.enmap.fullsky_geometry(
+        (10 * u.deg).to_value(u.rad),
+        dims=(3,),
+        variant="fejer1",
+    )
+    EmissionModel = ReturnsCar(wcs=wcs)
+    emission = EmissionModel.get_emission()
+    assert hasattr(emission, "wcs")

@@ -59,7 +59,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - name: Install required system packages
@@ -67,11 +67,11 @@ jobs:
         if [ "$RUNNER_OS" == "Linux" ]; then
         sudo sed -i -e 's/azure.archive.ubuntu.com/us.archive.ubuntu.com/g' /etc/apt/sources.list
         sudo apt-get update
-        sudo apt-get install -o Acquire::Retries=3 graphviz texlive-latex-extra dvipng libopenmpi-dev openmpi-bin pandoc
+        sudo apt-get install -o Acquire::Retries=3 graphviz texlive-latex-extra dvipng libopenmpi-dev openmpi-bin pandoc libhdf5-dev netcdf-bin libnetcdf-dev
         fi
       shell: bash
     - name: Set up python ${{ matrix.python }} on ${{ matrix.os }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python }}
     - name: Install base dependencies
