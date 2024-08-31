@@ -39,12 +39,18 @@ except ImportError:
     sys.exit(1)
 
 # Get configuration information from setup.cfg
-from configparser import ConfigParser
+# conf.py
 
-conf = ConfigParser()
+from sphinx_pyproject import SphinxConfig
 
-conf.read([os.path.join(os.path.dirname(__file__), "..", "setup.cfg")])
-setup_cfg = dict(conf.items("metadata"))
+import pysm3
+
+config = SphinxConfig(
+    "../pyproject.toml",
+    globalns=globals(),
+    config_overrides={"version": pysm3.__version__},
+)
+
 
 # -- General configuration ----------------------------------------------------
 
@@ -72,22 +78,13 @@ rst_epilog += """
 # -- Project information ------------------------------------------------------
 
 # This does not *have* to match the package name, but typically does
-project = setup_cfg["name"]
-author = setup_cfg["author"]
-copyright = "{0}, {1}".format(datetime.datetime.now().year, setup_cfg["author"])
+copyright = "{0}, {1}".format(datetime.datetime.now().year, "author")
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-import_module(setup_cfg["name"])
-package = sys.modules[setup_cfg["name"]]
-
-# The short X.Y version.
-version = package.__version__.split("-", 1)[0]
-# The full version, including alpha/beta/rc tags.
-release = package.__version__
-
+package = "pysm3"
 
 # -- Options for HTML output --------------------------------------------------
 
@@ -134,7 +131,8 @@ html_theme_options = {
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = "{0} v{1}".format(project, release)
+project = "PySM"
+html_title = "{0} v{1}".format(project, version)
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = project + "doc"
@@ -148,7 +146,7 @@ modindex_common_prefix = ["pysm3."]
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ("index", project + ".tex", project + u" Documentation", author, "manual")
+    ("index", project + ".tex", project + " Documentation", author, "manual")
 ]
 
 
@@ -156,23 +154,21 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("index", project.lower(), project + u" Documentation", [author], 1)]
+man_pages = [("index", project.lower(), project + " Documentation", [author], 1)]
 
 
 # -- Options for the edit_on_github extension ---------------------------------
 
-if setup_cfg.get("edit_on_github").lower() == "true":
+extensions += ["sphinx_astropy.ext.edit_on_github"]
 
-    extensions += ["sphinx_astropy.ext.edit_on_github"]
+edit_on_github_project = "galsci/pysm"
+edit_on_github_branch = "main"
 
-    edit_on_github_project = setup_cfg["github_project"]
-    edit_on_github_branch = "main"
-
-    edit_on_github_source_root = ""
-    edit_on_github_doc_root = "docs"
+edit_on_github_source_root = ""
+edit_on_github_doc_root = "docs"
 
 # -- Resolving issue number to links in changelog -----------------------------
-github_issues_url = "https://github.com/{0}/issues/".format(setup_cfg["github_project"])
+github_issues_url = "https://github.com/{0}/issues/".format(edit_on_github_project)
 
 
 # -- Options for linkcheck output -------------------------------------------
