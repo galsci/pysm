@@ -47,7 +47,7 @@ def test_evaluate_model_2freq_flat():
     coeff = np.array([[0, 0, 0, 0, 3.7]])
     freqs = np.exp(np.array([3, 4]))  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
-    weights /= np.trapezoid(weights, x=freqs)
+    weights /= trapezoid(weights, x=freqs)
     assert evaluate_model(freqs, weights, coeff) == np.ones((1, 1)) * 3.7
 
 
@@ -55,11 +55,11 @@ def test_evaluate_model_2freq_lin():
     coeff = np.array([[0, 0, 0, 2, 0]])
     freqs = np.exp(np.array([3, 4]))  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
-    weights /= np.trapezoid(weights, x=freqs)
+    weights /= trapezoid(weights, x=freqs)
     flux = evaluate_model(freqs, weights, coeff)[0]
     assert flux > 6
     assert flux < 8
-    assert flux == np.trapezoid(weights * np.array([6, 8]), x=freqs)
+    assert flux == trapezoid(weights * np.array([6, 8]), x=freqs)
 
 
 @pytest.fixture(scope="session")
@@ -98,11 +98,11 @@ def test_catalog_class_fluxes(test_catalog):
     catalog = PointSourceCatalog(test_catalog, nside=nside)
     freqs = np.exp(np.array([3, 4])) * u.GHz  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
-    weights /= np.trapezoid(weights, x=freqs.to_value(u.GHz))
+    weights /= trapezoid(weights, x=freqs.to_value(u.GHz))
     flux = catalog.get_fluxes(freqs, weights=weights)
     assert_allclose(flux[0], 3.7 * u.Jy)
     assert (
-        flux[1] == np.trapezoid(weights * np.array([6, 8]), x=freqs.to_value(u.GHz)) * u.Jy
+        flux[1] == trapezoid(weights * np.array([6, 8]), x=freqs.to_value(u.GHz)) * u.Jy
     )
 
 
@@ -111,7 +111,7 @@ def test_catalog_class_map_no_beam(test_catalog):
     catalog = PointSourceCatalog(test_catalog, nside=nside)
     freqs = np.exp(np.array([3, 4])) * u.GHz  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
-    weights /= np.trapezoid(weights, x=freqs.to_value(u.GHz))
+    weights /= trapezoid(weights, x=freqs.to_value(u.GHz))
 
     scaling_factor = utils.bandpass_unit_conversion(
         freqs, weights, output_unit=u.uK_RJ, input_unit=u.Jy / u.sr
@@ -141,7 +141,7 @@ def test_catalog_class_map_beam(test_catalog):
     catalog = PointSourceCatalog(test_catalog, nside=nside)
     freqs = np.exp(np.array([3, 4])) * u.GHz  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
-    weights /= np.trapezoid(weights, x=freqs.to_value(u.GHz))
+    weights /= trapezoid(weights, x=freqs.to_value(u.GHz))
 
     scaling_factor = utils.bandpass_unit_conversion(
         freqs, weights, input_unit=u.uK_RJ, output_unit=u.Jy / u.sr
@@ -193,7 +193,7 @@ def test_catalog_class_map_healpix(test_catalog):
     catalog = PointSourceCatalog(test_catalog, nside=nside)
     freqs = np.exp(np.array([3, 4])) * u.GHz  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
-    weights /= np.trapezoid(weights, x=freqs.to_value(u.GHz))
+    weights /= trapezoid(weights, x=freqs.to_value(u.GHz))
 
     scaling_factor = utils.bandpass_unit_conversion(
         freqs, weights, input_unit=u.uK_RJ, output_unit=u.Jy / u.sr
