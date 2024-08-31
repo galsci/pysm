@@ -27,7 +27,7 @@ jobs:
              os: ubuntu-22.04
              python: 3.9
 
-           - name: Python 3.11
+           - name: Python 3.12
              os: ubuntu-22.04
              python: 3.12
 
