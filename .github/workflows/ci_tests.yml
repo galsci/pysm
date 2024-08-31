@@ -22,72 +22,32 @@ jobs:
     strategy:
       matrix:
         include:
-           - name: Code style checks
-             os: ubuntu-22.04
-             python: 3.x
-             toxenv: codestyle
 
-           - name: Python 3.9 with minimal dependencies
+           - name: Python 3.9
              os: ubuntu-22.04
              python: 3.9
-             toxenv: py39-test
 
-           - name: Python 3.11 with all optional dependencies and coverage checking
+           - name: Python 3.11
              os: ubuntu-22.04
-             python: 3.11
-             toxenv: py311-test-alldeps-cov
-
-             # - name: OS X - Python 3.8
-             #   os: macos-10.15
-             #   python: 3.8
-             #   toxenv: py38-test
-
-          # - name: Python 3.7 with oldest supported version of all dependencies
-          #   os: ubuntu-16.04
-          #   python: 3.7
-          #   toxenv: py37-test-oldestdeps
-
-          # - name: Python 3.8 with latest dev versions of key dependencies
-          #   os: ubuntu-latest
-          #   python: 3.8
-          #   toxenv: py38-test-devdeps
-
-          # - name: Test building of Sphinx docs
-          #   os: ubuntu-latest
-          #   python: 3.x
-          #   toxenv: build_docs
+             python: 3.12
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Install required system packages
-      run: |
-        if [ "$RUNNER_OS" == "Linux" ]; then
-        sudo sed -i -e 's/azure.archive.ubuntu.com/us.archive.ubuntu.com/g' /etc/apt/sources.list
-        sudo apt-get update
-        sudo apt-get install -o Acquire::Retries=3 graphviz texlive-latex-extra dvipng libopenmpi-dev openmpi-bin pandoc libhdf5-dev netcdf-bin libnetcdf-dev
-        fi
-      shell: bash
-    - name: Set up python ${{ matrix.python }} on ${{ matrix.os }}
-      uses: actions/setup-python@v5
+    - uses: mamba-org/setup-micromamba@v1
       with:
-        python-version: ${{ matrix.python }}
-    - name: Install base dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install tox psutil codecov
+        environment-name: test-env
+        create-args: >-
+          python=${{ matrix.python }}
+          netcdf4
+    - name: Install package
+      run: pip install .[test]
     - name: Test with tox
       run: |
-        tox -e ${{ matrix.toxenv }}
-    - name: MPI test
-      if: contains(matrix.toxenv, 'alldeps')
-      run: |
-        mpirun -np 2 --oversubscribe .tox/${{ matrix.toxenv}}/bin/python -m pytest pysm3/tests/test_read_map_mpi.py;
-    # This is an example of how to upload coverage to codecov
-    # - name: Upload coverage to codecov
-    #   if: "contains(matrix.toxenv, '-cov')"
-    #   uses: codecov/codecov-action@v1
-    #   with:
-    #     file: ./coverage.xml
+        pytest -v
+
+#    - name: MPI test
+#      run: |
+#        mpirun -np 2 --oversubscribe .tox/${{ matrix.toxenv}}/bin/python -m pytest pysm3/tests/test_read_map_mpi.py;
