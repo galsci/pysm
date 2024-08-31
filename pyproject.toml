@@ -116,7 +116,6 @@ ignore = [
   "ISC001",   # Conflicts with formatter
 ]
 typing-modules = ["mypackage._compat.typing"]
-isort.required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["T20"]

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import numpy as np
 import so_pysm_models
 from memreport import MemReporter
