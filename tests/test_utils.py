@@ -1,8 +1,7 @@
-from __future__ import annotations
-
 from urllib.error import URLError
 
 import numpy as np
+
 try:
     from numpy import trapezoid
 except ImportError:

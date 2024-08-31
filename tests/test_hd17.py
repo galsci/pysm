@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import pytest
 from astropy import units
 from astropy.tests.helper import assert_quantity_allclose

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import healpy as hp
 import numpy as np
 import pytest
@@ -44,19 +42,11 @@ def test_co(include_high_galactic_latitude_clouds):
 
     co_map = co.get_emission([114.271, 115.271, 116.271, 117.271] * u.GHz)
     # weight is about 1/3 as bandwidth is 3 GHz
-    assert_quantity_allclose(
-        co_map,
-        expected_co_map * 0.3304377039951613,
-        rtol=1e-3
-    )
+    assert_quantity_allclose(co_map, expected_co_map * 0.3304377039951613, rtol=1e-3)
 
     co_map = co.get_emission([100, 120] * u.GHz)
     # weight is about 1/20, consider normalization also includes conversion to power units
-    assert_quantity_allclose(
-        co_map,
-        expected_co_map * 0.05475254098360655,
-        rtol=1e-4
-    )
+    assert_quantity_allclose(co_map, expected_co_map * 0.05475254098360655, rtol=1e-4)
 
 
 @pytest.mark.parametrize("model_tag", ["co2", "co3"])

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import psutil
 import pytest
 from astropy.tests.helper import assert_quantity_allclose
@@ -90,7 +88,7 @@ def test_d10_vs_d11(freq):
         nside=nside,
         seeds=[8192, 777, 888],
         synalm_lmax=int(8192 * 2),
-        **d11_configuration
+        **d11_configuration,
     )
     output_d11 = d11.get_emission(freq)
 

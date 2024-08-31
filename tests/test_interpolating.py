@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import healpy as hp
 import numpy as np
 import pytest
@@ -17,9 +15,7 @@ def interp(tmp_path):
     hp.write_map(tmp_path / "10.fits", np.ones(shape, dtype=np.float32))
     hp.write_map(tmp_path / "20.fits", 2 * np.ones(shape, dtype=np.float32))
 
-    return InterpolatingComponent(
-        tmp_path, "uK_RJ", nside, interpolation_kind="linear"
-    )
+    return InterpolatingComponent(tmp_path, "uK_RJ", nside, interpolation_kind="linear")
 
 
 def test_interpolating(interp):

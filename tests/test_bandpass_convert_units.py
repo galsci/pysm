@@ -1,8 +1,7 @@
-from __future__ import annotations
-
 import unittest
 
 import numpy as np
+
 try:
     from numpy import trapezoid
 except ImportError:
@@ -135,7 +134,9 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
                 rtol=0.02 * u.pct,
             )
             assert_quantity_allclose(
-                pysm_conv, self.CMB2MJysr_avg_tod2flux.get(freq), rtol=1.3 * u.pct,
+                pysm_conv,
+                self.CMB2MJysr_avg_tod2flux.get(freq),
+                rtol=1.3 * u.pct,
             )
 
     def test_bandpass_unit_conversion_MJysr2KRJ(self):

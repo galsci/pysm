@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import healpy as hp
 import numpy as np
 import pytest
@@ -47,15 +45,22 @@ def test_modified_black_body_class():
 
 @pytest.mark.parametrize("freq", [100, 353, 857])
 def test_model_d12(freq):
-    sky = Sky(preset_strings=["d12"], nside=8, output_unit=u.MJy / u.sr,)
+    sky = Sky(
+        preset_strings=["d12"],
+        nside=8,
+        output_unit=u.MJy / u.sr,
+    )
 
     emission = sky.get_emission(freq * u.GHz)
 
-    expected_map = read_map(
-        f"mkd_dust/test/layermodel_nside8_{freq}.fits",
-        8,
-        unit=u.MJy / u.sr,
-        field=(0, 1, 2),
-    ) * 0.911
+    expected_map = (
+        read_map(
+            f"mkd_dust/test/layermodel_nside8_{freq}.fits",
+            8,
+            unit=u.MJy / u.sr,
+            field=(0, 1, 2),
+        )
+        * 0.911
+    )
 
     assert_quantity_allclose(expected_map, emission, rtol=1e-5)

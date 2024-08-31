@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import os
 
 import healpy as hp
@@ -132,8 +130,10 @@ def test_sz(tmp_path, monkeypatch, sz_type):
     tsz = WebSkySZ(nside, "0.4", sz_type=sz_type)
 
     freq = 100 * u.GHz
-    tsz_map = tsz.get_emission(freq).to(u.uK_CMB, equivalencies=u.cmb_equivalencies(freq))
-    value = -4.109055 * u.uK_CMB if sz_type == "thermal" else 1. * u.uK_CMB
+    tsz_map = tsz.get_emission(freq).to(
+        u.uK_CMB, equivalencies=u.cmb_equivalencies(freq)
+    )
+    value = -4.109055 * u.uK_CMB if sz_type == "thermal" else 1.0 * u.uK_CMB
     np.testing.assert_allclose(np.ones(len(tsz_map[0])) * value, tsz_map[0], rtol=1e-4)
     np.testing.assert_allclose(np.zeros((2, len(tsz_map[0]))) * u.uK_CMB, tsz_map[1:])
 
