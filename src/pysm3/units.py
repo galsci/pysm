@@ -7,8 +7,6 @@ that are not already contained within `astropy.units`. These are
 We use the factory functions of `astropy.units` to define units
 that will work with the rest of astropy.
 """
-from __future__ import annotations
-
 from astropy.units import *  # noqa: F403
 
 # Define new thermodynamic and Rayleigh-Jeans units. This

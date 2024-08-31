@@ -7,6 +7,7 @@ this template, ensuring that the new subclass has the required
 Objects:
     Model
 """
+
 from __future__ import annotations
 
 import gc
@@ -14,6 +15,7 @@ import logging
 
 import healpy as hp
 import numpy as np
+
 try:
     from numpy import trapezoid
 except ImportError:
@@ -96,7 +98,9 @@ class Model:
         return read_cl(path, has_polarization=has_polarization, map_dist=self.map_dist)
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
+    def get_emission(
+        self, freqs: u.Quantity[u.GHz], weights=None
+    ) -> u.Quantity[u.uK_RJ]:
         """This function evaluates the component model at a either
         a single frequency, an array of frequencies, or over a bandpass.
 

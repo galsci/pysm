@@ -5,8 +5,6 @@ code, without delving into the difference `Model` objects.
 Objects:
     Sky
 """
-from __future__ import annotations
-
 import toml
 
 from . import data

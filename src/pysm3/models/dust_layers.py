@@ -107,7 +107,9 @@ class ModifiedBlackBodyLayers(Model):
         self.nside = int(nside)
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
+    def get_emission(
+        self, freqs: u.Quantity[u.GHz], weights=None
+    ) -> u.Quantity[u.uK_RJ]:
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         outputs = get_emission_numba(
@@ -123,7 +125,12 @@ class ModifiedBlackBodyLayers(Model):
 
 @njit(parallel=True)
 def get_emission_numba(
-    freqs, weights, layers, freq_ref, mbb_index, mbb_temperature,
+    freqs,
+    weights,
+    layers,
+    freq_ref,
+    mbb_index,
+    mbb_temperature,
 ):
     npix = layers.shape[-1]
     output = np.zeros((3, npix), dtype=layers.dtype)

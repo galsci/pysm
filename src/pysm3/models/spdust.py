@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import numpy as np
 from numba import njit
 
@@ -68,7 +66,7 @@ class SpDust(Model):
         self.emissivity = self.read_txt(emissivity, unpack=True)
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz, weights=None):
+    def get_emission(self, freqs: u.Quantity[u.GHz], weights=None):
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         return (
@@ -139,7 +137,7 @@ class SpDustPol(SpDust):
         self.pol_frac = pol_frac
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz, weights=None):
+    def get_emission(self, freqs: u.Quantity[u.GHz], weights=None):
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         return (

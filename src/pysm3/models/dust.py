@@ -12,7 +12,7 @@ from .template import Model
 
 
 class ModifiedBlackBody(Model):
-    """ This is a model for modified black body emission.
+    """This is a model for modified black body emission.
 
     Attributes
     ----------
@@ -39,7 +39,7 @@ class ModifiedBlackBody(Model):
         unit_mbb_temperature=None,
         map_dist=None,
     ):
-        """ This function initializes the modified black body model.
+        """This function initializes the modified black body model.
 
         The initialization of this model consists of reading in emission
         templates from file, reading in spectral parameter maps from
@@ -105,7 +105,9 @@ class ModifiedBlackBody(Model):
         self.nside = int(nside)
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
+    def get_emission(
+        self, freqs: u.Quantity[u.GHz], weights=None
+    ) -> u.Quantity[u.uK_RJ]:
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         outputs = get_emission_numba(
@@ -176,7 +178,7 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
         unit_mbb_temperature=None,
         correlation_length=None,
     ):
-        """ See parent class for other documentation.
+        """See parent class for other documentation.
 
         Parameters
         ----------
@@ -205,8 +207,10 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
         self.correlation_length = correlation_length * u.dimensionless_unscaled
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
-        """ Function to calculate the emission of a decorrelated modified black
+    def get_emission(
+        self, freqs: u.Quantity[u.GHz], weights=None
+    ) -> u.Quantity[u.uK_RJ]:
+        """Function to calculate the emission of a decorrelated modified black
         body model.
         """
         freqs = utils.check_freq_input(freqs)
@@ -239,8 +243,10 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
 
 
 @u.quantity_input
-def frequency_decorr_model(freqs: u.GHz, correlation_length: u.dimensionless_unscaled):
-    """ Function to calculate the frequency decorrelation method of
+def frequency_decorr_model(
+    freqs: u.Quantity[u.GHz], correlation_length: u.Quantity[u.dimensionless_unscaled]
+):
+    """Function to calculate the frequency decorrelation method of
     Vansyngel+17.
     """
     log_dep = np.log(freqs[:, None] / freqs[None, :])
@@ -249,11 +255,11 @@ def frequency_decorr_model(freqs: u.GHz, correlation_length: u.dimensionless_uns
 
 @u.quantity_input
 def get_decorrelation_matrix(
-    freq_constrained: u.GHz,
-    freqs_unconstrained: u.GHz,
-    correlation_length: u.dimensionless_unscaled,
+    freq_constrained: u.Quantity[u.GHz],
+    freqs_unconstrained: u.Quantity[u.GHz],
+    correlation_length: u.Quantity[u.dimensionless_unscaled],
 ):
-    """ Function to calculate the correlation matrix between observed
+    """Function to calculate the correlation matrix between observed
     frequencies. This model is based on the proposed model for decorrelation
     of Vansyngel+17. The proposed frequency covariance matrix in this paper
     is implemented, and a constrained Gaussian realization for the unobserved
@@ -326,7 +332,7 @@ def invert_safe(matrix):
 
 @njit
 def blackbody_ratio(freq_to, freq_from, temp):
-    """ Function to calculate the flux ratio between two frequencies for a
+    """Function to calculate the flux ratio between two frequencies for a
     blackbody at a given temperature.
 
     Parameters
@@ -394,5 +400,4 @@ def blackbody_nu(freq, temp):
     boltzm1 = np.expm1(log_boltz)
 
     # Calculate blackbody flux
-    return 2.0 * h * (freq * 1e9) ** 3 / (c ** 2 * boltzm1)
-
+    return 2.0 * h * (freq * 1e9) ** 3 / (c**2 * boltzm1)

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import healpy as hp
 import numpy as np
 
@@ -33,7 +31,6 @@ class COLines(Model):
         run_mcmole3d=False,
         map_dist=None,
     ):
-
         """Class defining attributes for CO line emission.
         CO templates are extracted from Type 1 CO Planck maps.
         See further details in:
@@ -103,14 +100,10 @@ class COLines(Model):
         self.has_polarization = has_polarization
         if self.has_polarization:
             self.polangle = self.read_map(
-                self.remote_data.get(
-                    f"co/psimap_dust90_{self.template_nside}.fits"
-                )
+                self.remote_data.get(f"co/psimap_dust90_{self.template_nside}.fits")
             ).value
             self.depolmap = self.read_map(
-                self.remote_data.get(
-                    f"co/gmap_dust90_{self.template_nside}.fits"
-                )
+                self.remote_data.get(f"co/gmap_dust90_{self.template_nside}.fits")
             ).value
         self.polarization_fraction = polarization_fraction
         self.theta_high_galactic_latitude_deg = theta_high_galactic_latitude_deg
@@ -122,9 +115,7 @@ class COLines(Model):
             self.mapclouds = build_lines_dict(
                 self.lines,
                 self.read_map(
-                    self.remote_data.get(
-                        f"co/mcmoleCO_HGL_{self.template_nside}.fits"
-                    ),
+                    self.remote_data.get(f"co/mcmoleCO_HGL_{self.template_nside}.fits"),
                     field=[self.line_index[line] for line in self.lines],
                     unit=u.K_CMB,
                 ),
@@ -133,7 +124,9 @@ class COLines(Model):
         self.verbose = verbose
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
+    def get_emission(
+        self, freqs: u.Quantity[u.GHz], weights=None
+    ) -> u.Quantity[u.uK_RJ]:
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         out = np.zeros((3, hp.nside2npix(self.nside)), dtype=np.double)

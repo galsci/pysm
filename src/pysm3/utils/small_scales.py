@@ -1,6 +1,4 @@
 """Utilities for generating Gaussian small scale realizations"""
-from __future__ import annotations
-
 import numpy as np
 
 

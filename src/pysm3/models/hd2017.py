@@ -10,7 +10,7 @@ from .template import Model
 
 
 class HensleyDraine2017(Model):
-    """ This is a model for modified black body emission.
+    """This is a model for modified black body emission.
 
     Attributes
     ----------
@@ -41,7 +41,7 @@ class HensleyDraine2017(Model):
         nside_uval=256,
         seed=None,
     ):
-        """ This function initializes the Hensley-Draine 2017 model.
+        """This function initializes the Hensley-Draine 2017 model.
 
         The initialization of this model consists of:
 
@@ -136,21 +136,21 @@ class HensleyDraine2017(Model):
             / u.s
             / u.sr
             / wav[:, None].to(u.Hz, equivalencies=u.spectral())
-        ).to(u.Jy / u.sr * u.cm ** 2)
+        ).to(u.Jy / u.sr * u.cm**2)
         silfe_data_i = (
             silfe_data[:, 3:84]
             * u.erg
             / u.s
             / u.sr
             / wav[:, None].to(u.Hz, equivalencies=u.spectral())
-        ).to(u.Jy / u.sr * u.cm ** 2)
+        ).to(u.Jy / u.sr * u.cm**2)
         car_data_i = (
             car_data[:, 3:84]
             * u.erg
             / u.s
             / u.sr
             / wav[:, None].to(u.Hz, equivalencies=u.spectral())
-        ).to(u.Jy / u.sr * u.cm ** 2)
+        ).to(u.Jy / u.sr * u.cm**2)
 
         sil_data_p = (
             sil_data[:, 84:165]
@@ -158,21 +158,21 @@ class HensleyDraine2017(Model):
             / u.s
             / u.sr
             / wav[:, None].to(u.Hz, equivalencies=u.spectral())
-        ).to(u.Jy / u.sr * u.cm ** 2)
+        ).to(u.Jy / u.sr * u.cm**2)
         silfe_data_p = (
             silfe_data[:, 84:165]
             * u.erg
             / u.s
             / u.sr
             / wav[:, None].to(u.Hz, equivalencies=u.spectral())
-        ).to(u.Jy / u.sr * u.cm ** 2)
+        ).to(u.Jy / u.sr * u.cm**2)
         car_data_p = (
             car_data[:, 84:165]
             * u.erg
             / u.s
             / u.sr
             / wav[:, None].to(u.Hz, equivalencies=u.spectral())
-        ).to(u.Jy / u.sr * u.cm ** 2)
+        ).to(u.Jy / u.sr * u.cm**2)
 
         # interpolate the pre-computed solutions for the emissivity as a
         # function of grain 4 composition F_fe, Fcar, and field strenth U,
@@ -181,22 +181,22 @@ class HensleyDraine2017(Model):
         # We will later ignore the cm^2 in the unit, since this does not affect
         # the outcome, and prevents the conversion between uK_RJ and Jy / sr
         # in astropy.
-        assert sil_data_i.unit == u.Jy / u.sr * u.cm ** 2
+        assert sil_data_i.unit == u.Jy / u.sr * u.cm**2
         self.sil_i = RectBivariateSpline(uvec, wav, sil_data_i.T)
 
-        assert silfe_data_i.unit == u.Jy / u.sr * u.cm ** 2
+        assert silfe_data_i.unit == u.Jy / u.sr * u.cm**2
         self.car_i = RectBivariateSpline(uvec, wav, car_data_i.T)
 
-        assert silfe_data_i.unit == u.Jy / u.sr * u.cm ** 2
+        assert silfe_data_i.unit == u.Jy / u.sr * u.cm**2
         self.silfe_i = RectBivariateSpline(uvec, wav, silfe_data_i.T)
 
-        assert sil_data_p.unit == u.Jy / u.sr * u.cm ** 2
+        assert sil_data_p.unit == u.Jy / u.sr * u.cm**2
         self.sil_p = RectBivariateSpline(uvec, wav, sil_data_p.T)
 
-        assert car_data_p.unit == u.Jy / u.sr * u.cm ** 2
+        assert car_data_p.unit == u.Jy / u.sr * u.cm**2
         self.car_p = RectBivariateSpline(uvec, wav, car_data_p.T)
 
-        assert silfe_data_p.unit == u.Jy / u.sr * u.cm ** 2
+        assert silfe_data_p.unit == u.Jy / u.sr * u.cm**2
         self.silfe_p = RectBivariateSpline(uvec, wav, silfe_data_p.T)
 
         # now draw the random realisation of uval if draw_uval = true
@@ -271,7 +271,7 @@ class HensleyDraine2017(Model):
 
     @u.quantity_input
     def evaluate_hd17_model_scaling(self, freq: u.GHz):
-        """ Method to evaluate the frequency scaling in the HD17 model. This
+        """Method to evaluate the frequency scaling in the HD17 model. This
         caluculates the scaling factor to be applied to a set of T, Q, U maps
         in uK_RJ at some reference frequencies `self.freq_ref_I`,
         `self.freq_ref_P`, in order to scale them to frequencies `freqs`.
@@ -323,7 +323,7 @@ class HensleyDraine2017(Model):
 
     @u.quantity_input
     def evaluate_mbb_scaling(self, freq: u.GHz):
-        """ Method to evaluate a simple MBB scaling model with a constant
+        """Method to evaluate a simple MBB scaling model with a constant
         index of 1.54. This method is used for frequencies below the break
         frequency (nominally 10 GHz), as the data the HD17 model relies upon
         stops at 10 GHz.
@@ -358,8 +358,10 @@ class HensleyDraine2017(Model):
         )
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
-        """ This function calculates the model of Hensley and Draine 2017 for
+    def get_emission(
+        self, freqs: u.Quantity[u.GHz], weights=None
+    ) -> u.Quantity[u.uK_RJ]:
+        """This function calculates the model of Hensley and Draine 2017 for
         the emission of a mixture of silicate, cabonaceous, and silicate
         grains with iron inclusions.
 

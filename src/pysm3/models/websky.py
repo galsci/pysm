@@ -255,7 +255,9 @@ class WebSkySZ(Model):
         return str(path)
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
+    def get_emission(
+        self, freqs: u.Quantity[u.GHz], weights=None
+    ) -> u.Quantity[u.uK_RJ]:
 
         freqs = pysm.check_freq_input(freqs)
         weights = pysm.normalize_weights(freqs, weights)

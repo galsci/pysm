@@ -81,7 +81,7 @@ class PowerLaw(Model):
             self.pl_index = self.read_map(map_pl_index, unit="")
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz, weights=None):
+    def get_emission(self, freqs: u.Quantity[u.GHz], weights=None):
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         if not self.has_polarization:

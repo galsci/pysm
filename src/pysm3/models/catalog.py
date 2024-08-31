@@ -1,8 +1,7 @@
-from __future__ import annotations
-
 import h5py
 import healpy as hp
 import numpy as np
+
 try:
     from numpy import trapezoid
 except ImportError:
@@ -146,11 +145,11 @@ class PointSourceCatalog(Model):
     @u.quantity_input
     def get_emission(
         self,
-        freqs: u.GHz,
-        fwhm: [u.arcmin, None] = None,
+        freqs: u.Quantity[u.GHz],
+        fwhm: u.Quantity[u.arcmin] | None = None,
         weights=None,
         output_units=u.uK_RJ,
-        car_map_resolution: [u.arcmin, None] = None,
+        car_map_resolution: u.Quantity[u.arcmin] | None = None,
         return_car=False,
     ):
         """Generate a HEALPix or CAR map of the catalog emission integrated on the bandpass

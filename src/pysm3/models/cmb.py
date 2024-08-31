@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import healpy as hp
 import numpy as np
 from scipy.special import comb, factorial
@@ -13,7 +11,14 @@ class CMBMap(Model):
     """Load one or a set of 3 CMB maps"""
 
     def __init__(
-        self, nside, max_nside=None, map_IQU=None, map_I=None, map_Q=None, map_U=None, map_dist=None
+        self,
+        nside,
+        max_nside=None,
+        map_IQU=None,
+        map_I=None,
+        map_Q=None,
+        map_U=None,
+        map_dist=None,
     ):
         """
         The input is assumed to be in `uK_CMB`
@@ -42,7 +47,9 @@ class CMBMap(Model):
             raise (ValueError(msg))
 
     @u.quantity_input
-    def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
+    def get_emission(
+        self, freqs: u.Quantity[u.GHz], weights=None
+    ) -> u.Quantity[u.uK_RJ]:
         freqs = utils.check_freq_input(freqs)
         # do not use normalize weights because that includes a transformation
         # to spectral radiance and then back to RJ
@@ -66,9 +73,7 @@ https://github.com/amaurea/taylens
 
 
 def simulate_tebp_correlated(cl_tebp_arr, nside, lmax, seed):
-    """This generates correlated T,E,B and Phi maps
-
-        """
+    """This generates correlated T,E,B and Phi maps"""
     np.random.seed(seed)
     alms = hp.synalm(cl_tebp_arr, lmax=lmax, new=True)
     aphi = alms[-1]
@@ -185,19 +190,19 @@ def offset_pos(ipos, dtheta, dphi, pol=False, geodesic=False):
 def offset_pos_helper(ipos, dtheta, dphi, pol):
     grad = np.array((dtheta, dphi))
     dtheta, dphi = None, None
-    d = np.sum(grad ** 2, 0) ** 0.5
+    d = np.sum(grad**2, 0) ** 0.5
     grad /= d
     cosd, sind = np.cos(d), np.sin(d)
     cost, sint = np.cos(ipos[0]), np.sin(ipos[0])
     ocost = cosd * cost - sind * sint * grad[0]
-    osint = (1 - ocost ** 2) ** 0.5
+    osint = (1 - ocost**2) ** 0.5
     ophi = ipos[1] + np.arcsin(sind * grad[1] / osint)
     if not pol:
         return np.array([np.arccos(ocost), ophi]), None
     A = grad[1] / (sind * cost / sint + grad[0] * cosd)
     nom1 = grad[0] + grad[1] * A
-    denom = 1 + A ** 2
-    cosgam = 2 * nom1 ** 2 / denom - 1
+    denom = 1 + A**2
+    cosgam = 2 * nom1**2 / denom - 1
     singam = 2 * nom1 * (grad[1] - grad[0] * A) / denom
     return np.array([np.arccos(ocost), ophi]), np.array([cosgam, singam])
 

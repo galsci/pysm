@@ -97,7 +97,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
                     amplitude_modulation_pol_alm,
                 ]
             ]
-            self.small_scale_cl = self.read_cl(small_scale_cl).to(u.uK_RJ ** 2)
+            self.small_scale_cl = self.read_cl(small_scale_cl).to(u.uK_RJ**2)
         if galplane_fix is not None:
             self.galplane_fix_map = self.read_map(galplane_fix, field=(0, 1, 2, 3))
         else:
@@ -121,7 +121,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         ).to(u.K)
         self.small_scale_cl_mbb_temperature = self.read_cl(
             small_scale_cl_mbb_temperature
-        ).to(u.K ** 2)
+        ).to(u.K**2)
         self.nside = int(nside)
         (
             self.I_ref,
@@ -201,7 +201,8 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             )
 
             alm_small_scale = hp.almxfl(
-                alm_small_scale, np.ones(int(min(2.5 * self.nside+1, synalm_lmax+1)))
+                alm_small_scale,
+                np.ones(int(min(2.5 * self.nside + 1, synalm_lmax + 1))),
             )
             output[key] = hp.alm2map(alm_small_scale, nside=self.nside) * output_unit
             output[key] *= modulate_map_I
