@@ -1,8 +1,8 @@
 import numpy as np
 import healpy as hp
 
-from .. import InterpolatingComponent
-from .. import units as u
+from pysm3 import InterpolatingComponent
+from pysm3 import units as u
 
 import pytest
 

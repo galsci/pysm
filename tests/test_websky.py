@@ -8,8 +8,8 @@ try:  # PySM >= 3.2.1
 except ImportError:
     import pysm.units as u
 
-from .. import utils
-from .. import (
+from pysm3 import utils
+from pysm3 import (
     SPT_CIB_map_scaling,
     WebSkyCIB,
     WebSkySZ,

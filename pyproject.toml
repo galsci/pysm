@@ -66,11 +66,11 @@ test = [
 source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
-version-file = "pysm3/_version.py"
+version-file = "src/pysm3/_version.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "/pysm3",
+    "/src/pysm3",
 ]
 
 [tool.pytest.ini_options]

@@ -1,13 +1,13 @@
-from ..utils import RemoteData
-from .. import units as u
-from .. import Sky
+from pysm3.utils import RemoteData
+from pysm3 import units as u
+from pysm3 import Sky
 
 import numpy as np
 import healpy as hp
 
 import pytest
 
-from .. import COLines
+from pysm3 import COLines
 from astropy.tests.helper import assert_quantity_allclose
 
 
