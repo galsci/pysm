@@ -16,6 +16,7 @@ authors = [
 dependencies = [
     "astropy",
     "h5py",
+    "scipy",
     "healpy >= 1.16.0",
     "importlib_metadata;python_version<'3.8'",
     "numba",
