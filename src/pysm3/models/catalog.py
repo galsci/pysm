@@ -1,3 +1,4 @@
+from typing import Optional
 import h5py
 import healpy as hp
 import numpy as np
@@ -146,10 +147,10 @@ class PointSourceCatalog(Model):
     def get_emission(
         self,
         freqs: u.Quantity[u.GHz],
-        fwhm: u.Quantity[u.arcmin] | None = None,
+        fwhm: Optional[u.Quantity[u.arcmin]] = None,
         weights=None,
         output_units=u.uK_RJ,
-        car_map_resolution: u.Quantity[u.arcmin] | None = None,
+        car_map_resolution: Optional[u.Quantity[u.arcmin]] = None,
         return_car=False,
     ):
         """Generate a HEALPix or CAR map of the catalog emission integrated on the bandpass
