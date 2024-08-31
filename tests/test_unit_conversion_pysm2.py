@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import unittest
+
 from pysm3 import units as u
 
 

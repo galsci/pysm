@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import numpy as np
-from numba import njit
 from astropy import constants as const
+from numba import njit
 
 from .. import units as u
 from .. import utils

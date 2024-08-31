@@ -7,18 +7,21 @@ this template, ensuring that the new subclass has the required
 Objects:
     Model
 """
-import logging
-import numpy as np
-import healpy as hp
-from astropy.io import fits
-from .. import utils
-from .. import units as u
-from .. import mpi
+from __future__ import annotations
+
 import gc
+import logging
+
+import healpy as hp
+import numpy as np
+from astropy.io import fits
+
+from .. import mpi, utils
+from .. import units as u
 
 try:
-    import pixell.enmap
     import pixell.curvedsky
+    import pixell.enmap
 except ImportError:
     pixell = None
 

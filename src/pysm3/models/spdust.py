@@ -1,8 +1,10 @@
-import numpy as np
-from .. import units as u
-from numba import njit
-from .. import utils
+from __future__ import annotations
 
+import numpy as np
+from numba import njit
+
+from .. import units as u
+from .. import utils
 from .template import Model
 
 

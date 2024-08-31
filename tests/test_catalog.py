@@ -1,19 +1,20 @@
 # Important: it is important to import netCDF4 before `h4py` is imported
 # to avoid "HDF Error" under Ubuntu with pip
 # This does not happen with conda packages
-import netCDF4
-from pysm3 import units as u
-from pysm3.utils import car_aperture_photometry, healpix_aperture_photometry
+from __future__ import annotations
+
 import h5py
 import healpy as hp
-from numpy.testing import assert_allclose
-import pytest
-
-from pysm3.models.catalog import evaluate_poly, evaluate_model, PointSourceCatalog
+import netCDF4
 import numpy as np
+import pytest
 import xarray as xr
+from numpy.testing import assert_allclose
 
+from pysm3 import units as u
 from pysm3 import utils
+from pysm3.models.catalog import PointSourceCatalog, evaluate_model, evaluate_poly
+from pysm3.utils import car_aperture_photometry, healpix_aperture_photometry
 
 
 def test_evaluate_poly():

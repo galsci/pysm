@@ -1,6 +1,8 @@
+from __future__ import annotations
+
+import healpy as hp
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
-import healpy as hp
 
 from .. import units as u
 from .. import utils

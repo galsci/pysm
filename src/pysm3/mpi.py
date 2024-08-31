@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import healpy as hp
 import numpy as np
+
 from . import units as u
 from . import utils
 

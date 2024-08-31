@@ -1,7 +1,10 @@
-import pysm3
-import numpy as np
+from __future__ import annotations
+
 import healpy as hp
 import matplotlib.pyplot as plt
+import numpy as np
+
+import pysm3
 
 if __name__ == "__main__":
     nside = 16

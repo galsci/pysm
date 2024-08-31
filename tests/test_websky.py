@@ -1,19 +1,22 @@
-import numpy as np
-import healpy as hp
-import pytest
+from __future__ import annotations
+
 import os
+
+import healpy as hp
+import numpy as np
+import pytest
 
 try:  # PySM >= 3.2.1
     import pysm3.units as u
 except ImportError:
     import pysm.units as u
 
-from pysm3 import utils
 from pysm3 import (
     SPT_CIB_map_scaling,
     WebSkyCIB,
-    WebSkySZ,
     WebSkyRadioGalaxies,
+    WebSkySZ,
+    utils,
 )  # , WebSkyCMBTensor
 
 

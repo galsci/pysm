@@ -1,11 +1,12 @@
-import psutil
+from __future__ import annotations
+
 import numpy as np
+import psutil
+import pytest
 from astropy.tests.helper import assert_quantity_allclose
 
 import pysm3
 from pysm3 import units as u
-
-import pytest
 
 
 @pytest.mark.parametrize("model_tag", ["s7"])
@@ -19,7 +20,7 @@ def test_synch_model_s7_noscaling(model_tag):
     output = model.get_emission(freq)
 
     input_template = pysm3.models.read_map(
-        "synch/synch_template_nside{nside}_2023.02.25.fits".format(nside=nside),
+        f"synch/synch_template_nside{nside}_2023.02.25.fits",
         nside=nside,
         field=(0, 1, 2),
     )
@@ -39,19 +40,19 @@ def test_synch_model_s7_44(model_tag):
     output = model.get_emission(freq)
 
     input_template = pysm3.models.read_map(
-        "synch/synch_template_nside{nside}_2023.02.25.fits".format(nside=nside),
+        f"synch/synch_template_nside{nside}_2023.02.25.fits",
         nside=nside,
         field=(0, 1, 2),
     )
 
     freq_ref = 23 * u.GHz
     beta = pysm3.models.read_map(
-        "synch/synch_beta_nside{nside}_2023.02.16.fits".format(nside=nside),
+        f"synch/synch_beta_nside{nside}_2023.02.16.fits",
         nside=nside,
         field=0,
     )
     curvature = pysm3.models.read_map(
-        "synch/synch_curvature_nside{nside}_2023.02.17.fits".format(nside=nside),
+        f"synch/synch_curvature_nside{nside}_2023.02.17.fits",
         nside=nside,
         field=0,
     )
@@ -72,7 +73,7 @@ def test_synch_model_noscaling(model_tag):
     output = model.get_emission(freq)
 
     input_template = pysm3.models.read_map(
-        "synch/synch_template_nside{nside}_2023.02.25.fits".format(nside=nside),
+        f"synch/synch_template_nside{nside}_2023.02.25.fits",
         nside=nside,
         field=(0, 1, 2),
     )
@@ -91,7 +92,7 @@ def test_synch_44(model_tag):
     output = model.get_emission(freq)
 
     input_template = pysm3.models.read_map(
-        "synch/synch_template_nside{nside}_2023.02.25.fits".format(nside=nside),
+        f"synch/synch_template_nside{nside}_2023.02.25.fits",
         nside=nside,
         field=(0, 1, 2),
     )
@@ -101,7 +102,7 @@ def test_synch_44(model_tag):
         -3.1
         if model_tag == "s4"
         else pysm3.models.read_map(
-            "synch/synch_beta_nside{nside}_2023.02.16.fits".format(nside=nside),
+            f"synch/synch_beta_nside{nside}_2023.02.16.fits",
             nside=nside,
             field=0,
         )

@@ -1,12 +1,16 @@
+from __future__ import annotations
+
+from urllib.error import URLError
+
 import numpy as np
+import pixell.enmap
 import pytest
-import pysm3
-import pysm3.units as u
 from astropy.io import fits
 from astropy.tests.helper import assert_quantity_allclose
+
+import pysm3
+import pysm3.units as u
 from pysm3 import utils
-from urllib.error import URLError
-import pixell.enmap
 
 
 def test_get_relevant_frequencies():

@@ -1,15 +1,18 @@
+from __future__ import annotations
+
 import os.path
 from pathlib import Path
 
-from numba import njit
 import numpy as np
+from numba import njit
 
 import pysm3 as pysm
 import pysm3.units as u
+
+from .. import utils
+from .cmb import CMBMap
 from .interpolating import InterpolatingComponent
 from .template import Model
-from .cmb import CMBMap
-from .. import utils
 
 
 @njit
@@ -134,7 +137,7 @@ class WebSkyCIB(InterpolatingComponent):
             994,
             1080,
         ]
-        self.websky_freqs = ["{:06.1f}".format(f) for f in self.websky_freqs_float]
+        self.websky_freqs = [f"{f:06.1f}" for f in self.websky_freqs_float]
         self.apply_SPT_correction = apply_SPT_correction
         super().__init__(
             path=websky_version,

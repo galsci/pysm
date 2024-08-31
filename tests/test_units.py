@@ -1,7 +1,10 @@
-import numpy as np
+from __future__ import annotations
+
 import healpy as hp
-import pysm3.units as units
+import numpy as np
 import pytest
+
+from pysm3 import units
 from pysm3.models.template import read_map
 
 

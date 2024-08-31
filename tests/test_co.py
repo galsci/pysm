@@ -1,14 +1,13 @@
-from pysm3.utils import RemoteData
-from pysm3 import units as u
-from pysm3 import Sky
+from __future__ import annotations
 
-import numpy as np
 import healpy as hp
-
+import numpy as np
 import pytest
-
-from pysm3 import COLines
 from astropy.tests.helper import assert_quantity_allclose
+
+from pysm3 import COLines, Sky
+from pysm3 import units as u
+from pysm3.utils import RemoteData
 
 
 @pytest.mark.parametrize("include_high_galactic_latitude_clouds", [False, True])
@@ -34,7 +33,7 @@ def test_co(include_high_galactic_latitude_clouds):
     tag = "wHGL" if include_high_galactic_latitude_clouds else "noHGL"
     remote_data = RemoteData()
     expected_map_filename = remote_data.get(
-        "co/testing/CO10_TQUmaps_{}_nside16_ring.fits.zip".format(tag)
+        f"co/testing/CO10_TQUmaps_{tag}_nside16_ring.fits.zip"
     )
 
     expected_co_map = (
@@ -71,7 +70,7 @@ def test_co_model(model_tag):
     tag = "wHGL" if include_high_galactic_latitude_clouds else "noHGL"
     remote_data = RemoteData()
     expected_map_filename = remote_data.get(
-        "co/testing/CO10_TQUmaps_{}_nside16_ring.fits.zip".format(tag)
+        f"co/testing/CO10_TQUmaps_{tag}_nside16_ring.fits.zip"
     )
     expected_co_map = (
         hp.read_map(expected_map_filename, field=(0, 1, 2), dtype=np.float64) * u.K_CMB

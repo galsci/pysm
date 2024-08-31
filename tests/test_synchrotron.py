@@ -1,7 +1,9 @@
-import pysm3
+from __future__ import annotations
 
 import pytest
 from astropy.tests.helper import assert_quantity_allclose
+
+import pysm3
 
 
 @pytest.mark.parametrize("freq", [30, 100, 353])
@@ -12,7 +14,7 @@ def test_synchrotron_model(model, freq):
 
     model_number = {"s0": 2, "s1": 2, "s2": 7, "s3": 10}[model]
     synch = pysm3.read_map(
-        "pysm_2_test_data/check{}synch_{}p0_64.fits".format(model_number, freq),
+        f"pysm_2_test_data/check{model_number}synch_{freq}p0_64.fits",
         64,
         unit=pysm3.units.uK_RJ,
         field=(0, 1, 2),

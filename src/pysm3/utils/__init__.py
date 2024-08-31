@@ -2,19 +2,22 @@
 
 # This sub-module is destined for common non-package specific utility
 # functions.
+from __future__ import annotations
+
+import logging
 
 import numpy as np
 from numba import njit
 
 from .. import units as u
+from .add_metadata import add_metadata  # noqa: F401
 from .data import RemoteData  # noqa: F401
 from .logpoltens import log_pol_tens_to_map, map_to_log_pol_tens  # noqa: F401
+from .photometry import (
+    car_aperture_photometry,  # noqa: F401
+    healpix_aperture_photometry,  # noqa: F401
+)
 from .small_scales import sigmoid  # noqa: F401
-from .add_metadata import add_metadata  # noqa: F401
-from .photometry import car_aperture_photometry  # noqa: F401
-from .photometry import healpix_aperture_photometry  # noqa: F401
-
-import logging
 
 log = logging.getLogger("pysm3")
 
@@ -153,7 +156,7 @@ def bandpass_unit_conversion(
         if weights.min() < cut:
             good = np.logical_not(weights < cut)
             log.info(
-                "Removing {}/{} points below {}".format(good.sum(), len(good), cut)
+                f"Removing {good.sum()}/{len(good)} points below {cut}"
             )
             weights = weights[good]
             freqs = freqs[good]

@@ -1,9 +1,11 @@
-import numpy as np
-import healpy as hp
-from scipy.special import factorial, comb
+from __future__ import annotations
 
-from .. import utils
+import healpy as hp
+import numpy as np
+from scipy.special import comb, factorial
+
 from .. import units as u
+from .. import utils
 from .template import Model
 
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pysm3
 import pysm3.units as u
 

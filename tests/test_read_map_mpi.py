@@ -1,6 +1,9 @@
-import pytest
-import numpy as np
+from __future__ import annotations
+
 import healpy as hp
+import numpy as np
+import pytest
+
 import pysm3
 
 try:
@@ -20,7 +23,7 @@ def test_read_map_mpi_pixel_indices(mpi_comm):
     # pixels [0,1] on rank 1
     # pixels [0,1,2] on rank 2 and so on.
     map_dist = pysm3.MapDistribution(
-        mpi_comm=mpi_comm, pixel_indices=list(range(0, mpi_comm.rank + 1))
+        mpi_comm=mpi_comm, pixel_indices=list(range(mpi_comm.rank + 1))
     )
     m = pysm3.read_map("pysm_2/dust_temp.fits", nside=8, field=0, map_dist=map_dist)
     assert len(m) == mpi_comm.rank + 1
@@ -36,9 +39,7 @@ def test_read_map_mpi_uniform_distribution(mpi_comm):
     npix = hp.nside2npix(8)
     assert (
         npix % mpi_comm.size == 0
-    ), "This test requires the size of the communicator to divide the number of pixels {}".format(
-        npix
-    )
+    ), f"This test requires the size of the communicator to divide the number of pixels {npix}"
     num_local_pix = len(m)
     assert num_local_pix == npix / mpi_comm.size
 

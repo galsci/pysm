@@ -1,13 +1,15 @@
-from pathlib import Path
-import healpy as hp
+from __future__ import annotations
 
+from pathlib import Path
+
+import healpy as hp
 import numpy as np
 from numba import njit
 
 from .. import units as u
 from .. import utils
-from .template import Model
 from .dust import blackbody_ratio
+from .template import Model
 
 
 class ModifiedBlackBodyLayers(Model):

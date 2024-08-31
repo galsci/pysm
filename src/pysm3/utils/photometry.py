@@ -1,5 +1,7 @@
-import numpy as np
+from __future__ import annotations
+
 import healpy as hp
+import numpy as np
 
 
 def car_aperture_photometry(

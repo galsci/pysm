@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import unittest
+
 import numpy as np
 from astropy.io import fits
-import scipy.constants as constants
-from pysm3 import units as u
-from pysm3 import bandpass_unit_conversion
 from astropy.tests.helper import assert_quantity_allclose
-from pysm3 import utils
+from scipy import constants
+
+from pysm3 import bandpass_unit_conversion, utils
+from pysm3 import units as u
 
 
 class test_Bandpass_Unit_Conversion(unittest.TestCase):

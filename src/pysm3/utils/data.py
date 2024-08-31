@@ -1,7 +1,8 @@
-import os
-import logging
-from urllib.error import URLError
+from __future__ import annotations
 
+import logging
+import os
+from urllib.error import URLError
 
 from astropy.utils import data
 

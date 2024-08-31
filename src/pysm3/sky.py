@@ -5,12 +5,15 @@ code, without delving into the difference `Model` objects.
 Objects:
     Sky
 """
+from __future__ import annotations
+
 import toml
-from . import units as u
-from .utils import bandpass_unit_conversion
+
 from . import data
-from .models import Model
+from . import units as u
 from .models import *
+from .models import Model
+from .utils import bandpass_unit_conversion
 
 
 def remove_class_from_dict(d):

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from astropy.io import fits
 
 

@@ -1,16 +1,15 @@
-import numpy as np
-import healpy as hp
-from numba import njit
-from .. import utils
+from __future__ import annotations
 
+import h5py
+import healpy as hp
+import numpy as np
+from numba import njit
 
 # from astropy import constants as const
 #
 from .. import units as u
-
+from .. import utils
 from .template import Model
-
-import h5py
 
 
 @njit
@@ -257,7 +256,6 @@ class PointSourceCatalog(Model):
                 )
         if return_car:
             return output_map
-        else:
-            from pixell import reproject
+        from pixell import reproject
 
-            return reproject.map2healpix(output_map, self.nside)
+        return reproject.map2healpix(output_map, self.nside)

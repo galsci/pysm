@@ -1,8 +1,10 @@
-import numpy as np
-from .. import units as u
-from numba import njit
-from .. import utils
+from __future__ import annotations
 
+import numpy as np
+from numba import njit
+
+from .. import units as u
+from .. import utils
 from .template import Model
 
 
@@ -77,7 +79,6 @@ class PowerLaw(Model):
             self.pl_index = u.Quantity(map_pl_index, unit="")
         except TypeError:  # input is a path
             self.pl_index = self.read_map(map_pl_index, unit="")
-        return
 
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None):

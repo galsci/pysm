@@ -1,5 +1,7 @@
-import numpy as np
+from __future__ import annotations
+
 import healpy as hp
+import numpy as np
 
 from .. import units as u
 from .. import utils
@@ -80,7 +82,7 @@ class COLines(Model):
         self.remote_data = utils.RemoteData()
 
         self.planck_templatemap_filename = (
-            "co/HFI_CompMap_CO-Type1_{}_R2.00_ring.fits".format(self.template_nside)
+            f"co/HFI_CompMap_CO-Type1_{self.template_nside}_R2.00_ring.fits"
         )
         self.planck_templatemap = build_lines_dict(
             self.lines,
@@ -102,12 +104,12 @@ class COLines(Model):
         if self.has_polarization:
             self.polangle = self.read_map(
                 self.remote_data.get(
-                    "co/psimap_dust90_{}.fits".format(self.template_nside)
+                    f"co/psimap_dust90_{self.template_nside}.fits"
                 )
             ).value
             self.depolmap = self.read_map(
                 self.remote_data.get(
-                    "co/gmap_dust90_{}.fits".format(self.template_nside)
+                    f"co/gmap_dust90_{self.template_nside}.fits"
                 )
             ).value
         self.polarization_fraction = polarization_fraction
@@ -121,7 +123,7 @@ class COLines(Model):
                 self.lines,
                 self.read_map(
                     self.remote_data.get(
-                        "co/mcmoleCO_HGL_{}.fits".format(self.template_nside)
+                        f"co/mcmoleCO_HGL_{self.template_nside}.fits"
                     ),
                     field=[self.line_index[line] for line in self.lines],
                     unit=u.K_CMB,
@@ -240,5 +242,4 @@ class COLines(Model):
                 belowplanck = rmssim / rmsplanck
 
             return mapclouds * hglmask / belowplanck
-        else:
-            return self.mapclouds[line]
+        return self.mapclouds[line]

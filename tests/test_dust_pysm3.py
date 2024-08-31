@@ -1,12 +1,12 @@
-import psutil
-from astropy.tests.helper import assert_quantity_allclose
+from __future__ import annotations
 
-from pysm3.models.dust import blackbody_ratio
+import psutil
+import pytest
+from astropy.tests.helper import assert_quantity_allclose
 
 import pysm3
 from pysm3 import units as u
-
-import pytest
+from pysm3.models.dust import blackbody_ratio
 
 
 @pytest.mark.parametrize("model_tag", ["d9", "d10"])
@@ -20,7 +20,7 @@ def test_dust_model_353(model_tag):
     output = model.get_emission(freq)
 
     input_template = pysm3.models.read_map(
-        "dust_gnilc/gnilc_dust_template_nside{nside}_2023.02.10.fits".format(nside=nside),
+        f"dust_gnilc/gnilc_dust_template_nside{nside}_2023.02.10.fits",
         nside=nside,
         field=(0, 1, 2),
     )
@@ -44,7 +44,7 @@ def test_gnilc_857(model_tag):
     output = model.get_emission(freq)
 
     input_template = pysm3.models.read_map(
-        "dust_gnilc/gnilc_dust_template_nside{nside}_2023.02.10.fits".format(nside=2048),
+        f"dust_gnilc/gnilc_dust_template_nside{2048}_2023.02.10.fits",
         nside=2048,
         field=(0, 1, 2),
     )
@@ -54,7 +54,7 @@ def test_gnilc_857(model_tag):
         1.48
         if model_tag == "d9"
         else pysm3.models.read_map(
-            "dust_gnilc/gnilc_dust_beta_nside{nside}_2023.06.06.fits".format(nside=2048),
+            f"dust_gnilc/gnilc_dust_beta_nside{2048}_2023.06.06.fits",
             nside=2048,
             field=0,
         )
@@ -63,7 +63,7 @@ def test_gnilc_857(model_tag):
         19.6 * u.K
         if model_tag == "d9"
         else pysm3.models.read_map(
-            "dust_gnilc/gnilc_dust_Td_nside{nside}_2023.06.06.fits".format(nside=2048),
+            f"dust_gnilc/gnilc_dust_Td_nside{2048}_2023.06.06.fits",
             nside=2048,
             field=0,
         )

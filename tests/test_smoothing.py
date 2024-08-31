@@ -1,4 +1,5 @@
 """Test the `apply_smoothing_and_coord_transform` function"""
+from __future__ import annotations
 
 import healpy as hp
 import numpy as np
@@ -9,11 +10,11 @@ try:
 except ImportError:
     pass
 
-from pysm3.models import apply_smoothing_and_coord_transform
-import pysm3.units as u
-
-from astropy.tests.helper import assert_quantity_allclose
 import pytest
+from astropy.tests.helper import assert_quantity_allclose
+
+import pysm3.units as u
+from pysm3.models import apply_smoothing_and_coord_transform
 
 FWHM = (5 * u.deg).to_value(u.radian)
 NSIDE = 128

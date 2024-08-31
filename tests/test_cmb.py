@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import numpy as np
+import pytest
+from astropy.tests.helper import assert_quantity_allclose
+
 import pysm3
 import pysm3.units as u
-from astropy.tests.helper import assert_quantity_allclose
-import pytest
 
 
 def test_cmb_map():
@@ -62,7 +65,7 @@ def test_cmb_lensed(model_tag, freq):
 
     model_number = 5
     expected_output = pysm3.read_map(
-        "pysm_2_test_data/check{}cmb_{}p0_64.fits".format(model_number, freq),
+        f"pysm_2_test_data/check{model_number}cmb_{freq}p0_64.fits",
         64,
         unit="uK_RJ",
         field=(0, 1, 2),

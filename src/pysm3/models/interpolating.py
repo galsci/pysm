@@ -1,15 +1,18 @@
+from __future__ import annotations
+
+import logging
 import os
+import warnings
+
 import healpy as hp
+import numpy as np
 from numba import njit, types
 from numba.typed import Dict
-import numpy as np
-from .template import Model
+
 from .. import units as u
 from .. import utils
 from ..utils import trapz_step_inplace
-import warnings
-
-import logging
+from .template import Model
 
 log = logging.getLogger("pysm3")
 
@@ -101,16 +104,12 @@ class InterpolatingComponent(Model):
         npix = hp.nside2npix(self.nside)
         if nu[0] < self.freqs[0]:
             warnings.warn(
-                "Frequency not supported, requested {} Ghz < lower bound {} GHz".format(
-                    nu[0], self.freqs[0]
-                )
+                f"Frequency not supported, requested {nu[0]} Ghz < lower bound {self.freqs[0]} GHz"
             )
             return np.zeros((3, npix)) << u.uK_RJ
         if nu[-1] > self.freqs[-1]:
             warnings.warn(
-                "Frequency not supported, requested {} Ghz > upper bound {} GHz".format(
-                    nu[-1], self.freqs[-1]
-                )
+                f"Frequency not supported, requested {nu[-1]} Ghz > upper bound {self.freqs[-1]} GHz"
             )
             return np.zeros((3, npix)) << u.uK_RJ
 
@@ -125,9 +124,7 @@ class InterpolatingComponent(Model):
                 self.cached_maps[freq] = m.astype(np.float32)
                 for i_pol, pol in enumerate("IQU" if m.shape[0] == 3 else "I"):
                     log.info(
-                        "Mean emission at {} GHz in {}: {:.4g} uK_RJ".format(
-                            freq, pol, self.cached_maps[freq][i_pol].mean()
-                        )
+                        f"Mean emission at {freq} GHz in {pol}: {self.cached_maps[freq][i_pol].mean():.4g} uK_RJ"
                     )
 
         out = compute_interpolated_emission_numba(

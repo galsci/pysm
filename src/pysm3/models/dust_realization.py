@@ -1,10 +1,12 @@
-import numpy as np
+from __future__ import annotations
+
 import healpy as hp
+import numpy as np
 
 from .. import units as u
 from .. import utils
-from .template import Model
 from .dust import ModifiedBlackBody
+from .template import Model
 
 
 class ModifiedBlackBodyRealization(ModifiedBlackBody):

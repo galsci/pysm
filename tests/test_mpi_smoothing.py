@@ -1,6 +1,9 @@
-import pytest
-import numpy as np
+from __future__ import annotations
+
 import healpy as hp
+import numpy as np
+import pytest
+
 import pysm3
 import pysm3.units as u
 

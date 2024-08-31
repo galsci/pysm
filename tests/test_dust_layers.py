@@ -1,12 +1,14 @@
-import astropy.units as units
-import pytest
-import numpy as np
+from __future__ import annotations
+
 import healpy as hp
+import numpy as np
+import pytest
+from astropy import units
 from astropy.tests.helper import assert_quantity_allclose
 
-from pysm3.models.dust_layers import ModifiedBlackBodyLayers
-from pysm3 import units as u
 from pysm3 import Sky, read_map
+from pysm3 import units as u
+from pysm3.models.dust_layers import ModifiedBlackBodyLayers
 
 
 def test_modified_black_body_class():

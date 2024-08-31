@@ -1,10 +1,11 @@
-import numpy as np
+from __future__ import annotations
+
 import healpy as hp
+import numpy as np
+import pytest
 
 from pysm3 import InterpolatingComponent
 from pysm3 import units as u
-
-import pytest
 
 nside = 4
 shape = (3, hp.nside2npix(nside))
