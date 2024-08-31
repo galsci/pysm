@@ -42,11 +42,17 @@ jobs:
         create-args: >-
           python=${{ matrix.python }}
           netcdf4
+        init-shell: >-
+          bash
+        cache-environment: true
+        post-cleanup: 'all'
     - name: Install package
       run: pip install .[test]
+      shell: bash -el {0}
     - name: Test with tox
       run: |
         pytest -v
+      shell: bash -el {0}
 
 #    - name: MPI test
 #      run: |
