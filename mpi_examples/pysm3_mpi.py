@@ -1,8 +1,8 @@
 import numpy as np
+from mpi4py import MPI
+
 import pysm3 as pysm
 import pysm3.units as u
-
-from mpi4py import MPI
 
 nside = 32
 

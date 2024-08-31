@@ -1,12 +1,11 @@
 import numpy as np
-import healpy as hp
+import so_pysm_models
+from memreport import MemReporter
+from mpi4py import MPI
+from so_pysm_models import get_so_models
+
 import pysm3 as pysm
 import pysm3.units as u
-from so_pysm_models import get_so_models
-import so_pysm_models
-
-from mpi4py import MPI
-from memreport import MemReporter
 
 nside = 4096
 
@@ -17,6 +16,7 @@ map_dist = pysm.MapDistribution(
 )
 
 import warnings
+
 if map_dist.mpi_comm.rank > 0:
     warnings.filterwarnings("ignore")
 
@@ -30,7 +30,7 @@ num_elements = timelines_size_GB * GB_to_bytes//np.dtype(np.double).itemsize
 
 timelines = np.ones(num_elements, dtype=np.double)
 
-memreport.run("Created fake timelines of {:.2f} GB per process".format(timelines.nbytes/GB_to_bytes))
+memreport.run(f"Created fake timelines of {timelines.nbytes/GB_to_bytes:.2f} GB per process")
 
 components = []
 for comp in ["SO_d0s", "SO_s0s", "SO_f0s", "SO_a0s"]:

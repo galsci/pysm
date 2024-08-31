@@ -1,7 +1,9 @@
-import psutil
 import gc
-import numpy as np
 import time
+
+import numpy as np
+import psutil
+
 
 class MemReporter:
 
@@ -15,8 +17,8 @@ class MemReporter:
         vmem = psutil.virtual_memory()._asdict()
         gc.collect()
         vmem2 = psutil.virtual_memory()._asdict()
-        memstr = "***** {}\n".format(msg)
-        memstr += "Walltime elapsed since the beginning {:.1f} s\n".format(time.time() - self.timer)
+        memstr = f"***** {msg}\n"
+        memstr += f"Walltime elapsed since the beginning {time.time() - self.timer:.1f} s\n"
         memstr += "Memory usage \n"
         for key, value in vmem.items():
             value2 = vmem2[key]
@@ -46,40 +48,20 @@ class MemReporter:
                 else:
                     unit = "% "
                 if self.comm is None or self.comm.size == 1:
-                    memstr += "{:>12} : {:8.3f} {}\n".format(key, vlist[0], unit)
+                    memstr += f"{key:>12} : {vlist[0]:8.3f} {unit}\n"
                     if np.abs(vlist2[0] - vlist[0]) / vlist[0] > 1e-3:
-                        memstr += "{:>12} : {:8.3f} {} (after GC)\n".format(
-                            key, vlist2[0], unit
-                        )
+                        memstr += f"{key:>12} : {vlist2[0]:8.3f} {unit} (after GC)\n"
                 else:
                     med1 = np.median(vlist)
                     memstr += (
-                        "{:>12} : {:8.3f} {}  < {:8.3f} +- {:8.3f} {}  "
-                        "< {:8.3f} {}\n".format(
-                            key,
-                            np.amin(vlist),
-                            unit,
-                            med1,
-                            np.std(vlist),
-                            unit,
-                            np.amax(vlist),
-                            unit,
-                        )
+                        f"{key:>12} : {np.amin(vlist):8.3f} {unit}  < {med1:8.3f} +- {np.std(vlist):8.3f} {unit}  "
+                        f"< {np.amax(vlist):8.3f} {unit}\n"
                     )
                     med2 = np.median(vlist2)
                     if np.abs(med2 - med1) / med1 > 1e-3:
                         memstr += (
-                            "{:>12} : {:8.3f} {}  < {:8.3f} +- {:8.3f} {}  "
-                            "< {:8.3f} {} (after GC)\n".format(
-                                key,
-                                np.amin(vlist2),
-                                unit,
-                                med2,
-                                np.std(vlist2),
-                                unit,
-                                np.amax(vlist2),
-                                unit,
-                            )
+                            f"{key:>12} : {np.amin(vlist2):8.3f} {unit}  < {med2:8.3f} +- {np.std(vlist2):8.3f} {unit}  "
+                            f"< {np.amax(vlist2):8.3f} {unit} (after GC)\n"
                         )
         if self.comm is None or self.comm.rank == 0:
             print(memstr, flush=True)
