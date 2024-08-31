@@ -236,10 +236,7 @@ class COLines(Model):
             hglmask[listhgl] = 1.0
             rmsplanck = self.planck_templatemap[line][listhgl].std()
             rmssim = mapclouds[listhgl].std()
-            if rmssim == 0.0:
-                belowplanck = 1.0
-            else:
-                belowplanck = rmssim / rmsplanck
+            belowplanck = 1.0 if rmssim == 0.0 else rmssim / rmsplanck
 
             return mapclouds * hglmask / belowplanck
         return self.mapclouds[line]

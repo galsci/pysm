@@ -43,7 +43,7 @@ def test_evaluate_model_2freq_flat():
     coeff = np.array([[0, 0, 0, 0, 3.7]])
     freqs = np.exp(np.array([3, 4]))  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
-    weights /= np.trapz(weights, x=freqs)
+    weights /= np.trapezoid(weights, x=freqs)
     assert evaluate_model(freqs, weights, coeff) == np.ones((1, 1)) * 3.7
 
 
@@ -51,11 +51,11 @@ def test_evaluate_model_2freq_lin():
     coeff = np.array([[0, 0, 0, 2, 0]])
     freqs = np.exp(np.array([3, 4]))  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
-    weights /= np.trapz(weights, x=freqs)
+    weights /= np.trapezoid(weights, x=freqs)
     flux = evaluate_model(freqs, weights, coeff)[0]
     assert flux > 6
     assert flux < 8
-    assert flux == np.trapz(weights * np.array([6, 8]), x=freqs)
+    assert flux == np.trapezoid(weights * np.array([6, 8]), x=freqs)
 
 
 @pytest.fixture(scope="session")
@@ -80,9 +80,9 @@ def test_catalog(tmp_path_factory):
         catalog[field].attrs["units"] = "rad"
     for field in ["logpolycoefflux", "logpolycoefpolflux"]:
         catalog[field].attrs["units"] = "Jy"
-    catalog["logpolycoefflux"].loc[dict(index=0, power=0)] = 3.7
-    catalog["logpolycoefflux"].loc[dict(index=1, power=1)] = 2
-    catalog["logpolycoefpolflux"].loc[dict(index=1, power=0)] = 5
+    catalog["logpolycoefflux"].loc[{"index": 0, "power": 0}] = 3.7
+    catalog["logpolycoefflux"].loc[{"index": 1, "power": 1}] = 2
+    catalog["logpolycoefpolflux"].loc[{"index": 1, "power": 0}] = 5
     fn = tmp_path_factory.mktemp("data") / "test_catalog.h5"
     print(netCDF4.__version__)
     catalog.to_netcdf(str(fn), format="NETCDF4")  # requires netcdf4 package
@@ -94,11 +94,11 @@ def test_catalog_class_fluxes(test_catalog):
     catalog = PointSourceCatalog(test_catalog, nside=nside)
     freqs = np.exp(np.array([3, 4])) * u.GHz  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
-    weights /= np.trapz(weights, x=freqs.to_value(u.GHz))
+    weights /= np.trapezoid(weights, x=freqs.to_value(u.GHz))
     flux = catalog.get_fluxes(freqs, weights=weights)
     assert_allclose(flux[0], 3.7 * u.Jy)
     assert (
-        flux[1] == np.trapz(weights * np.array([6, 8]), x=freqs.to_value(u.GHz)) * u.Jy
+        flux[1] == np.trapezoid(weights * np.array([6, 8]), x=freqs.to_value(u.GHz)) * u.Jy
     )
 
 
@@ -107,7 +107,7 @@ def test_catalog_class_map_no_beam(test_catalog):
     catalog = PointSourceCatalog(test_catalog, nside=nside)
     freqs = np.exp(np.array([3, 4])) * u.GHz  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
-    weights /= np.trapz(weights, x=freqs.to_value(u.GHz))
+    weights /= np.trapezoid(weights, x=freqs.to_value(u.GHz))
 
     scaling_factor = utils.bandpass_unit_conversion(
         freqs, weights, output_unit=u.uK_RJ, input_unit=u.Jy / u.sr
@@ -137,7 +137,7 @@ def test_catalog_class_map_beam(test_catalog):
     catalog = PointSourceCatalog(test_catalog, nside=nside)
     freqs = np.exp(np.array([3, 4])) * u.GHz  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
-    weights /= np.trapz(weights, x=freqs.to_value(u.GHz))
+    weights /= np.trapezoid(weights, x=freqs.to_value(u.GHz))
 
     scaling_factor = utils.bandpass_unit_conversion(
         freqs, weights, input_unit=u.uK_RJ, output_unit=u.Jy / u.sr
@@ -189,7 +189,7 @@ def test_catalog_class_map_healpix(test_catalog):
     catalog = PointSourceCatalog(test_catalog, nside=nside)
     freqs = np.exp(np.array([3, 4])) * u.GHz  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
-    weights /= np.trapz(weights, x=freqs.to_value(u.GHz))
+    weights /= np.trapezoid(weights, x=freqs.to_value(u.GHz))
 
     scaling_factor = utils.bandpass_unit_conversion(
         freqs, weights, input_unit=u.uK_RJ, output_unit=u.Jy / u.sr

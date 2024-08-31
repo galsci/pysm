@@ -115,7 +115,7 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
         below 1% for all channels except 857GHz which is ~1.3%.
         """
 
-        for freq in self.CMB2MJysr_avg.keys():
+        for freq in self.CMB2MJysr_avg:
             pysm_conv = bandpass_unit_conversion(
                 self.channels[freq][0] * u.GHz,
                 weights=self.channels[freq][1],
@@ -136,7 +136,7 @@ class test_Bandpass_Unit_Conversion(unittest.TestCase):
 
     def test_bandpass_unit_conversion_MJysr2KRJ(self):
 
-        for freq in self.MJysr2KRJ_avg.keys():
+        for freq in self.MJysr2KRJ_avg:
             pysm_conv = bandpass_unit_conversion(
                 self.channels[freq][0] * u.GHz,
                 weights=self.channels[freq][1],
@@ -160,7 +160,7 @@ class test_bandpass_convert_integration(unittest.TestCase):
         self.freqs = np.linspace(nu1, nu2, nsamples) * u.GHz
 
         weights = np.ones(len(self.freqs))
-        self.Jysr2CMB = np.trapz(weights, x=self.freqs) / np.trapz(
+        self.Jysr2CMB = np.trapezoid(weights, x=self.freqs) / np.trapezoid(
             (1 * u.K_CMB).to(
                 u.Jy / u.sr, equivalencies=u.cmb_equivalencies(self.freqs)
             ),

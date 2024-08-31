@@ -58,7 +58,6 @@ def cmb_equivalencies(spec: GHz):
     try:
         [(_, _, Jy_to_CMB, CMB_to_Jy)] = thermodynamic_temperature(nu)
     except NameError:
-        print("PySM requires `astropy` > 3.1")
         raise
     [(_, _, Jy_to_RJ, RJ_to_Jy)] = brightness_temperature(nu)
 

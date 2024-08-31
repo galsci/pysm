@@ -14,8 +14,7 @@ except ImportError:
 
 @pytest.fixture
 def mpi_comm():
-    comm = MPI.COMM_WORLD
-    return comm
+    return MPI.COMM_WORLD
 
 
 def test_read_map_mpi_pixel_indices(mpi_comm):

@@ -86,7 +86,7 @@ def evaluate_model(freqs, weights, coeff):
         for i_source in range(n_sources):
             for i_freq in range(len(freqs)):
                 flux[i_freq] = evaluate_poly(coeff[i_source, :], logfreqs[i_freq])
-            out[i_source] = np.trapz(flux * weights, x=freqs)
+            out[i_source] = np.trapezoid(flux * weights, x=freqs)
     return out
 
 
@@ -134,7 +134,7 @@ class PointSourceCatalog(Model):
 
     def get_fluxes(self, freqs: u.GHz, coeff="logpolycoefflux", weights=None):
         """Get catalog fluxes in Jy integrated over a bandpass"""
-        weights /= np.trapz(weights, x=freqs.to_value(u.GHz))
+        weights /= np.trapezoid(weights, x=freqs.to_value(u.GHz))
         with h5py.File(self.catalog_filename) as f:
             flux = evaluate_model(freqs.to_value(u.GHz), weights, np.array(f[coeff]))
         return flux * u.Jy

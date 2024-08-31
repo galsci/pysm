@@ -122,7 +122,7 @@ def get_emission_numba_IQU(
     has_pol = Q_ref is not None
     output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
     I, Q, U = 0, 1, 2
-    for i, (freq, weight) in enumerate(zip(freqs, weights)):
+    for i, (freq, _weight) in enumerate(zip(freqs, weights)):
         utils.trapz_step_inplace(
             freqs, weights, i, I_ref * (freq / freq_ref_I) ** pl_index, output[I]
         )
@@ -228,7 +228,7 @@ def get_emission_numba_IQU_curved(
     has_pol = Q_ref is not None
     output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
     I, Q, U = 0, 1, 2
-    for i, (freq, weight) in enumerate(zip(freqs, weights)):
+    for i, (freq, _weight) in enumerate(zip(freqs, weights)):
         curvature_term = np.log((freq / freq_curve) ** curvature)
         utils.trapz_step_inplace(
             freqs,

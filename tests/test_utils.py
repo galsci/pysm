@@ -60,7 +60,7 @@ def test_bandpass_integration_tophat():
     weights = None
     freqs = utils.check_freq_input(freqs)
     weights = utils.normalize_weights(freqs, weights)
-    for i, (freq, weight) in enumerate(zip(freqs, weights)):
+    for i, (_freq, _weight) in enumerate(zip(freqs, weights)):
         utils.trapz_step_inplace(freqs, weights, i, input_map, output_map)
     np.testing.assert_allclose(input_map, output_map)
 
@@ -75,10 +75,10 @@ def test_trapz(freq_spacing):
     weights = [0.3, 1, 0.3]
     freqs = utils.check_freq_input(freqs)
     weights = utils.normalize_weights(freqs, weights)
-    for i, (freq, weight) in enumerate(zip(freqs, weights)):
+    for i, (_freq, _weight) in enumerate(zip(freqs, weights)):
         utils.trapz_step_inplace(freqs, weights, i, input_maps[i : i + 1], output_map)
 
-    expected = np.trapz(weights * input_maps, freqs)
+    expected = np.trapezoid(weights * input_maps, freqs)
     np.testing.assert_allclose(expected, output_map)
 
 
@@ -89,7 +89,7 @@ def test_bandpass_integration_weights():
     weights = [0.3, 1, 0.3]
     freqs = utils.check_freq_input(freqs)
     weights = utils.normalize_weights(freqs, weights)
-    for i, (freq, weight) in enumerate(zip(freqs, weights)):
+    for i, (_freq, _weight) in enumerate(zip(freqs, weights)):
         utils.trapz_step_inplace(freqs, weights, i, input_map, output_map)
     np.testing.assert_allclose(input_map, output_map)
 

@@ -30,8 +30,7 @@ def input_map():
     cl = np.zeros((6, len(beam_window)))
     cl[0:3] = beam_window
     np.random.seed(7)
-    m = hp.synfast(cl, NSIDE, lmax=LMAX, new=True) * u.uK_RJ
-    return m
+    return hp.synfast(cl, NSIDE, lmax=LMAX, new=True) * u.uK_RJ
 
 
 def test_smoothing_healpix(input_map):

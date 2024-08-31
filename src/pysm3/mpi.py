@@ -29,10 +29,9 @@ def distribute_pixels_uniformly(mpi_comm, nside):
     """
     npix = hp.nside2npix(nside)
     pix_per_proc = int(np.ceil(npix / mpi_comm.size))
-    pixel_indices = np.arange(
+    return np.arange(
         mpi_comm.rank * pix_per_proc, min((mpi_comm.rank + 1) * pix_per_proc, npix)
     )
-    return pixel_indices
 
 
 def expand_pix(startpix, ringpix, local_npix):

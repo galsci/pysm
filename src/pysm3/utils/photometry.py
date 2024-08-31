@@ -88,5 +88,4 @@ def healpix_aperture_photometry(m, theta, phi, aperture_radius, annulus_width=No
     ipix_annulus = np.array(list(set(ipix_total).difference(set(ipix_aperture_radius))))
     # mean background level from the annulus
     mean = np.mean(m[ipix_annulus])
-    flux = np.sum(m[ipix_aperture_radius] - mean) * hp.nside2pixarea(nside)
-    return flux
+    return np.sum(m[ipix_aperture_radius] - mean) * hp.nside2pixarea(nside)

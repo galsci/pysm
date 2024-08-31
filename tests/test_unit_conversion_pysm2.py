@@ -32,7 +32,7 @@ class TestConvertUnits(unittest.TestCase):
         and limits some comparison to only ~2/3 s.f.
         """
         freqs = [30, 143, 857]
-        uK_CMB_2_K_RJ = dict()
+        uK_CMB_2_K_RJ = {}
         uK_CMB_2_K_RJ[30] = 9.77074e-7
         uK_CMB_2_K_RJ[143] = 6.04833e-7
         uK_CMB_2_K_RJ[857] = 6.37740e-11
@@ -44,7 +44,7 @@ class TestConvertUnits(unittest.TestCase):
                 * u.uK_CMB.to(u.K_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz)),
             )
 
-        K_CMB_2_MJysr = dict()
+        K_CMB_2_MJysr = {}
         K_CMB_2_MJysr[30] = 27.6515
         K_CMB_2_MJysr[143] = 628.272
         K_CMB_2_MJysr[857] = 22565.1
@@ -66,7 +66,7 @@ class TestConvertUnits(unittest.TestCase):
         # definitions of h, k, c in the document linked above are in cgs and differ
         # from those on wikipedia. This may conflict with the scipy constants I use.
 
-        uK_CMB_2_MJysr = dict()
+        uK_CMB_2_MJysr = {}
         uK_CMB_2_MJysr[30] = 2.7e-5
         uK_CMB_2_MJysr[143] = 0.0003800
         uK_CMB_2_MJysr[857] = 1.43907e-6

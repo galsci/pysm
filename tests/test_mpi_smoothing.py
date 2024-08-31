@@ -22,8 +22,7 @@ except ImportError:
 
 @pytest.fixture
 def mpi_comm():
-    comm = MPI.COMM_WORLD
-    return comm
+    return MPI.COMM_WORLD
 
 
 def test_mpi_assemble(mpi_comm):

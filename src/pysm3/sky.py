@@ -18,7 +18,7 @@ from .utils import bandpass_unit_conversion
 
 def remove_class_from_dict(d):
     """Return a copy of dictionary without the key "class" """
-    return {k: d[k] for k in d.keys() if k != "class"}
+    return {k: d[k] for k in d if k != "class"}
 
 
 def create_components_from_config(config, nside, map_dist=None):

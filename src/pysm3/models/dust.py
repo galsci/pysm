@@ -135,13 +135,10 @@ def get_emission_numba(
     mbb_temperature,
 ):
     output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
-    if len(freqs) > 1:
-        temp = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
-    else:
-        temp = output
+    temp = np.zeros((3, len(I_ref)), dtype=I_ref.dtype) if len(freqs) > 1 else output
 
     I, Q, U = 0, 1, 2
-    for i, (freq, weight) in enumerate(zip(freqs, weights)):
+    for i, (freq, _weight) in enumerate(zip(freqs, weights)):
         temp[I, :] = I_ref
         temp[Q, :] = Q_ref
         temp[U, :] = U_ref
@@ -232,7 +229,7 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
 
         output = np.zeros((3, len(self.I_ref)), dtype=self.I_ref.dtype)
         # apply the decorrelation to the mbb_emission for each frequencies before integrating
-        for i, (freq, weight) in enumerate(zip(freqs, weights)):
+        for i, (freq, _weight) in enumerate(zip(freqs, weights)):
             temp = decorr[..., None][i] * super().get_emission(freq * u.GHz)
             if len(freqs) > 1:
                 utils.trapz_step_inplace(freqs, weights, i, temp, output)
@@ -397,6 +394,5 @@ def blackbody_nu(freq, temp):
     boltzm1 = np.expm1(log_boltz)
 
     # Calculate blackbody flux
-    bb_nu = 2.0 * h * (freq * 1e9) ** 3 / (c ** 2 * boltzm1)
+    return 2.0 * h * (freq * 1e9) ** 3 / (c ** 2 * boltzm1)
 
-    return bb_nu

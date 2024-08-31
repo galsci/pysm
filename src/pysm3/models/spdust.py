@@ -71,7 +71,7 @@ class SpDust(Model):
     def get_emission(self, freqs: u.GHz, weights=None):
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
-        outputs = (
+        return (
             compute_spdust_emission_numba(
                 freqs,
                 weights,
@@ -82,7 +82,6 @@ class SpDust(Model):
             )
             << u.uK_RJ
         )
-        return outputs
 
 
 @njit
@@ -101,7 +100,7 @@ def compute_spdust_emission_numba(
     freqs, weights, I_ref, freq_ref_I, freq_peak, emissivity
 ):
     output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
-    for i, (freq, weight) in enumerate(zip(freqs, weights)):
+    for i, (freq, _weight) in enumerate(zip(freqs, weights)):
         scaling = compute_spdust_scaling_numba(freq, freq_ref_I, freq_peak, emissivity)
         utils.trapz_step_inplace(freqs, weights, i, scaling * I_ref, output[0])
     return output
@@ -143,7 +142,7 @@ class SpDustPol(SpDust):
     def get_emission(self, freqs: u.GHz, weights=None):
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
-        outputs = (
+        return (
             compute_spdust_emission_pol_numba(
                 freqs,
                 weights,
@@ -156,7 +155,6 @@ class SpDustPol(SpDust):
             )
             << u.uK_RJ
         )
-        return outputs
 
 
 @njit(parallel=True)
@@ -165,7 +163,7 @@ def compute_spdust_emission_pol_numba(
 ):
     output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
     I, Q, U = 0, 1, 2
-    for i, (freq, weight) in enumerate(zip(freqs, weights)):
+    for i, (freq, _weight) in enumerate(zip(freqs, weights)):
         scaling = compute_spdust_scaling_numba(freq, freq_ref_I, freq_peak, emissivity)
         utils.trapz_step_inplace(freqs, weights, i, scaling * I_ref, output[I])
         utils.trapz_step_inplace(

@@ -166,10 +166,7 @@ def compute_interpolated_emission_numba(freqs, weights, freq_range, all_maps):
     output = np.zeros(
         all_maps[freq_range[0]].shape, dtype=all_maps[freq_range[0]].dtype
     )
-    if len(freqs) > 1:
-        temp = np.zeros_like(output)
-    else:
-        temp = output
+    temp = np.zeros_like(output) if len(freqs) > 1 else output
     index_range = np.arange(len(freq_range))
     for i in range(len(freqs)):
         interpolation_weight = np.interp(freqs[i], freq_range, index_range)

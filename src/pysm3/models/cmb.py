@@ -38,7 +38,8 @@ class CMBMap(Model):
                     self.map.append(self.read_map(m, unit=u.uK_CMB))
                 self.map = u.Quantity(self.map, unit=u.uK_CMB)
         else:
-            raise (ValueError("No input map provided"))
+            msg = "No input map provided"
+            raise (ValueError(msg))
 
     @u.quantity_input
     def get_emission(self, freqs: u.GHz, weights=None) -> u.uK_RJ:
@@ -163,10 +164,7 @@ def offset_pos(ipos, dtheta, dphi, pol=False, geodesic=False):
 
     """
     opos = np.zeros(ipos.shape)
-    if pol and not geodesic:
-        orot = np.zeros(ipos.shape)
-    else:
-        orot = None
+    orot = np.zeros(ipos.shape) if pol and not geodesic else None
     if not geodesic:
         # Loop over chunks in order to conserve memory
         step = 0x10000

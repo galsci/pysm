@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
 from urllib.error import URLError
@@ -30,10 +31,8 @@ class RemoteData:
         """
         self.data_url = DATAURL
         self.data_folders = []
-        try:
+        with contextlib.suppress(KeyError):
             self.data_folders.append(os.environ["PYSM_LOCAL_DATA"])
-        except KeyError:
-            pass
         self.data_folders += PREDEFINED_DATA_FOLDERS
 
     def get(self, filename):

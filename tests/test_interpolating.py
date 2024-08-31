@@ -17,10 +17,9 @@ def interp(tmp_path):
     hp.write_map(tmp_path / "10.fits", np.ones(shape, dtype=np.float32))
     hp.write_map(tmp_path / "20.fits", 2 * np.ones(shape, dtype=np.float32))
 
-    interp = InterpolatingComponent(
+    return InterpolatingComponent(
         tmp_path, "uK_RJ", nside, interpolation_kind="linear"
     )
-    return interp
 
 
 def test_interpolating(interp):

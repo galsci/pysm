@@ -70,10 +70,7 @@ class Model:
         value when reading the map. This can be used to read in data
         products that must be processed at a specific nside.
         """
-        if nside is not None:
-            nside = nside
-        else:
-            nside = self.nside
+        nside = nside if nside is not None else self.nside
         if "{nside}" in path:
             path = path.format(nside=max(2048, nside))
         return read_map(
@@ -189,10 +186,7 @@ def apply_smoothing_and_coord_transform(
         if output_nside is None:
             output_nside = nside
 
-    if hasattr(input_map, "unit"):
-        unit = input_map.unit
-    else:
-        unit = 1
+    unit = input_map.unit if hasattr(input_map, "unit") else 1
 
     if lmax is None:
         if nside == output_nside:
@@ -303,7 +297,7 @@ def apply_normalization(freqs, weights):
         Tuple containing the frequencies and weights. These are numpy arrays
         of equal length.
     """
-    return freqs, weights / np.trapz(weights, freqs)
+    return freqs, weights / np.trapezoid(weights, freqs)
 
 
 def extract_hdu_unit(path, hdu=1, field=0):

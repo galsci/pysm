@@ -130,7 +130,7 @@ def get_emission_numba(
     temp = np.zeros((3, npix), dtype=layers.dtype)
 
     I, Q, U = 0, 1, 2
-    for i, (freq, weight) in enumerate(zip(freqs, weights)):
+    for i, (freq, _weight) in enumerate(zip(freqs, weights)):
         for i_layer in range(layers.shape[0]):
             temp[:, :] = layers[i_layer, :, :]
             # -2 because black body is in flux unit and not K_RJ

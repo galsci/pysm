@@ -268,22 +268,18 @@ class WebSkySZ(Model):
         )
 
         is_thermal = self.sz_type == "thermal"
-        output = (
+        return (
             get_sz_emission_numba(freqs, weights, self.m.value, is_thermal) << u.uK_RJ
         )
 
         # the output of out is always 2D, (IQU, npix)
-        return output
 
 
 @njit(parallel=True)
 def get_sz_emission_numba(freqs, weights, m, is_thermal):
     output = np.zeros((3, len(m)), dtype=m.dtype)
     for i in range(len(freqs)):
-        if is_thermal:
-            signal = m * m.dtype.type(y2uK_CMB(freqs[i]))
-        else:
-            signal = m
+        signal = m * m.dtype.type(y2uK_CMB(freqs[i])) if is_thermal else m
         pysm.utils.trapz_step_inplace(freqs, weights, i, signal, output[0])
     return output
 
