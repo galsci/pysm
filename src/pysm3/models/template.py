@@ -14,6 +14,10 @@ import logging
 
 import healpy as hp
 import numpy as np
+try:
+    from numpy import trapezoid
+except ImportError:
+    from numpy import trapz as trapezoid
 from astropy.io import fits
 
 from .. import mpi, utils
@@ -297,7 +301,7 @@ def apply_normalization(freqs, weights):
         Tuple containing the frequencies and weights. These are numpy arrays
         of equal length.
     """
-    return freqs, weights / np.trapezoid(weights, freqs)
+    return freqs, weights / trapezoid(weights, freqs)
 
 
 def extract_hdu_unit(path, hdu=1, field=0):

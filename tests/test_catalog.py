@@ -7,6 +7,10 @@ import h5py
 import healpy as hp
 import netCDF4
 import numpy as np
+try:
+    from numpy import trapezoid
+except ImportError:
+    from numpy import trapz as trapezoid
 import pytest
 import xarray as xr
 from numpy.testing import assert_allclose

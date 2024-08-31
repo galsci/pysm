@@ -3,6 +3,10 @@ from __future__ import annotations
 from urllib.error import URLError
 
 import numpy as np
+try:
+    from numpy import trapezoid
+except ImportError:
+    from numpy import trapz as trapezoid
 import pixell.enmap
 import pytest
 from astropy.io import fits
@@ -78,7 +82,7 @@ def test_trapz(freq_spacing):
     for i, (_freq, _weight) in enumerate(zip(freqs, weights)):
         utils.trapz_step_inplace(freqs, weights, i, input_maps[i : i + 1], output_map)
 
-    expected = np.trapezoid(weights * input_maps, freqs)
+    expected = trapezoid(weights * input_maps, freqs)
     np.testing.assert_allclose(expected, output_map)
 
 

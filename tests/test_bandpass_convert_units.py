@@ -3,6 +3,10 @@ from __future__ import annotations
 import unittest
 
 import numpy as np
+try:
+    from numpy import trapezoid
+except ImportError:
+    from numpy import trapz as trapezoid
 from astropy.io import fits
 from astropy.tests.helper import assert_quantity_allclose
 from scipy import constants
@@ -160,7 +164,7 @@ class test_bandpass_convert_integration(unittest.TestCase):
         self.freqs = np.linspace(nu1, nu2, nsamples) * u.GHz
 
         weights = np.ones(len(self.freqs))
-        self.Jysr2CMB = np.trapezoid(weights, x=self.freqs) / np.trapezoid(
+        self.Jysr2CMB = trapezoid(weights, x=self.freqs) / trapezoid(
             (1 * u.K_CMB).to(
                 u.Jy / u.sr, equivalencies=u.cmb_equivalencies(self.freqs)
             ),
