@@ -15,6 +15,7 @@ from astropy.tests.helper import assert_quantity_allclose
 import pysm3.units as u
 from pysm3 import apply_smoothing_and_coord_transform
 
+INITIAL_FWHM = (1 * u.deg).to_value(u.radian)
 FWHM = (5 * u.deg).to_value(u.radian)
 NSIDE = 128
 CAR_RESOL = 12 * u.arcmin
@@ -25,7 +26,7 @@ LMAX = int(NSIDE * 1.5)
     scope="module"
 )  # scope makes the fixture just run once per execution of module
 def input_map():
-    beam_window = hp.gauss_beam(fwhm=FWHM, lmax=LMAX) ** 2
+    beam_window = hp.gauss_beam(fwhm=INITIAL_FWHM, lmax=LMAX) ** 2
     cl = np.zeros((6, len(beam_window)))
     cl[0:3] = beam_window
     np.random.seed(7)
