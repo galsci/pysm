@@ -259,7 +259,13 @@ def apply_smoothing_and_coord_transform(
             log.info("Smoothing with a custom isotropic beam")
             # smoothalm does not support polarized beam
             for i in range(3):
-                hp.smoothalm(alm[i], beam_window=beam_window[:, i], inplace=True)
+                try:
+                    beam_window_i = beam_window[:, i]
+                    log.info("Using polarized beam")
+                except IndexError:
+                    beam_window_i = beam_window
+                    log.info("Using the same beam for all components")
+                hp.smoothalm(alm[i], beam_window=beam_window_i, inplace=True)
         if rot is not None:
             log.info("Rotate Alm")
             rot.rotate_alm(alm, inplace=True)
