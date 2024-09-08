@@ -34,8 +34,23 @@ def input_map():
     return m
 
 
-def test_smoothing_healpix(input_map):
+def test_smoothing_healpix_beamwindow(input_map):
+    beam_window = hp.gauss_beam(fwhm=FWHM, lmax=LMAX, pol=True)
 
+    smoothed_map = apply_smoothing_and_coord_transform(
+        input_map, lmax=LMAX, beam_window=beam_window
+    )
+    assert input_map.shape[0] == 3
+    assert smoothed_map.shape == input_map.shape
+    assert_quantity_allclose(
+        actual=smoothed_map,
+        desired=hp.smoothing(input_map, fwhm=FWHM, lmax=LMAX, use_pixel_weights=True)
+        * input_map.unit,
+        rtol=1e-7,
+    )
+
+
+def test_smoothing_healpix(input_map):
     smoothed_map = apply_smoothing_and_coord_transform(
         input_map, lmax=LMAX, fwhm=FWHM * u.radian
     )
@@ -49,7 +64,6 @@ def test_smoothing_healpix(input_map):
 
 
 def test_car_nosmoothing(input_map):
-
     # `enmap_from_healpix` has no iteration or weights
     # so for test purpose we reproduce it here
     alm = (
@@ -79,7 +93,6 @@ def test_car_nosmoothing(input_map):
 
 
 def test_healpix_output_nside(input_map):
-
     output_nside = 64
     output_map = apply_smoothing_and_coord_transform(
         input_map, fwhm=None, output_nside=output_nside, lmax=LMAX
