@@ -169,7 +169,6 @@ def bandpass_unit_conversion(
             weights = weights[good]
             freqs = freqs[good]
             weights /= np.trapz(weights, freqs)
-            1 / 0
         weights_to_rj = (weights * input_unit).to_value(
             (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
         )
