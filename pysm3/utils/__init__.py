@@ -151,11 +151,14 @@ def bandpass_unit_conversion(
         if weights.min() < cut:
             good = np.logical_not(weights < cut)
             log.info(
-                "Removing {}/{} points below {}".format(good.sum(), len(good), cut)
+                "Removing {}/{} points below {}".format(
+                    (good == 0).sum(), len(good), cut
+                )
             )
             weights = weights[good]
             freqs = freqs[good]
             weights /= np.trapz(weights, freqs)
+            1 / 0
         weights_to_rj = (weights * input_unit).to_value(
             (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
         )
