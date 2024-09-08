@@ -257,7 +257,9 @@ def apply_smoothing_and_coord_transform(
         if beam_window is not None:
             assert fwhm is None, "Either FWHM or beam_window"
             log.info("Smoothing with a custom isotropic beam")
-            hp.smoothalm(alm, beam_window=beam_window, inplace=True, pol=True)
+            # smoothalm does not support polarized beam
+            for i in range(3):
+                hp.smoothalm(alm[i], beam_window=beam_window[:, i], inplace=True)
         if rot is not None:
             log.info("Rotate Alm")
             rot.rotate_alm(alm, inplace=True)
