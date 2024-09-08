@@ -124,6 +124,7 @@ class Model:
 def apply_smoothing_and_coord_transform(
     input_map,
     fwhm=None,
+    beam_window=None,
     rot=None,
     lmax=None,
     output_nside=None,
@@ -150,6 +151,8 @@ def apply_smoothing_and_coord_transform(
     fwhm : astropy.units.Quantity
         Full width at half-maximum, defining the
         Gaussian kernels to be applied.
+    beam_window: array, optional
+        Custom beam window function (:math:`B_\ell`)
     rot: hp.Rotator
         Apply a coordinate rotation give a healpy `Rotator`, e.g. if the
         inputs are in Galactic, `hp.Rotator(coord=("G", "C"))` rotates
@@ -240,8 +243,13 @@ def apply_smoothing_and_coord_transform(
                         error,
                     )
         if fwhm is not None:
+            assert beam_window is None, "Either FWHM or beam_window"
             log.info("Smoothing with fwhm of %s", str(fwhm))
             hp.smoothalm(alm, fwhm=fwhm.to_value(u.rad), inplace=True, pol=True)
+        if beam_window is not None:
+            assert fwhm is None, "Either FWHM or beam_window"
+            log.info("Smoothing with a custom isotropic beam")
+            hp.smoothalm(alm, beam_window=beam_window, inplace=True, pol=True)
         if rot is not None:
             log.info("Rotate Alm")
             rot.rotate_alm(alm, inplace=True)
