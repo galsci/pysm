@@ -97,11 +97,13 @@ def test_catalog_class_fluxes(test_catalog):
     catalog = PointSourceCatalog(test_catalog, nside=nside)
     freqs = np.exp(np.array([3, 4])) * u.GHz  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
-    weights /= trapezoid(weights, x=freqs.to_value(u.GHz))
+    normalized_weights = utils.normalize_weights(utils.check_freq_input(freqs), weights)
     flux = catalog.get_fluxes(freqs, weights=weights)
     assert_allclose(flux[0], 3.7 * u.Jy)
     assert (
-        flux[1] == trapezoid(weights * np.array([6, 8]), x=freqs.to_value(u.GHz)) * u.Jy
+        flux[1]
+        == trapezoid(normalized_weights * np.array([6, 8]), x=freqs.to_value(u.GHz))
+        * u.Jy
     )
 
 

@@ -125,7 +125,6 @@ class PointSourceCatalog(Model):
     ):
         self.catalog_filename = catalog_filename
         self.nside = nside
-        self.shape = (3, hp.nside2npix(nside))
         self.wcs = target_wcs
 
         with h5py.File(self.catalog_filename) as f:
@@ -138,9 +137,10 @@ class PointSourceCatalog(Model):
 
     def get_fluxes(self, freqs: u.GHz, coeff="logpolycoefflux", weights=None):
         """Get catalog fluxes in Jy integrated over a bandpass"""
-        weights /= trapezoid(weights, x=freqs.to_value(u.GHz))
+        freqs = utils.check_freq_input(freqs)
+        weights = utils.normalize_weights(freqs, weights)
         with h5py.File(self.catalog_filename) as f:
-            flux = evaluate_model(freqs.to_value(u.GHz), weights, np.array(f[coeff]))
+            flux = evaluate_model(freqs, weights, np.array(f[coeff]))
         return flux * u.Jy
 
     @u.quantity_input
@@ -178,8 +178,6 @@ class PointSourceCatalog(Model):
         -------
         output_map: np.array
             Output HEALPix or CAR map"""
-        with h5py.File(self.catalog_filename) as f:
-            pix = hp.ang2pix(self.nside, f["theta"], f["phi"])
         scaling_factor = utils.bandpass_unit_conversion(
             freqs, weights, output_unit=output_units, input_unit=u.Jy / u.sr
         )
@@ -195,7 +193,12 @@ class PointSourceCatalog(Model):
         fluxes_I = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefflux")
 
         if fwhm is None:
-            output_map = np.zeros(self.shape, dtype=np.float32) * output_units
+            with h5py.File(self.catalog_filename) as f:
+                pix = hp.ang2pix(self.nside, f["theta"], f["phi"])
+            output_map = (
+                np.zeros((3, hp.nside2npix(self.nside)), dtype=np.float32)
+                * output_units
+            )
             # sum, what if we have 2 sources on the same pixel?
             output_map[0, pix] += fluxes_I / pix_size * scaling_factor
         else:
@@ -258,8 +261,8 @@ class PointSourceCatalog(Model):
                     ),
                     ((r, p)),
                 )
-        if return_car:
-            return output_map
-        from pixell import reproject
+            if not return_car:
+                from pixell import reproject
 
-        return reproject.map2healpix(output_map, self.nside)
+                return reproject.map2healpix(output_map, self.nside)
+        return output_map
