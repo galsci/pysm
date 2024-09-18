@@ -130,7 +130,19 @@ Configure verbosity
 -------------------
 
 PySM uses the `logging` module to configure its verbosity,
-by default it will only print warnings and errors, to configure logging
+by default it will only print warnings and errors.
+
+A log of useful information, for example intermediate results and timing can be
+accessed enabling the `INFO` level of logging.
+We provide a simplified function to configure this.
+
+    pysm3.set_verbosity()
+
+By default this sets verbosity to `INFO`, otherwise you can specify a level:
+
+    pysm3.set_verbosity(logging.DEBUG)
+
+To configure logging
 you can access the "pysm3" logger with::
 
     import logging
