@@ -15,7 +15,7 @@ from .websky import (
     SPT_CIB_map_scaling,
     WebSkyCMB,
     WebSkyCIB,
-    WebSkySZ,
-    WebSkyRadioGalaxies,
+    SimpleSZ,
+    WebSkyRadioGalaxies
 )
 from .catalog import PointSourceCatalog
