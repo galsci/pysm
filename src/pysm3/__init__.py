@@ -11,4 +11,4 @@ from .sky import Sky, get_pysm_emission
 from . import units
 from .distribution import MapDistribution
 from .mpi import mpi_smoothing
-from .utils import normalize_weights, bandpass_unit_conversion, check_freq_input
+from .utils import normalize_weights, bandpass_unit_conversion, check_freq_input, set_verbosity

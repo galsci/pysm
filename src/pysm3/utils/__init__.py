@@ -20,6 +20,17 @@ from .small_scales import sigmoid  # noqa: F401
 log = logging.getLogger("pysm3")
 
 
+def set_verbosity(level=logging.INFO):
+    logger = logging.getLogger("pysm3")
+    logger.setLevel(level)
+    if not logger.hasHandlers():
+        handler = logging.StreamHandler()
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        )
+        logger.addHandler(handler)
+
+
 def get_relevant_frequencies(freqs, low, high):
     """Get the frequencies necessary for interpolation in the
     input list between a low and a high limit
@@ -153,9 +164,7 @@ def bandpass_unit_conversion(
         weights /= np.trapz(weights, freqs)
         if weights.min() < cut:
             good = np.logical_not(weights < cut)
-            log.info(
-                f"Removing {good.sum()}/{len(good)} points below {cut}"
-            )
+            log.info(f"Removing {good.sum()}/{len(good)} points below {cut}")
             weights = weights[good]
             freqs = freqs[good]
             weights /= np.trapz(weights, freqs)
