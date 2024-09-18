@@ -16,8 +16,19 @@ from numpy.testing import assert_allclose
 
 from pysm3 import units as u
 from pysm3 import utils
-from pysm3.models.catalog import PointSourceCatalog, evaluate_model, evaluate_poly
+from pysm3.models.catalog import (
+    PointSourceCatalog,
+    evaluate_model,
+    evaluate_poly,
+    aggregate,
+)
 from pysm3.utils import car_aperture_photometry, healpix_aperture_photometry
+
+
+def test_aggregate():
+    m = np.zeros(3)
+    aggregate(np.array([2, 2]), m, np.ones(2))
+    assert_allclose(m, np.array([0, 0, 2]))
 
 
 def test_evaluate_poly():

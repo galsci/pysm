@@ -3,6 +3,10 @@ import h5py
 import healpy as hp
 import numpy as np
 
+import logging
+
+log = logging.getLogger("pysm3")
+
 try:
     from numpy import trapezoid
 except ImportError:
@@ -14,6 +18,26 @@ from numba import njit
 from .. import units as u
 from .. import utils
 from .template import Model
+
+
+@njit
+def aggregate(index, array, values):
+    """Sums values by index
+
+    Example:
+    m = np.zeros(3)
+    m[2, 2] += np.ones(2)
+    gives:
+    m
+    [0, 0, 1]
+    instead
+    aggregate([2,2], m, np.ones(2))
+    gives
+    m
+    [0, 0, 2]
+    """
+    for i, v in zip(index, values):
+        array[i] += v
 
 
 @njit
@@ -178,30 +202,33 @@ class PointSourceCatalog(Model):
         -------
         output_map: np.array
             Output HEALPix or CAR map"""
+
+        convolve_beam = fwhm is not None
         scaling_factor = utils.bandpass_unit_conversion(
             freqs, weights, output_unit=output_units, input_unit=u.Jy / u.sr
         )
+        log.info(
+            "HEALPix map resolution: %s arcmin",
+            hp.nside2resol(self.nside, arcmin=True),
+        )
         pix_size = hp.nside2pixarea(self.nside) * u.sr
-        if car_map_resolution is None:
-            car_map_resolution = (hp.nside2resol(self.nside) * u.rad) / 2
 
-        # Make sure the resolution evenly divides the map vertically
-        if (car_map_resolution.to_value(u.rad) % np.pi) > 1e-8:
-            car_map_resolution = (
-                np.pi / np.round(np.pi / car_map_resolution.to_value(u.rad))
-            ) * u.rad
+        if convolve_beam:
+            if car_map_resolution is None:
+                car_map_resolution = (hp.nside2resol(self.nside) * u.rad) / 2
+                log.info("CAR map resolution: %s", car_map_resolution.to(u.arcmin))
+
+            # Make sure the resolution evenly divides the map vertically
+            if (car_map_resolution.to_value(u.rad) % np.pi) > 1e-8:
+                car_map_resolution = (
+                    np.pi / np.round(np.pi / car_map_resolution.to_value(u.rad))
+                ) * u.rad
+                log.info(
+                    "Rounded CAR map resolution: %s", car_map_resolution.to(u.arcmin)
+                )
         fluxes_I = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefflux")
 
-        if fwhm is None:
-            with h5py.File(self.catalog_filename) as f:
-                pix = hp.ang2pix(self.nside, f["theta"], f["phi"])
-            output_map = (
-                np.zeros((3, hp.nside2npix(self.nside)), dtype=np.float32)
-                * output_units
-            )
-            # sum, what if we have 2 sources on the same pixel?
-            output_map[0, pix] += fluxes_I / pix_size * scaling_factor
-        else:
+        if convolve_beam:
 
             from pixell import (
                 enmap,
@@ -213,6 +240,7 @@ class PointSourceCatalog(Model):
                 dims=(3,),
                 variant="fejer1",
             )
+            log.info("CAR map shape %s", shape)
             output_map = enmap.enmap(np.zeros(shape, dtype=np.float32), wcs)
             r, p = pointsrcs.expand_beam(fwhm2sigma(fwhm.to_value(u.rad)))
             with h5py.File(self.catalog_filename) as f:
@@ -229,6 +257,14 @@ class PointSourceCatalog(Model):
                 ),  # to peak amplitude and to output units
                 ((r, p)),
             )
+        else:
+            with h5py.File(self.catalog_filename) as f:
+                pix = hp.ang2pix(self.nside, f["theta"], f["phi"])
+            output_map = (
+                np.zeros((3, hp.nside2npix(self.nside)), dtype=np.float32)
+                * output_units
+            )
+            aggregate(pix, output_map[0], fluxes_I / pix_size * scaling_factor)
 
         del fluxes_I
         fluxes_P = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
@@ -238,14 +274,7 @@ class PointSourceCatalog(Model):
         psirand = np.random.uniform(
             low=-np.pi / 2.0, high=np.pi / 2.0, size=len(fluxes_P)
         )
-        if fwhm is None:
-            output_map[1, pix] += (
-                fluxes_P / pix_size * scaling_factor * np.cos(2 * psirand)
-            )
-            output_map[2, pix] += (
-                fluxes_P / pix_size * scaling_factor * np.sin(2 * psirand)
-            )
-        else:
+        if convolve_beam:
             pols = [(1, np.cos)]
             pols.append((2, np.sin))
             for i_pol, sincos in pols:
@@ -264,5 +293,17 @@ class PointSourceCatalog(Model):
             if not return_car:
                 from pixell import reproject
 
-                return reproject.map2healpix(output_map, self.nside)
+                log.info("Reprojecting to HEALPix")
+                output_map = reproject.map2healpix(
+                    output_map,
+                    self.nside,
+                )
+        else:
+            output_map[1, pix] += (
+                fluxes_P / pix_size * scaling_factor * np.cos(2 * psirand)
+            )
+            output_map[2, pix] += (
+                fluxes_P / pix_size * scaling_factor * np.sin(2 * psirand)
+            )
+        log.info("Catalog emission computed")
         return output_map
