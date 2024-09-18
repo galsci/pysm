@@ -216,7 +216,7 @@ class PointSourceCatalog(Model):
             output_map = enmap.enmap(np.zeros(shape, dtype=np.float32), wcs)
             r, p = pointsrcs.expand_beam(fwhm2sigma(fwhm.to_value(u.rad)))
             with h5py.File(self.catalog_filename) as f:
-                pointing = np.column_stack(
+                pointing = np.vstack(
                     (np.pi / 2 - np.array(f["theta"]), np.array(f["phi"]))
                 )
             output_map[0] = pointsrcs.sim_objects(
