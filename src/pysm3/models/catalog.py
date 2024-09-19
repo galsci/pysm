@@ -299,11 +299,15 @@ class PointSourceCatalog(Model):
                     self.nside,
                 )
         else:
-            output_map[1, pix] += (
-                fluxes_P / pix_size * scaling_factor * np.cos(2 * psirand)
+            aggregate(
+                pix,
+                output_map[1],
+                fluxes_P / pix_size * scaling_factor * np.cos(2 * psirand),
             )
-            output_map[2, pix] += (
-                fluxes_P / pix_size * scaling_factor * np.sin(2 * psirand)
+            aggregate(
+                pix,
+                output_map[2],
+                fluxes_P / pix_size * scaling_factor * np.sin(2 * psirand),
             )
         log.info("Catalog emission computed")
         return output_map
