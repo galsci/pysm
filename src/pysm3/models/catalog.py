@@ -146,11 +146,15 @@ class PointSourceCatalog(Model):
         catalog_filename,
         nside=None,
         target_wcs=None,
+        catalog_slice=None,
         map_dist=None,
     ):
         self.catalog_filename = catalog_filename
         self.nside = nside
         self.wcs = target_wcs
+        if catalog_slice is None:
+            catalog_slice = np.index_exp[:]
+        self.catalog_slice = catalog_slice
 
         with h5py.File(self.catalog_filename) as f:
             assert f["theta"].attrs["units"].decode("UTF-8") == "rad"
@@ -165,7 +169,9 @@ class PointSourceCatalog(Model):
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         with h5py.File(self.catalog_filename) as f:
-            flux = evaluate_model(freqs, weights, np.array(f[coeff]))
+            flux = evaluate_model(
+                freqs, weights, np.array(f[coeff][self.catalog_slice])
+            )
         return flux * u.Jy
 
     @u.quantity_input
@@ -230,7 +236,6 @@ class PointSourceCatalog(Model):
         fluxes_I = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefflux")
 
         if convolve_beam:
-
             from pixell import (
                 enmap,
                 pointsrcs,
@@ -246,21 +251,29 @@ class PointSourceCatalog(Model):
             r, p = pointsrcs.expand_beam(fwhm2sigma(fwhm.to_value(u.rad)))
             with h5py.File(self.catalog_filename) as f:
                 pointing = np.vstack(
-                    (np.pi / 2 - np.array(f["theta"]), np.array(f["phi"]))
+                    (
+                        np.pi / 2 - np.array(f["theta"][self.catalog_slice]),
+                        np.array(f["phi"][self.catalog_slice]),
+                    )
                 )
+
             output_map[0] = pointsrcs.sim_objects(
-                shape,
-                wcs,
-                pointing,
-                flux2amp(
+                shape=shape,
+                wcs=wcs,
+                poss=pointing,
+                amps=flux2amp(
                     fluxes_I.to_value(u.Jy) * scaling_factor.value,
                     fwhm.to_value(u.rad),
                 ),  # to peak amplitude and to output units
-                ((r, p)),
+                profile=((r, p)),
             )
         else:
             with h5py.File(self.catalog_filename) as f:
-                pix = hp.ang2pix(self.nside, f["theta"], f["phi"])
+                pix = hp.ang2pix(
+                    self.nside,
+                    f["theta"][self.catalog_slice],
+                    f["phi"][self.catalog_slice],
+                )
             output_map = (
                 np.zeros((3, hp.nside2npix(self.nside)), dtype=np.float32)
                 * output_units
