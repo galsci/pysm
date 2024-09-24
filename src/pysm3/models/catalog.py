@@ -79,6 +79,7 @@ def evaluate_poly(p, x):
     N = len(p)
     for i in range(N):
         out += p[i] * x ** (N - 1 - i)
+    out = max(0, out)
     return out
 
 
