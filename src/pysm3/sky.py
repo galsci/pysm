@@ -171,11 +171,11 @@ class Sky(Model):
     def add_component(self, component):
         self.components.append(component)
 
-    def get_emission(self, freq, weights=None):
+    def get_emission(self, freq, weights=None, **kwargs):
         """This function returns the emission at a frequency, set of
         frequencies, or over a bandpass.
         """
-        output = self.components[0].get_emission(freq, weights=weights)
+        output = self.components[0].get_emission(freq, weights=weights, **kwargs)
         for comp in self.components[1:]:
-            output += comp.get_emission(freq, weights=weights)
+            output += comp.get_emission(freq, weights=weights, **kwargs)
         return output * bandpass_unit_conversion(freq, weights, self.output_unit)

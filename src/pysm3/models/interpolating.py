@@ -24,6 +24,7 @@ class InterpolatingComponent(Model):
         max_nside=None,
         interpolation_kind="linear",
         map_dist=None,
+        freqs = None,
         verbose=False,
     ):
         """PySM component interpolating between precomputed maps
@@ -57,16 +58,21 @@ class InterpolatingComponent(Model):
         """
 
         super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
-        self.maps = {}
-        self.maps = self.get_filenames(path)
+
+        if freqs is None:
+            self.maps = {}
+            self.maps = self.get_filenames(path)
+            self.freqs = np.array(list(self.maps.keys()))
+            self.freqs.sort()
+        else:
+            self.freqs = np.array(freqs)
+            self.maps = {freq:path + f"/{freq:05.1f}.fits" for freq in freqs}
 
         # use a numba typed Dict so we can used in JIT compiled code
         self.cached_maps = Dict.empty(
             key_type=types.float64, value_type=types.float32[:, :]
         )
 
-        self.freqs = np.array(list(self.maps.keys()))
-        self.freqs.sort()
         self.input_units = input_units
         self.interpolation_kind = interpolation_kind
         self.verbose = verbose
