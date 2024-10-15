@@ -40,13 +40,12 @@ def aggregate(index, array, values):
         array[i] += v
 
 
-@njit
 def fwhm2sigma(fwhm):
     """Converts the Full Width Half Maximum of a Gaussian beam to its standard deviation"""
     return fwhm / (2.0 * np.sqrt(2.0 * np.log(2.0)))
 
 
-@njit
+# njit fails with the np.clip function
 def flux2amp(flux, fwhm):
     """Converts the total flux of a radio source to the peak amplitude of its Gaussian
     beam representation, taking into account the width of the beam as specified
@@ -65,7 +64,7 @@ def flux2amp(flux, fwhm):
         Peak amplitude of the Gaussian beam representation of the radio source"""
     sigma = fwhm2sigma(fwhm)
     amp = flux / (2 * np.pi * sigma**2)
-    amp[amp < 1e-5] = 1e-5 # sim_objects fails if amp is zero
+    amp = np.clip(amp, a_min=1e-5, a_max=None)  # sim_objects fails if amp is zero
     return amp
 
 
@@ -153,7 +152,7 @@ class PointSourceCatalog(Model):
         map_dist=None,
     ):
         super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
-        self.catalog_filename = utils.RemoteData().get( catalog_filename)
+        self.catalog_filename = utils.RemoteData().get(catalog_filename)
         self.wcs = target_wcs
         if catalog_slice is None:
             catalog_slice = np.index_exp[:]
@@ -260,14 +259,15 @@ class PointSourceCatalog(Model):
                     )
                 )
 
+            amps = flux2amp(
+                fluxes_I.to_value(u.Jy) * scaling_factor.value,
+                fwhm.to_value(u.rad),
+            )  # to peak amplitude and to output units
             output_map[0] = pointsrcs.sim_objects(
                 shape=shape,
                 wcs=wcs,
                 poss=pointing,
-                amps=flux2amp(
-                    fluxes_I.to_value(u.Jy) * scaling_factor.value,
-                    fwhm.to_value(u.rad),
-                ),  # to peak amplitude and to output units
+                amps=amps,
                 profile=((r, p)),
             )
         else:
@@ -311,11 +311,10 @@ class PointSourceCatalog(Model):
                 from pixell import reproject
 
                 log.info("Reprojecting to HEALPix")
-                output_map = reproject.map2healpix(
-                    output_map,
-                    self.nside,
-                    method="spline"
-                ) * output_units
+                output_map = (
+                    reproject.map2healpix(output_map, self.nside, method="spline")
+                    * output_units
+                )
         else:
             aggregate(
                 pix,
