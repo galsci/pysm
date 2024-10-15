@@ -149,10 +149,11 @@ class PointSourceCatalog(Model):
         nside=None,
         target_wcs=None,
         catalog_slice=None,
+        max_nside=None,
         map_dist=None,
     ):
-        self.catalog_filename = catalog_filename
-        self.nside = nside
+        super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
+        self.catalog_filename = utils.RemoteData().get( catalog_filename)
         self.wcs = target_wcs
         if catalog_slice is None:
             catalog_slice = np.index_exp[:]
