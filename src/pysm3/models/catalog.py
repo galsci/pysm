@@ -314,7 +314,8 @@ class PointSourceCatalog(Model):
                 output_map = reproject.map2healpix(
                     output_map,
                     self.nside,
-                )
+                    method="spline"
+                ) * output_units
         else:
             aggregate(
                 pix,
