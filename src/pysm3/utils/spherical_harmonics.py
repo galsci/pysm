@@ -128,6 +128,8 @@ def apply_smoothing_and_coord_transform(
                     copy=False,
                 )
             )
+            output_maps.append(shape)
+            output_maps.append(wcs)
     else:
         assert (rot is None) or (
             rot.coordin == rot.coordout
