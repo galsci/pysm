@@ -124,7 +124,6 @@ def apply_smoothing_and_coord_transform(
                         alm, pixell.enmap.empty(shape, wcs), ainfo=ainfo
                     )
                 )
-            )
     else:
         assert (rot is None) or (
             rot.coordin == rot.coordout
