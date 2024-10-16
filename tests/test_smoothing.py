@@ -13,7 +13,7 @@ import pytest
 from astropy.tests.helper import assert_quantity_allclose
 
 import pysm3.units as u
-from pysm3.models import apply_smoothing_and_coord_transform
+from pysm3 import apply_smoothing_and_coord_transform
 
 FWHM = (5 * u.deg).to_value(u.radian)
 NSIDE = 128
