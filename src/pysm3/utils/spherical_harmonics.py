@@ -120,16 +120,11 @@ def apply_smoothing_and_coord_transform(
             )
             ainfo = pixell.curvedsky.alm_info(lmax=lmax)
             output_maps.append(
-                u.Quantity(
                     pixell.curvedsky.alm2map(
                         alm, pixell.enmap.empty(shape, wcs), ainfo=ainfo
-                    ),
-                    unit,
-                    copy=False,
+                    )
                 )
             )
-            output_maps.append(shape)
-            output_maps.append(wcs)
     else:
         assert (rot is None) or (
             rot.coordin == rot.coordout
