@@ -2,10 +2,10 @@
 # coding: utf-8
 
 import os
-from pixell import enmap
+from pixell import enmap, reproject
 
 # for jupyter.nersc.gov otherwise the code only uses 2 cores
-os.environ["OMP_NUM_THREADS"] = "128"
+os.environ["OMP_NUM_THREADS"] = "48"
 
 import numpy as np
 import healpy as hp
@@ -20,9 +20,11 @@ import sys
 
 pysm3.set_verbosity()
 
-catalog_filename = "/pscratch/sd/z/zonca/websky_full_catalog_trasp.h5"
+catalog_filename = sys.argv[1]
 
-nside = int(sys.argv[1])
+nside = int(sys.argv[2])
+
+output_path = f"/mnt/sdceph/users/azonca/pysm-data/websky/0.4/radio_catalog/background/{nside}/"
 
 car_map_resolution = None
 
@@ -94,5 +96,18 @@ for slice_start in range(0, catalog_size, slice_size):
         )
 
 enmap.write_map(out_filename, m, fmt="hdf")
+
+output_map = reproject.map2healpix(
+    m,
+    nside,
+    method="spline",
+)
+hp.write_map(
+    output_path + f"{freq.value:05.1f}.fits",
+    output_map,
+    column_units="uK_RJ",
+    coord="G",
+    overwrite=True,
+)
 
 open(out_filename.replace(".h5", "_COMPLETED"), "a").close()
