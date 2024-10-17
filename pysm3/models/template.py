@@ -7,6 +7,7 @@ this template, ensuring that the new subclass has the required
 Objects:
     Model
 """
+
 import logging
 import numpy as np
 import healpy as hp
@@ -124,6 +125,7 @@ class Model:
 def apply_smoothing_and_coord_transform(
     input_map,
     fwhm=None,
+    beam_window=None,
     rot=None,
     lmax=None,
     output_nside=None,
@@ -150,6 +152,8 @@ def apply_smoothing_and_coord_transform(
     fwhm : astropy.units.Quantity
         Full width at half-maximum, defining the
         Gaussian kernels to be applied.
+    beam_window: array, optional
+        Custom beam window function (:math:`B_\ell`)
     rot: hp.Rotator
         Apply a coordinate rotation give a healpy `Rotator`, e.g. if the
         inputs are in Galactic, `hp.Rotator(coord=("G", "C"))` rotates
@@ -240,8 +244,21 @@ def apply_smoothing_and_coord_transform(
                         error,
                     )
         if fwhm is not None:
+            assert beam_window is None, "Either FWHM or beam_window"
             log.info("Smoothing with fwhm of %s", str(fwhm))
             hp.smoothalm(alm, fwhm=fwhm.to_value(u.rad), inplace=True, pol=True)
+        if beam_window is not None:
+            assert fwhm is None, "Either FWHM or beam_window"
+            log.info("Smoothing with a custom isotropic beam")
+            # smoothalm does not support polarized beam
+            for i in range(3):
+                try:
+                    beam_window_i = beam_window[:, i]
+                    log.info("Using polarized beam")
+                except IndexError:
+                    beam_window_i = beam_window
+                    log.info("Using the same beam for all components")
+                hp.smoothalm(alm[i], beam_window=beam_window_i, inplace=True)
         if rot is not None:
             log.info("Rotate Alm")
             rot.rotate_alm(alm, inplace=True)
