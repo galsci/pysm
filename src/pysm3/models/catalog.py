@@ -64,7 +64,9 @@ def flux2amp(flux, fwhm):
         Peak amplitude of the Gaussian beam representation of the radio source"""
     sigma = fwhm2sigma(fwhm)
     amp = flux / (2 * np.pi * sigma**2)
-    amp = np.clip(amp, a_min=1e-5, a_max=None)  # sim_objects fails if amp is zero
+    # sim_objects fails if amp is zero
+    amp[np.logical_and(amp < 1e-5, amp > 0)] = 1e-5
+    amp[np.logical_and(amp > -1e-5, amp < 0)] = -1e-5
     return amp
 
 
