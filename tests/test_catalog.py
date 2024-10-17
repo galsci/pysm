@@ -227,7 +227,7 @@ def test_catalog_class_map_healpix(test_catalog):
     assert output_map.argmax() == pix[1]
 
     flux = healpix_aperture_photometry(
-        (output_map[0] * scaling_factor.value),
+        (output_map[0].value * scaling_factor.value),
         aperture_radius=2 * fwhm.to_value(u.rad),
         theta=theta[1],
         phi=phi[1],
