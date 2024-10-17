@@ -86,7 +86,6 @@ def test_car_nosmoothing(input_map):
         pixell.reproject.enmap_from_healpix(
             input_map, shape, wcs, lmax=LMAX, rot=None, ncomp=3
         )
-        * input_map.unit
     )
     assert_quantity_allclose(actual=car_map, desired=map_rep)
 
