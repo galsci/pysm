@@ -3,6 +3,10 @@ import h5py
 import healpy as hp
 import numpy as np
 
+import logging
+
+log = logging.getLogger("pysm3")
+
 try:
     from numpy import trapezoid
 except ImportError:
@@ -17,12 +21,31 @@ from .template import Model
 
 
 @njit
+def aggregate(index, array, values):
+    """Sums values by index
+
+    Example:
+    m = np.zeros(3)
+    m[2, 2] += np.ones(2)
+    gives:
+    m
+    [0, 0, 1]
+    instead
+    aggregate([2,2], m, np.ones(2))
+    gives
+    m
+    [0, 0, 2]
+    """
+    for i, v in zip(index, values):
+        array[i] += v
+
+
 def fwhm2sigma(fwhm):
     """Converts the Full Width Half Maximum of a Gaussian beam to its standard deviation"""
     return fwhm / (2.0 * np.sqrt(2.0 * np.log(2.0)))
 
 
-@njit
+# njit fails with the np.clip function
 def flux2amp(flux, fwhm):
     """Converts the total flux of a radio source to the peak amplitude of its Gaussian
     beam representation, taking into account the width of the beam as specified
@@ -40,7 +63,11 @@ def flux2amp(flux, fwhm):
     amp: float
         Peak amplitude of the Gaussian beam representation of the radio source"""
     sigma = fwhm2sigma(fwhm)
-    return flux / (2 * np.pi * sigma**2)
+    amp = flux / (2 * np.pi * sigma**2)
+    # sim_objects fails if amp is zero
+    amp[np.logical_and(amp < 1e-5, amp > 0)] = 1e-5
+    amp[np.logical_and(amp > -1e-5, amp < 0)] = -1e-5
+    return amp
 
 
 @njit
@@ -55,6 +82,7 @@ def evaluate_poly(p, x):
     N = len(p)
     for i in range(N):
         out += p[i] * x ** (N - 1 - i)
+    out = max(0, out)
     return out
 
 
@@ -121,12 +149,16 @@ class PointSourceCatalog(Model):
         catalog_filename,
         nside=None,
         target_wcs=None,
+        catalog_slice=None,
+        max_nside=None,
         map_dist=None,
     ):
-        self.catalog_filename = catalog_filename
-        self.nside = nside
-        self.shape = (3, hp.nside2npix(nside))
+        super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
+        self.catalog_filename = utils.RemoteData().get(catalog_filename)
         self.wcs = target_wcs
+        if catalog_slice is None:
+            catalog_slice = np.index_exp[:]
+        self.catalog_slice = catalog_slice
 
         with h5py.File(self.catalog_filename) as f:
             assert f["theta"].attrs["units"].decode("UTF-8") == "rad"
@@ -138,9 +170,12 @@ class PointSourceCatalog(Model):
 
     def get_fluxes(self, freqs: u.GHz, coeff="logpolycoefflux", weights=None):
         """Get catalog fluxes in Jy integrated over a bandpass"""
-        weights /= trapezoid(weights, x=freqs.to_value(u.GHz))
+        freqs = utils.check_freq_input(freqs)
+        weights = utils.normalize_weights(freqs, weights)
         with h5py.File(self.catalog_filename) as f:
-            flux = evaluate_model(freqs.to_value(u.GHz), weights, np.array(f[coeff]))
+            flux = evaluate_model(
+                freqs, weights, np.array(f[coeff][self.catalog_slice])
+            )
         return flux * u.Jy
 
     @u.quantity_input
@@ -150,6 +185,7 @@ class PointSourceCatalog(Model):
         fwhm: Optional[u.Quantity[u.arcmin]] = None,
         weights=None,
         output_units=u.uK_RJ,
+        coord=None,
         car_map_resolution: Optional[u.Quantity[u.arcmin]] = None,
         return_car=False,
     ):
@@ -171,6 +207,9 @@ class PointSourceCatalog(Model):
         car_map_resolution: float
             Resolution of the CAR map used by pixell to generate the map, if None,
             it is set to half of the resolution of the HEALPix map given by `self.nside`
+        coord: tuple of str
+            coordinate rotation, it uses the healpy convention, "Q" for Equatorial,
+            "G" for Galactic.
         return_car: bool
             If True return a CAR map, if False return a HEALPix map
 
@@ -178,28 +217,33 @@ class PointSourceCatalog(Model):
         -------
         output_map: np.array
             Output HEALPix or CAR map"""
-        with h5py.File(self.catalog_filename) as f:
-            pix = hp.ang2pix(self.nside, f["theta"], f["phi"])
+
+        convolve_beam = fwhm is not None
         scaling_factor = utils.bandpass_unit_conversion(
             freqs, weights, output_unit=output_units, input_unit=u.Jy / u.sr
         )
+        log.info(
+            "HEALPix map resolution: %s arcmin",
+            hp.nside2resol(self.nside, arcmin=True),
+        )
         pix_size = hp.nside2pixarea(self.nside) * u.sr
-        if car_map_resolution is None:
-            car_map_resolution = (hp.nside2resol(self.nside) * u.rad) / 2
 
-        # Make sure the resolution evenly divides the map vertically
-        if (car_map_resolution.to_value(u.rad) % np.pi) > 1e-8:
-            car_map_resolution = (
-                np.pi / np.round(np.pi / car_map_resolution.to_value(u.rad))
-            ) * u.rad
+        if convolve_beam:
+            if car_map_resolution is None:
+                car_map_resolution = (hp.nside2resol(self.nside) * u.rad) / 2
+                log.info("CAR map resolution: %s", car_map_resolution.to(u.arcmin))
+
+            # Make sure the resolution evenly divides the map vertically
+            if (car_map_resolution.to_value(u.rad) % np.pi) > 1e-8:
+                car_map_resolution = (
+                    np.pi / np.round(np.pi / car_map_resolution.to_value(u.rad))
+                ) * u.rad
+                log.info(
+                    "Rounded CAR map resolution: %s", car_map_resolution.to(u.arcmin)
+                )
         fluxes_I = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefflux")
 
-        if fwhm is None:
-            output_map = np.zeros(self.shape, dtype=np.float32) * output_units
-            # sum, what if we have 2 sources on the same pixel?
-            output_map[0, pix] += fluxes_I / pix_size * scaling_factor
-        else:
-
+        if convolve_beam:
             from pixell import (
                 enmap,
                 pointsrcs,
@@ -210,22 +254,40 @@ class PointSourceCatalog(Model):
                 dims=(3,),
                 variant="fejer1",
             )
+            log.info("CAR map shape %s", shape)
             output_map = enmap.enmap(np.zeros(shape, dtype=np.float32), wcs)
             r, p = pointsrcs.expand_beam(fwhm2sigma(fwhm.to_value(u.rad)))
             with h5py.File(self.catalog_filename) as f:
-                pointing = np.column_stack(
-                    (np.pi / 2 - np.array(f["theta"]), np.array(f["phi"]))
+                pointing = np.vstack(
+                    (
+                        np.pi / 2 - np.array(f["theta"][self.catalog_slice]),
+                        np.array(f["phi"][self.catalog_slice]),
+                    )
                 )
+
+            amps = flux2amp(
+                fluxes_I.to_value(u.Jy) * scaling_factor.value,
+                fwhm.to_value(u.rad),
+            )  # to peak amplitude and to output units
             output_map[0] = pointsrcs.sim_objects(
-                shape,
-                wcs,
-                pointing,
-                flux2amp(
-                    fluxes_I.to_value(u.Jy) * scaling_factor.value,
-                    fwhm.to_value(u.rad),
-                ),  # to peak amplitude and to output units
-                ((r, p)),
+                shape=shape,
+                wcs=wcs,
+                poss=pointing,
+                amps=amps,
+                profile=((r, p)),
             )
+        else:
+            with h5py.File(self.catalog_filename) as f:
+                pix = hp.ang2pix(
+                    self.nside,
+                    f["theta"][self.catalog_slice],
+                    f["phi"][self.catalog_slice],
+                )
+            output_map = (
+                np.zeros((3, hp.nside2npix(self.nside)), dtype=np.float32)
+                * output_units
+            )
+            aggregate(pix, output_map[0], fluxes_I / pix_size * scaling_factor)
 
         del fluxes_I
         fluxes_P = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
@@ -235,14 +297,7 @@ class PointSourceCatalog(Model):
         psirand = np.random.uniform(
             low=-np.pi / 2.0, high=np.pi / 2.0, size=len(fluxes_P)
         )
-        if fwhm is None:
-            output_map[1, pix] += (
-                fluxes_P / pix_size * scaling_factor * np.cos(2 * psirand)
-            )
-            output_map[2, pix] += (
-                fluxes_P / pix_size * scaling_factor * np.sin(2 * psirand)
-            )
-        else:
+        if convolve_beam:
             pols = [(1, np.cos)]
             pols.append((2, np.sin))
             for i_pol, sincos in pols:
@@ -258,8 +313,35 @@ class PointSourceCatalog(Model):
                     ),
                     ((r, p)),
                 )
-        if return_car:
-            return output_map
-        from pixell import reproject
+            if return_car:
+                assert (
+                    coord is None
+                ), "Coord rotation for CAR not implemented yet, open issue if you need it"
+            else:
+                from pixell import reproject
 
-        return reproject.map2healpix(output_map, self.nside)
+                frames_dict = {"Q": "equ", "C": "equ", "G": "gal"}
+                if coord is not None:
+                    coord = [frames_dict[frame] for frame in coord]
+
+                log.info("Reprojecting to HEALPix")
+                output_map = (
+                    reproject.map2healpix(
+                        output_map, self.nside, rot=coord, method="spline"
+                    )
+                    * output_units
+                )
+
+        else:
+            aggregate(
+                pix,
+                output_map[1],
+                fluxes_P / pix_size * scaling_factor * np.cos(2 * psirand),
+            )
+            aggregate(
+                pix,
+                output_map[2],
+                fluxes_P / pix_size * scaling_factor * np.sin(2 * psirand),
+            )
+        log.info("Catalog emission computed")
+        return output_map

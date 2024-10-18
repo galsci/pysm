@@ -1,5 +1,7 @@
 3.4.1 (unreleased)
 ==================
+- Finalized Point Source Catalog component and backgroud component https://github.com/galsci/pysm/pull/191
+- Configure verbosity easily with `set_verbosity()`
 - Updated `pixell` from 0.17.3 to 0.26.0 https://github.com/galsci/pysm/pull/183
 - Initial implementation of a point source catalog component emission https://github.com/galsci/pysm/pull/187
 - Switch the build system to Hatch https://github.com/galsci/pysm/pull/189

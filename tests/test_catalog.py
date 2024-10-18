@@ -16,8 +16,19 @@ from numpy.testing import assert_allclose
 
 from pysm3 import units as u
 from pysm3 import utils
-from pysm3.models.catalog import PointSourceCatalog, evaluate_model, evaluate_poly
+from pysm3.models.catalog import (
+    PointSourceCatalog,
+    evaluate_model,
+    evaluate_poly,
+    aggregate,
+)
 from pysm3.utils import car_aperture_photometry, healpix_aperture_photometry
+
+
+def test_aggregate():
+    m = np.zeros(3)
+    aggregate(np.array([2, 2]), m, np.ones(2))
+    assert_allclose(m, np.array([0, 0, 2]))
 
 
 def test_evaluate_poly():
@@ -97,11 +108,13 @@ def test_catalog_class_fluxes(test_catalog):
     catalog = PointSourceCatalog(test_catalog, nside=nside)
     freqs = np.exp(np.array([3, 4])) * u.GHz  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
-    weights /= trapezoid(weights, x=freqs.to_value(u.GHz))
+    normalized_weights = utils.normalize_weights(utils.check_freq_input(freqs), weights)
     flux = catalog.get_fluxes(freqs, weights=weights)
     assert_allclose(flux[0], 3.7 * u.Jy)
     assert (
-        flux[1] == trapezoid(weights * np.array([6, 8]), x=freqs.to_value(u.GHz)) * u.Jy
+        flux[1]
+        == trapezoid(normalized_weights * np.array([6, 8]), x=freqs.to_value(u.GHz))
+        * u.Jy
     )
 
 
@@ -214,7 +227,7 @@ def test_catalog_class_map_healpix(test_catalog):
     assert output_map.argmax() == pix[1]
 
     flux = healpix_aperture_photometry(
-        (output_map[0] * scaling_factor.value),
+        (output_map[0].value * scaling_factor.value),
         aperture_radius=2 * fwhm.to_value(u.rad),
         theta=theta[1],
         phi=phi[1],
