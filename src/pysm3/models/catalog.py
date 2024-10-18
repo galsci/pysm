@@ -185,6 +185,7 @@ class PointSourceCatalog(Model):
         fwhm: Optional[u.Quantity[u.arcmin]] = None,
         weights=None,
         output_units=u.uK_RJ,
+        coord=None,
         car_map_resolution: Optional[u.Quantity[u.arcmin]] = None,
         return_car=False,
     ):
@@ -206,6 +207,9 @@ class PointSourceCatalog(Model):
         car_map_resolution: float
             Resolution of the CAR map used by pixell to generate the map, if None,
             it is set to half of the resolution of the HEALPix map given by `self.nside`
+        coord: tuple of str
+            coordinate rotation, it uses the healpy convention, "Q" for Equatorial,
+            "G" for Galactic.
         return_car: bool
             If True return a CAR map, if False return a HEALPix map
 
@@ -309,14 +313,25 @@ class PointSourceCatalog(Model):
                     ),
                     ((r, p)),
                 )
-            if not return_car:
+            if return_car:
+                assert (
+                    coord is None
+                ), "Coord rotation for CAR not implemented yet, open issue if you need it"
+            else:
                 from pixell import reproject
+
+                frames_dict = {"Q": "equ", "C": "equ", "G": "gal"}
+                if coord is not None:
+                    coord = [frames_dict[frame] for frame in coord]
 
                 log.info("Reprojecting to HEALPix")
                 output_map = (
-                    reproject.map2healpix(output_map, self.nside, method="spline")
+                    reproject.map2healpix(
+                        output_map, self.nside, rot=coord, method="spline"
+                    )
                     * output_units
                 )
+
         else:
             aggregate(
                 pix,
