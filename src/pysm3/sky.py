@@ -5,6 +5,7 @@ code, without delving into the difference `Model` objects.
 Objects:
     Sky
 """
+
 import toml
 
 from . import data
@@ -33,7 +34,7 @@ def create_components_from_config(config, nside, map_dist=None):
                     component_class(
                         **remove_class_from_dict(each_config),
                         nside=nside,
-                        map_dist=map_dist
+                        map_dist=map_dist,
                     )
                 )
             output_component = Sky(
@@ -170,6 +171,12 @@ class Sky(Model):
 
     def add_component(self, component):
         self.components.append(component)
+
+    @property
+    def includes_smoothing(self):
+        return all(
+            getattr(comp, "includes_smoothing", False) for comp in self.components
+        )
 
     def get_emission(self, freq, weights=None, **kwargs):
         """This function returns the emission at a frequency, set of
