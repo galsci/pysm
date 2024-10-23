@@ -68,7 +68,7 @@ def interp_pre_smoothed(tmp_path):
         nside,
         interpolation_kind="linear",
         available_nside=[nside],
-        pre_applied_beam={nside: 5},
+        pre_applied_beam={str(nside): 5},
         pre_applied_beam_units="deg",
     )
 
@@ -96,7 +96,7 @@ def test_presmoothed(tmp_path):
         nside,
         interpolation_kind="linear",
         available_nside=[nside],
-        pre_applied_beam={nside: 3},
+        pre_applied_beam={str(nside): 3},
         pre_applied_beam_units="deg",
     )
 

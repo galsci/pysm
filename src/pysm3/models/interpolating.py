@@ -157,10 +157,6 @@ class InterpolatingComponent(Model):
             if out.ndim == 1 or out.shape[0] == 1:
                 zeros = np.zeros_like(out)
                 out = np.array([out, zeros, zeros])
-            if self.pre_applied_beam is not None:
-                assert (
-                    fwhm is None and coord is None
-                ), "differential smoothing and coordinate rotation not supported with single frequency"
         else:
 
             npix = hp.nside2npix(self.nside)
@@ -199,63 +195,65 @@ class InterpolatingComponent(Model):
                 zeros = np.zeros_like(out)
                 out = np.array([out, zeros, zeros])
 
-        if ((self.pre_applied_beam is not None) and (fwhm is not None)) or (
-            coord is not None
-        ):
-
-            pre_beam = (
-                None
-                if self.pre_applied_beam is None
-                else (
-                    self.pre_applied_beam.get(
-                        self.nside, self.pre_applied_beam[str(self.nside)]
-                    )
-                    * self.pre_applied_beam_units
+        pre_beam = (
+            None
+            if self.pre_applied_beam is None
+            else (
+                self.pre_applied_beam.get(
+                    self.nside, self.pre_applied_beam[str(self.templates_nside)]
                 )
+                * self.pre_applied_beam_units
             )
-            if pre_beam == fwhm and coord is not None:
-                output_maps = [out << u.uK_RJ]
-            else:
-                assert lmax is not None, "lmax must be provided when applying a beam"
-                alm = map2alm(out, self.nside, lmax)
-                if pre_beam != fwhm:
-                    log.info(
-                        "Applying the differential beam between: %s %s",
-                        str(pre_beam),
-                        str(fwhm),
-                    )
+        )
+        if (
+            ((pre_beam is None) or (pre_beam == fwhm))
+            and (coord is None)
+            and (return_car is False)
+        ):
+            # no need to go to alm if no beam and no rotation
+            output_maps = [out << u.uK_RJ]
+        else:
 
-                    beam = hp.gauss_beam(
-                        fwhm.to_value(u.radian), lmax=lmax, pol=True
-                    ) / hp.gauss_beam(
-                        pre_beam.to_value(u.radian),
-                        lmax=lmax,
-                        pol=True,
+            assert lmax is not None, "lmax must be provided when applying a beam"
+            alm = map2alm(out, self.nside, lmax)
+            if pre_beam != fwhm:
+                log.info(
+                    "Applying the differential beam between: %s %s",
+                    str(pre_beam),
+                    str(fwhm),
+                )
+
+                beam = hp.gauss_beam(
+                    fwhm.to_value(u.radian), lmax=lmax, pol=True
+                ) / hp.gauss_beam(
+                    pre_beam.to_value(u.radian),
+                    lmax=lmax,
+                    pol=True,
+                )
+                for each_alm, each_beam in zip(alm, beam.T):
+                    hp.almxfl(each_alm, each_beam, mmax=lmax, inplace=True)
+            if coord is not None:
+                rot = hp.Rotator(coord=coord)
+                alm = rot.rotate_alm(alm)
+            output_maps = []
+            if return_healpix:
+                log.info("Alm to map HEALPix")
+                output_maps.append(
+                    hp.alm2map(alm, nside=output_nside if output_nside is not None else self.nside, pixwin=False) << u.uK_RJ
+                )
+            if return_car:
+                log.info("Alm to map CAR")
+                shape, wcs = pixell.enmap.fullsky_geometry(
+                    output_car_resol.to_value(u.radian),
+                    dims=(3,),
+                    variant="fejer1",
+                )
+                ainfo = pixell.curvedsky.alm_info(lmax=lmax)
+                output_maps.append(
+                    pixell.curvedsky.alm2map(
+                        alm, pixell.enmap.empty(shape, wcs), ainfo=ainfo
                     )
-                    for each_alm, each_beam in zip(alm, beam.T):
-                        hp.almxfl(each_alm, each_beam, mmax=lmax, inplace=True)
-                if coord is not None:
-                    rot = hp.Rotator(coord=coord)
-                    alm = rot.rotate_alm(alm)
-                output_maps = []
-                if return_healpix:
-                    log.info("Alm to map HEALPix")
-                    output_maps.append(
-                        hp.alm2map(alm, nside=output_nside, pixwin=False) << u.uK_RJ
-                    )
-                if return_car:
-                    log.info("Alm to map CAR")
-                    shape, wcs = pixell.enmap.fullsky_geometry(
-                        output_car_resol.to_value(u.radian),
-                        dims=(3,),
-                        variant="fejer1",
-                    )
-                    ainfo = pixell.curvedsky.alm_info(lmax=lmax)
-                    output_maps.append(
-                        pixell.curvedsky.alm2map(
-                            alm, pixell.enmap.empty(shape, wcs), ainfo=ainfo
-                        )
-                    )
+                )
 
         return output_maps[0] if len(output_maps) == 1 else tuple(output_maps)
 
