@@ -221,9 +221,10 @@ class PointSourceCatalog(Model):
         output_map: np.array
             Output HEALPix and/or CAR map, in case both (healpix_map, car_map)"""
 
+        output_units = u.uK_RJ
         convolve_beam = fwhm is not None
         scaling_factor = utils.bandpass_unit_conversion(
-            freqs, weights, output_unit=u.uK_RJ, input_unit=u.Jy / u.sr
+            freqs, weights, output_unit=output_units, input_unit=u.Jy / u.sr
         )
         log.info(
             "HEALPix map resolution: %s arcmin",
