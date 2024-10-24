@@ -12,6 +12,7 @@ from .. import units as u
 from .. import utils
 from ..utils import trapz_step_inplace, map2alm
 from .template import Model
+import pixell
 
 log = logging.getLogger("pysm3")
 
@@ -88,6 +89,10 @@ class InterpolatingComponent(Model):
         self.interpolation_kind = interpolation_kind
         self.verbose = verbose
 
+    @property
+    def includes_smoothing(self):
+        return self.pre_applied_beam is not None
+
     def get_filenames(self, path):
         # Override this to implement name convention
         filenames = {}
@@ -104,8 +109,41 @@ class InterpolatingComponent(Model):
         weights=None,
         fwhm: Optional[u.Quantity[u.arcmin]] = None,
         output_nside: Optional[int] = None,
+        output_car_resol=None,
+        coord=None,
         lmax: Optional[int] = None,
+        return_healpix=True,
+        return_car=False,
     ) -> u.Quantity[u.uK_RJ]:
+        """Return the emission at a frequency or integrated over a bandpass
+
+        Parameters
+        ----------
+            freqs : u.Quantity[u.GHz]
+                Frequency or frequencies at which to compute the emission
+            weights : array-like
+                Weights for the bandpass integration
+            fwhm : u.Quantity[u.arcmin]
+                Beam FWHM
+            output_nside : int
+                NSIDE of the output map
+            coord: tuple of str
+                coordinate rotation, it uses the healpy convention, "Q" for Equatorial,
+                "G" for Galactic.
+            output_car_resol : astropy.Quantity
+                CAR output map resolution, generally in arcmin
+            lmax : int
+                Maximum l of the alm transform
+            return_healpix : bool
+                If True, return the map in healpix format
+            return_car : bool
+                If True, return the map in CAR format
+
+        Returns
+        -------
+            m : u.Quantity[u.uK_RJ]
+                Emission at the requested frequency or integrated over the bandpass
+        """
         nu = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(nu, weights)
 
@@ -157,23 +195,33 @@ class InterpolatingComponent(Model):
                 zeros = np.zeros_like(out)
                 out = np.array([out, zeros, zeros])
 
-        if (self.pre_applied_beam is not None) and (fwhm is not None):
-            assert lmax is not None, "lmax must be provided when applying a beam"
-            if output_nside is None:
-                output_nside = self.nside
-            pre_beam = (
+        pre_beam = (
+            None
+            if self.pre_applied_beam is None
+            else (
                 self.pre_applied_beam.get(
-                    self.nside, self.pre_applied_beam[self.available_nside[0]]
+                    self.nside, self.pre_applied_beam[str(self.templates_nside)]
                 )
                 * self.pre_applied_beam_units
             )
+        )
+        if (
+            ((pre_beam is None) or (pre_beam == fwhm))
+            and (coord is None)
+            and (return_car is False)
+        ):
+            # no need to go to alm if no beam and no rotation
+            output_maps = [out << u.uK_RJ]
+        else:
+
+            assert lmax is not None, "lmax must be provided when applying a beam"
+            alm = map2alm(out, self.nside, lmax)
             if pre_beam != fwhm:
                 log.info(
                     "Applying the differential beam between: %s %s",
                     str(pre_beam),
                     str(fwhm),
                 )
-                alm = map2alm(out, self.nside, lmax)
 
                 beam = hp.gauss_beam(
                     fwhm.to_value(u.radian), lmax=lmax, pol=True
@@ -184,10 +232,30 @@ class InterpolatingComponent(Model):
                 )
                 for each_alm, each_beam in zip(alm, beam.T):
                     hp.almxfl(each_alm, each_beam, mmax=lmax, inplace=True)
-                out = hp.alm2map(alm, nside=output_nside, pixwin=False)
+            if coord is not None:
+                rot = hp.Rotator(coord=coord)
+                alm = rot.rotate_alm(alm)
+            output_maps = []
+            if return_healpix:
+                log.info("Alm to map HEALPix")
+                output_maps.append(
+                    hp.alm2map(alm, nside=output_nside if output_nside is not None else self.nside, pixwin=False) << u.uK_RJ
+                )
+            if return_car:
+                log.info("Alm to map CAR")
+                shape, wcs = pixell.enmap.fullsky_geometry(
+                    output_car_resol.to_value(u.radian),
+                    dims=(3,),
+                    variant="fejer1",
+                )
+                ainfo = pixell.curvedsky.alm_info(lmax=lmax)
+                output_maps.append(
+                    pixell.curvedsky.alm2map(
+                        alm, pixell.enmap.empty(shape, wcs), ainfo=ainfo
+                    )
+                )
 
-        # the output of out is always 2D, (IQU, npix)
-        return out << u.uK_RJ
+        return output_maps[0] if len(output_maps) == 1 else tuple(output_maps)
 
     def read_map_by_frequency(self, freq):
         filename = self.maps[freq]

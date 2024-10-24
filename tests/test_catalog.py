@@ -131,9 +131,7 @@ def test_catalog_class_map_no_beam(test_catalog):
     flux_I = catalog.get_fluxes(freqs, weights=weights)
 
     flux_P = catalog.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
-    output_map = catalog.get_emission(
-        freqs, weights=weights, output_units=u.uK_RJ, fwhm=None, return_car=True
-    )
+    output_map = catalog.get_emission(freqs, weights=weights, fwhm=None)
     with h5py.File(test_catalog) as f:
         pix = hp.ang2pix(nside, f["theta"], f["phi"])
     assert_allclose(
@@ -164,9 +162,9 @@ def test_catalog_class_map_beam(test_catalog):
     output_map = catalog.get_emission(
         freqs,
         weights=weights,
-        output_units=u.uK_RJ,
         fwhm=fwhm,
         return_car=True,
+        return_healpix=False,
     )
     assert_allclose(
         output_map[0].argmax(unit="coord"), np.array([0, 0]), atol=1e-2, rtol=1e-3
@@ -216,7 +214,6 @@ def test_catalog_class_map_healpix(test_catalog):
     output_map = catalog.get_emission(
         freqs,
         weights=weights,
-        output_units=u.uK_RJ,
         fwhm=fwhm,
         return_car=False,
     )

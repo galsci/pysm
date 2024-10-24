@@ -144,6 +144,8 @@ class PointSourceCatalog(Model):
         Path to the catalog HDF5 file
     """
 
+    includes_smoothing = True
+
     def __init__(
         self,
         catalog_filename,
@@ -184,10 +186,10 @@ class PointSourceCatalog(Model):
         freqs: u.Quantity[u.GHz],
         fwhm: Optional[u.Quantity[u.arcmin]] = None,
         weights=None,
-        output_units=u.uK_RJ,
         coord=None,
         car_map_resolution: Optional[u.Quantity[u.arcmin]] = None,
         return_car=False,
+        return_healpix=True,
     ):
         """Generate a HEALPix or CAR map of the catalog emission integrated on the bandpass
         and convolved with the beam
@@ -202,22 +204,24 @@ class PointSourceCatalog(Model):
         weights: np.array
             Array of relative bandpass weights already normalized
             Same length of freqs, if None, uniform weights are assumed
-        output_units: astropy.units
-            Output units of the map
         car_map_resolution: float
             Resolution of the CAR map used by pixell to generate the map, if None,
             it is set to half of the resolution of the HEALPix map given by `self.nside`
         coord: tuple of str
             coordinate rotation, it uses the healpy convention, "Q" for Equatorial,
             "G" for Galactic.
+        return_healpix: bool
+            If True return a HEALPix map
         return_car: bool
-            If True return a CAR map, if False return a HEALPix map
+            If True return a CAR map, in case they are both true, return a tuple,
+            (healpix_map, car_map)
 
         Returns
         -------
         output_map: np.array
-            Output HEALPix or CAR map"""
+            Output HEALPix and/or CAR map, in case both (healpix_map, car_map)"""
 
+        output_units = u.uK_RJ
         convolve_beam = fwhm is not None
         scaling_factor = utils.bandpass_unit_conversion(
             freqs, weights, output_unit=output_units, input_unit=u.Jy / u.sr
@@ -317,7 +321,7 @@ class PointSourceCatalog(Model):
                 assert (
                     coord is None
                 ), "Coord rotation for CAR not implemented yet, open issue if you need it"
-            else:
+            if return_healpix:
                 from pixell import reproject
 
                 frames_dict = {"Q": "equ", "C": "equ", "G": "gal"}
@@ -325,14 +329,19 @@ class PointSourceCatalog(Model):
                     coord = [frames_dict[frame] for frame in coord]
 
                 log.info("Reprojecting to HEALPix")
-                output_map = (
+                output_map_healpix = (
                     reproject.map2healpix(
                         output_map, self.nside, rot=coord, method="spline"
                     )
                     * output_units
                 )
+                if return_car:
+                    output_map = (output_map_healpix, output_map)
+                else:
+                    output_map = output_map_healpix
 
         else:
+            assert not return_car and return_healpix, "Only HEALPix maps supported"
             aggregate(
                 pix,
                 output_map[1],

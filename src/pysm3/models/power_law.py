@@ -16,6 +16,7 @@ class PowerLaw(Model):
         map_pl_index,
         nside,
         max_nside=None,
+        available_nside=None,
         has_polarization=True,
         map_Q=None,
         map_U=None,
@@ -48,8 +49,21 @@ class PowerLaw(Model):
             Path to the map to be used as the power law index.
         nside: int
             Resolution parameter at which this model is to be calculated.
+        max_nside: int
+            Maximum resolution parameter at which this model is to be calculated.
+        has_polarization: bool
+            If True, the model will include polarization.
+        available_nside: list of int
+            List of available nside for the input maps.
+        map_dist: pysm.MapDistribution
+            Distribution object used for parallel computing with MPI
         """
-        super().__init__(nside, max_nside=max_nside, map_dist=map_dist)
+        super().__init__(
+            nside,
+            max_nside=max_nside,
+            available_nside=available_nside,
+            map_dist=map_dist,
+        )
         # do model setup
         self.is_IQU = has_polarization and map_Q is None
         self.I_ref = self.read_map(
@@ -141,6 +155,7 @@ class CurvedPowerLaw(PowerLaw):
         spectral_curvature,
         freq_curve,
         max_nside=None,
+        available_nside=None,
         has_polarization=True,
         map_Q=None,
         map_U=None,
@@ -156,6 +171,7 @@ class CurvedPowerLaw(PowerLaw):
             map_pl_index=map_pl_index,
             nside=nside,
             max_nside=max_nside,
+            available_nside=available_nside,
             has_polarization=has_polarization,
             map_Q=map_Q,
             map_U=map_U,
