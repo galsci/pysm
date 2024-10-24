@@ -28,6 +28,7 @@ class ModifiedBlackBody(Model):
         map_mbb_temperature,
         nside,
         max_nside=None,
+        available_nside=None,
         map_Q=None,
         map_U=None,
         has_polarization=True,
@@ -65,8 +66,17 @@ class ModifiedBlackBody(Model):
             integer
         nside: int
             Resolution parameter at which this model is to be calculated.
+        max_nside : int
+            Maximum resolution parameter at which this model is defined.
+        available_nside : list of int
+            List of resolution parameters at which the input maps are defined.
         """
-        super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
+        super().__init__(
+            nside=nside,
+            max_nside=max_nside,
+            map_dist=map_dist,
+            available_nside=available_nside,
+        )
         # do model setup
         self.is_IQU = has_polarization and map_Q is None
         self.I_ref = self.read_map(
@@ -168,6 +178,7 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
         map_mbb_temperature=None,
         nside=None,
         max_nside=None,
+        available_nside=None,
         mpi_comm=None,
         map_dist=None,
         unit_I=None,
@@ -196,6 +207,7 @@ class DecorrelatedModifiedBlackBody(ModifiedBlackBody):
             map_mbb_temperature=map_mbb_temperature,
             nside=nside,
             max_nside=max_nside,
+            available_nside=available_nside,
             unit_I=unit_I,
             unit_Q=unit_Q,
             unit_U=unit_U,
@@ -287,7 +299,7 @@ def get_decorrelation_matrix(
     freqs_all = np.insert(freqs_unconstrained, 0, freq_constrained)
     indref = np.where(freqs_all == freq_constrained)
     corrmatrix = frequency_decorr_model(freqs_all, correlation_length)
-    rho_inv = invert_safe(corrmatrix)
+    rho_inv = invert_safe(corrmatrix.value)
     rho_uu = np.delete(np.delete(rho_inv, indref, axis=0), indref, axis=1)
     rho_uu = invert_safe(rho_uu)
     rho_inv_cu = rho_inv[:, indref]
