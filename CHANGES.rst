@@ -1,5 +1,6 @@
 3.4.1 (unreleased)
 ==================
+- Fix bug in `cib1` when frequency goes below 18.7 GHz, emission too large https://github.com/galsci/pysm/pull/195
 - Finalized Point Source Catalog component and backgroud component https://github.com/galsci/pysm/pull/191
 - Configure verbosity easily with `set_verbosity()`
 - Updated `pixell` from 0.17.3 to 0.26.0 https://github.com/galsci/pysm/pull/183
