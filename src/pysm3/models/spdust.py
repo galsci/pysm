@@ -97,9 +97,14 @@ def compute_spdust_scaling_numba(freq, freq_ref_I, freq_peak, emissivity):
 def compute_spdust_emission_numba(
     freqs, weights, I_ref, freq_ref_I, freq_peak, emissivity
 ):
-    output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
+    output = np.zeros((3, len(I_ref)), dtype=np.float64)
     for i, (freq, _weight) in enumerate(zip(freqs, weights)):
-        scaling = compute_spdust_scaling_numba(freq, freq_ref_I, freq_peak, emissivity)
+        scaling = compute_spdust_scaling_numba(
+            freq,
+            freq_ref_I,
+            freq_peak,
+            emissivity.astype(np.float64),
+        )
         utils.trapz_step_inplace(freqs, weights, i, scaling * I_ref, output[0])
     return output
 
@@ -162,7 +167,12 @@ def compute_spdust_emission_pol_numba(
     output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
     I, Q, U = 0, 1, 2
     for i, (freq, _weight) in enumerate(zip(freqs, weights)):
-        scaling = compute_spdust_scaling_numba(freq, freq_ref_I, freq_peak, emissivity)
+        scaling = compute_spdust_scaling_numba(
+            freq,
+            freq_ref_I,
+            freq_peak,
+            emissivity.astype(np.float64),
+        )
         utils.trapz_step_inplace(freqs, weights, i, scaling * I_ref, output[I])
         utils.trapz_step_inplace(
             freqs, weights, i, scaling * I_ref * pol_frac * np.cos(pol_angle), output[Q]

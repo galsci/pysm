@@ -144,8 +144,8 @@ def get_emission_numba(
     mbb_index,
     mbb_temperature,
 ):
-    output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
-    temp = np.zeros((3, len(I_ref)), dtype=I_ref.dtype) if len(freqs) > 1 else output
+    output = np.zeros((3, len(I_ref)), dtype=np.float64)
+    temp = np.zeros((3, len(I_ref)), dtype=np.float64) if len(freqs) > 1 else output
 
     I, Q, U = 0, 1, 2
     for i, (freq, _weight) in enumerate(zip(freqs, weights)):
@@ -154,11 +154,13 @@ def get_emission_numba(
         temp[U, :] = U_ref
         if freq != freq_ref_I:
             # -2 because black body is in flux unit and not K_RJ
-            temp[I] *= (freq / freq_ref_I) ** (mbb_index - 2.0)
-            temp[I] *= blackbody_ratio(freq, freq_ref_I, mbb_temperature)
-            freq_scaling_P = (freq / freq_ref_P) ** (mbb_index - 2.0) * blackbody_ratio(
-                freq, freq_ref_P, mbb_temperature
+            temp[I] *= (np.float64(freq / freq_ref_I)) ** (mbb_index - 2.0)
+            temp[I] *= blackbody_ratio(
+                np.float64(freq), np.float64(freq_ref_I), mbb_temperature
             )
+            freq_scaling_P = (np.float64(freq / freq_ref_P)) ** (
+                mbb_index - 2.0
+            ) * blackbody_ratio(np.float64(freq), np.float64(freq_ref_P), mbb_temperature)
             for P in [Q, U]:
                 temp[P] *= freq_scaling_P
         if len(freqs) > 1:
