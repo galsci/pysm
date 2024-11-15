@@ -1,5 +1,6 @@
 3.4.1 (unreleased)
 ==================
+- Make sure models are evaluated in double precision https://github.com/galsci/pysm/pull/196
 - Fix bug in `cib1` when frequency goes below 18.7 GHz, emission too large https://github.com/galsci/pysm/pull/195
 - Finalized Point Source Catalog component and backgroud component https://github.com/galsci/pysm/pull/191
 - Configure verbosity easily with `set_verbosity()`
