@@ -326,7 +326,7 @@ class PointSourceCatalog(Model):
 
                 frames_dict = {"Q": "equ", "C": "equ", "G": "gal"}
                 if coord is not None:
-                    coord = [frames_dict[frame] for frame in coord]
+                    coord = ",".join([frames_dict[frame] for frame in coord])
 
                 log.info("Reprojecting to HEALPix")
                 output_map_healpix = (
