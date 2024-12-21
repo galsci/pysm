@@ -4,9 +4,6 @@
 import os
 from pixell import enmap, reproject
 
-# for jupyter.nersc.gov otherwise the code only uses 2 cores
-os.environ["OMP_NUM_THREADS"] = "48"
-
 import numpy as np
 import healpy as hp
 import pysm3
@@ -24,7 +21,7 @@ catalog_filename = sys.argv[1]
 
 nside = int(sys.argv[2])
 
-output_path = f"/mnt/sdceph/users/azonca/pysm-data/websky/0.4/radio_catalog/background/{nside}/"
+output_path = os.path.dirname(catalog_filename) + f"/{nside}/"
 
 car_map_resolution = None
 
