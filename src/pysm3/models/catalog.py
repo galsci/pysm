@@ -39,13 +39,13 @@ def aggregate(index, array, values):
     for i, v in zip(index, values):
         array[i] += v
 
-
+@njit
 def fwhm2sigma(fwhm):
     """Converts the Full Width Half Maximum of a Gaussian beam to its standard deviation"""
     return fwhm / (2.0 * np.sqrt(2.0 * np.log(2.0)))
 
 
-# njit fails with the np.clip function
+@njit
 def flux2amp(flux, fwhm):
     """Converts the total flux of a radio source to the peak amplitude of its Gaussian
     beam representation, taking into account the width of the beam as specified
@@ -65,8 +65,9 @@ def flux2amp(flux, fwhm):
     sigma = fwhm2sigma(fwhm)
     amp = flux / (2 * np.pi * sigma**2)
     # sim_objects fails if amp is zero
-    amp[np.logical_and(amp < 1e-5, amp > 0)] = 1e-5
-    amp[np.logical_and(amp > -1e-5, amp < 0)] = -1e-5
+    c = 1e-9 # minimum amplitude
+    amp[np.logical_and(amp < c, amp > 0)] = c
+    amp[np.logical_and(amp > -c, amp < 0)] = -c
     return amp
 
 
