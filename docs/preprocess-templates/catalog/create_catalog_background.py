@@ -107,4 +107,4 @@ hp.write_map(
     overwrite=True,
 )
 
-open(out_filename.replace(".h5", "_COMPLETED"), "a").close()
+open(out_filename.replace(".h5", "_COMPLETED"), "w").close()
