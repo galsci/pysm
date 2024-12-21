@@ -131,8 +131,8 @@ def get_emission_numba(
     mbb_temperature,
 ):
     npix = layers.shape[-1]
-    output = np.zeros((3, npix), dtype=layers.dtype)
-    temp = np.zeros((3, npix), dtype=layers.dtype)
+    output = np.zeros((3, npix), dtype=np.float64)
+    temp = np.zeros((3, npix), dtype=np.float64)
 
     I, Q, U = 0, 1, 2
     for i, (freq, _weight) in enumerate(zip(freqs, weights)):

@@ -129,7 +129,7 @@ class COLines(Model):
     ) -> u.Quantity[u.uK_RJ]:
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
-        out = np.zeros((3, hp.nside2npix(self.nside)), dtype=np.double)
+        out = np.zeros((3, hp.nside2npix(self.nside)), dtype=np.float64)
         for line in self.lines:
             line_freq = self.line_frequency[line].to_value(u.GHz)
             if line_freq >= freqs[0] and line_freq <= freqs[-1]:

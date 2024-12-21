@@ -239,7 +239,12 @@ class InterpolatingComponent(Model):
             if return_healpix:
                 log.info("Alm to map HEALPix")
                 output_maps.append(
-                    hp.alm2map(alm, nside=output_nside if output_nside is not None else self.nside, pixwin=False) << u.uK_RJ
+                    hp.alm2map(
+                        alm,
+                        nside=output_nside if output_nside is not None else self.nside,
+                        pixwin=False,
+                    )
+                    << u.uK_RJ
                 )
             if return_car:
                 log.info("Alm to map CAR")
@@ -281,15 +286,13 @@ class InterpolatingComponent(Model):
 
 @njit(parallel=False)
 def compute_interpolated_emission_numba(freqs, weights, freq_range, all_maps):
-    output = np.zeros(
-        all_maps[freq_range[0]].shape, dtype=all_maps[freq_range[0]].dtype
-    )
+    output = np.zeros(all_maps[freq_range[0]].shape, dtype=np.float64)
     temp = np.zeros_like(output) if len(freqs) > 1 else output
     index_range = np.arange(len(freq_range))
     for i in range(len(freqs)):
         interpolation_weight = np.interp(freqs[i], freq_range, index_range)
         int_interpolation_weight = int(interpolation_weight)
-        relative_weight = interpolation_weight - int_interpolation_weight
+        relative_weight = np.float64(interpolation_weight - int_interpolation_weight)
         temp[:] = (1 - relative_weight) * all_maps[freq_range[int_interpolation_weight]]
         if relative_weight > 0:
             temp += relative_weight * all_maps[freq_range[int_interpolation_weight + 1]]

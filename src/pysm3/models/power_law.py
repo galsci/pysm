@@ -132,14 +132,18 @@ def get_emission_numba_IQU(
     freqs, weights, I_ref, Q_ref, U_ref, freq_ref_I, freq_ref_P, pl_index
 ):
     has_pol = Q_ref is not None
-    output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
+    output = np.zeros((3, len(I_ref)), dtype=np.float64)
     I, Q, U = 0, 1, 2
     for i, (freq, _weight) in enumerate(zip(freqs, weights)):
         utils.trapz_step_inplace(
-            freqs, weights, i, I_ref * (freq / freq_ref_I) ** pl_index, output[I]
+            freqs,
+            weights,
+            i,
+            I_ref.astype(np.float64) * (np.float64(freq) / freq_ref_I) ** pl_index,
+            output[I],
         )
         if has_pol:
-            pol_scaling = (freq / freq_ref_P) ** pl_index
+            pol_scaling = (np.float64(freq) / freq_ref_P) ** pl_index
             utils.trapz_step_inplace(freqs, weights, i, Q_ref * pol_scaling, output[Q])
             utils.trapz_step_inplace(freqs, weights, i, U_ref * pol_scaling, output[U])
     return output
@@ -240,19 +244,19 @@ def get_emission_numba_IQU_curved(
     curvature,
 ):
     has_pol = Q_ref is not None
-    output = np.zeros((3, len(I_ref)), dtype=I_ref.dtype)
+    output = np.zeros((3, len(I_ref)), dtype=np.float64)
     I, Q, U = 0, 1, 2
     for i, (freq, _weight) in enumerate(zip(freqs, weights)):
-        curvature_term = np.log((freq / freq_curve) ** curvature)
+        curvature_term = np.log((np.float64(freq) / freq_curve) ** curvature)
         utils.trapz_step_inplace(
             freqs,
             weights,
             i,
-            I_ref * (freq / freq_ref_I) ** (pl_index + curvature_term),
+            I_ref * (np.float64(freq) / freq_ref_I) ** (pl_index + curvature_term),
             output[I],
         )
         if has_pol:
-            pol_scaling = (freq / freq_ref_P) ** (pl_index + curvature_term)
+            pol_scaling = (np.float64(freq) / freq_ref_P) ** (pl_index + curvature_term)
             utils.trapz_step_inplace(freqs, weights, i, Q_ref * pol_scaling, output[Q])
             utils.trapz_step_inplace(freqs, weights, i, U_ref * pol_scaling, output[U])
     return output
