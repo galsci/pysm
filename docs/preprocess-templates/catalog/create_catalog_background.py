@@ -70,6 +70,8 @@ slice_size = int(2.82 * 1e6)
 
 fwhm = {8192: 0.9 * u.arcmin, 4096: 2.6 * u.arcmin, 2048: 5.1 * u.arcmin}
 
+m = None
+
 for slice_start in range(0, catalog_size, slice_size):
     gc.collect()
     catalog = PointSourceCatalog(
@@ -77,20 +79,17 @@ for slice_start in range(0, catalog_size, slice_size):
         catalog_slice=np.index_exp[slice_start : slice_start + slice_size],
         nside=nside,
     )
-    if slice_start == 0:
-        m = catalog.get_emission(
-            freq,
-            fwhm=fwhm[nside],
-            car_map_resolution=car_map_resolution,
-            return_car=True,
-        )
+    temp_m = catalog.get_emission(
+        freq,
+        fwhm=fwhm[nside],
+        car_map_resolution=car_map_resolution,
+        return_car=True,
+        return_healpix=False,
+    )
+    if m is None:
+        m = temp_m
     else:
-        m += catalog.get_emission(
-            freq,
-            fwhm=fwhm[nside],
-            car_map_resolution=car_map_resolution,
-            return_car=True,
-        )
+        m += temp_m
 
 enmap.write_map(out_filename, m, fmt="hdf")
 
@@ -99,6 +98,7 @@ output_map = reproject.map2healpix(
     nside,
     method="spline",
 )
+
 hp.write_map(
     output_path + f"{freq.value:05.1f}.fits",
     output_map,
