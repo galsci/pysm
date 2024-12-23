@@ -59,24 +59,27 @@ out_filename = catalog_filename.replace(
     ".h5", f"_nside_{nside}_map_{freq.value:04.1f}.h5"
 )
 
-
 if os.path.exists(out_filename.replace(".h5", "COMPLETED.txt")):
     sys.exit(0)
 
 
 catalog_size = len(h5py.File(catalog_filename)["theta"])
 
-slice_size = int(2.82 * 1e6)
+step = 10
+if step != 1:
+    out_filename = out_filename.replace(".h5", f"_sparse{step}.h5")
+
+slice_size = int(2.82 * 1e6 * step)
 
 fwhm = {8192: 0.9 * u.arcmin, 4096: 2.6 * u.arcmin, 2048: 5.1 * u.arcmin}
 
 m = None
-
+num_slice = 0
 for slice_start in range(0, catalog_size, slice_size):
     gc.collect()
     catalog = PointSourceCatalog(
         catalog_filename,
-        catalog_slice=np.index_exp[slice_start : slice_start + slice_size],
+        catalog_slice=np.index_exp[slice_start : slice_start + slice_size : step],
         nside=nside,
     )
     temp_m = catalog.get_emission(
