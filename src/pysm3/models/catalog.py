@@ -65,8 +65,8 @@ def flux2amp(flux, fwhm):
     sigma = fwhm2sigma(fwhm)
     amp = flux / (2 * np.pi * sigma**2)
     # sim_objects fails if amp is zero
-    c = 1e-9 # minimum amplitude
-    amp[np.logical_and(amp < c, amp > 0)] = c
+    c = 1e-9 # clip
+    amp[np.logical_and(amp < c, amp >= 0)] = c
     amp[np.logical_and(amp > -c, amp < 0)] = -c
     return amp
 
