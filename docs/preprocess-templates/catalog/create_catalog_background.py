@@ -74,7 +74,6 @@ slice_size = int(2.82 * 1e6 * step)
 fwhm = {8192: 0.9 * u.arcmin, 4096: 2.6 * u.arcmin, 2048: 5.1 * u.arcmin}
 
 m = None
-num_slice = 0
 for slice_start in range(0, catalog_size, slice_size):
     gc.collect()
     catalog = PointSourceCatalog(

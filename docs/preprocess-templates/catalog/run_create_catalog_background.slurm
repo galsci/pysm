@@ -4,6 +4,8 @@
 #SBATCH --constraint=cpu
 #SBATCH --time=2:00:00
 #SBATCH --array=0-13
+#SBATCH --mail-type=END,FAIL    # Notifications for job completion or failure
+#SBATCH --mail-user=andrea@andreazonca.com
 
 echo $SLURM_ARRAY_TASK_ID
 
