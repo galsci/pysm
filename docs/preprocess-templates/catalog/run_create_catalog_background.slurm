@@ -1,8 +1,11 @@
 #!/bin/bash
-#SBATCH --qos=regular
+### Perlmutter
+###SBATCH --qos=regular
+###SBATCH --constraint=cpu
+### Popeye
+#SBATCH --partition=genx
 #SBATCH --nodes=1
-#SBATCH --constraint=cpu
-#SBATCH --time=2:00:00
+#SBATCH --time=10:00:00
 #SBATCH --array=0-13
 #SBATCH --mail-type=END,FAIL    # Notifications for job completion or failure
 #SBATCH --mail-user=andrea@andreazonca.com
