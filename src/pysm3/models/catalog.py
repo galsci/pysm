@@ -65,7 +65,7 @@ def flux2amp(flux, fwhm):
     sigma = fwhm2sigma(fwhm)
     amp = flux / (2 * np.pi * sigma**2)
     # sim_objects fails if amp is zero
-    c = 1e-9 # clip
+    c = 1e-9 # minimum amplitude
     amp[np.logical_and(amp < c, amp >= 0)] = c
     amp[np.logical_and(amp > -c, amp < 0)] = -c
     return amp
@@ -187,10 +187,9 @@ class PointSourceCatalog(Model):
         freqs: u.Quantity[u.GHz],
         fwhm: Optional[u.Quantity[u.arcmin]] = None,
         weights=None,
-        coord=None,
+        output_units=u.uK_RJ,
         car_map_resolution: Optional[u.Quantity[u.arcmin]] = None,
         return_car=False,
-        return_healpix=True,
     ):
         """Generate a HEALPix or CAR map of the catalog emission integrated on the bandpass
         and convolved with the beam
@@ -205,24 +204,19 @@ class PointSourceCatalog(Model):
         weights: np.array
             Array of relative bandpass weights already normalized
             Same length of freqs, if None, uniform weights are assumed
+        output_units: astropy.units
+            Output units of the map
         car_map_resolution: float
             Resolution of the CAR map used by pixell to generate the map, if None,
             it is set to half of the resolution of the HEALPix map given by `self.nside`
-        coord: tuple of str
-            coordinate rotation, it uses the healpy convention, "Q" for Equatorial,
-            "G" for Galactic.
-        return_healpix: bool
-            If True return a HEALPix map
         return_car: bool
-            If True return a CAR map, in case they are both true, return a tuple,
-            (healpix_map, car_map)
+            If True return a CAR map, if False return a HEALPix map
 
         Returns
         -------
         output_map: np.array
-            Output HEALPix and/or CAR map, in case both (healpix_map, car_map)"""
+            Output HEALPix or CAR map"""
 
-        output_units = u.uK_RJ
         convolve_beam = fwhm is not None
         scaling_factor = utils.bandpass_unit_conversion(
             freqs, weights, output_unit=output_units, input_unit=u.Jy / u.sr
