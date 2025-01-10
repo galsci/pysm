@@ -7,8 +7,8 @@
 #SBATCH --nodes=1
 #SBATCH --time=10:00:00
 #SBATCH --array=0-13
-#SBATCH --mail-type=END,FAIL    # Notifications for job completion or failure
 #SBATCH --mail-user=andrea@andreazonca.com
+#SBATCH --mail-type=ALL
 
 echo $SLURM_ARRAY_TASK_ID
 
