@@ -92,6 +92,7 @@ for slice_start in range(0, catalog_size, slice_size):
         m = temp_m
     else:
         m += temp_m
+    num_slice += 1
 
 enmap.write_map(out_filename, m, fmt="hdf")
 
