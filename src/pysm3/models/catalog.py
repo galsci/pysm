@@ -240,7 +240,10 @@ class PointSourceCatalog(Model):
                 log.info(
                     "Rounded CAR map resolution: %s", car_map_resolution.to(u.arcmin)
                 )
+
+        log.info("Computing fluxes for I")
         fluxes_I = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefflux")
+        log.info("Fluxes for I computed")
 
         if convolve_beam:
             from pixell import (
@@ -256,6 +259,8 @@ class PointSourceCatalog(Model):
             log.info("CAR map shape %s", shape)
             output_map = enmap.enmap(np.zeros(shape, dtype=np.float32), wcs)
             r, p = pointsrcs.expand_beam(fwhm2sigma(fwhm.to_value(u.rad)))
+
+            log.info("Reading pointing")
             with h5py.File(self.catalog_filename) as f:
                 pointing = np.vstack(
                     (
@@ -263,11 +268,13 @@ class PointSourceCatalog(Model):
                         np.array(f["phi"][self.catalog_slice]),
                     )
                 )
+            log.info("Reading pointing completed")
 
             amps = flux2amp(
                 fluxes_I.to_value(u.Jy) * scaling_factor.value,
                 fwhm.to_value(u.rad),
             )  # to peak amplitude and to output units
+            log.info("Executing sim_objects for I")
             output_map[0] = pointsrcs.sim_objects(
                 shape=shape,
                 wcs=wcs,
@@ -275,6 +282,7 @@ class PointSourceCatalog(Model):
                 amps=amps,
                 profile=((r, p)),
             )
+            log.info("Execution of sim_objects for I completed")
         else:
             with h5py.File(self.catalog_filename) as f:
                 pix = hp.ang2pix(
@@ -289,7 +297,9 @@ class PointSourceCatalog(Model):
             aggregate(pix, output_map[0], fluxes_I / pix_size * scaling_factor)
 
         del fluxes_I
+        log.info("Computing fluxes for Q/U")
         fluxes_P = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
+        log.info("Fluxes for Q/U computed")
         # set seed so that the polarization angle is always the same for each run
         # could expose to the interface if useful
         np.random.seed(56567)
@@ -300,6 +310,7 @@ class PointSourceCatalog(Model):
             pols = [(1, np.cos)]
             pols.append((2, np.sin))
             for i_pol, sincos in pols:
+                log.info("Executing sim_objects for Q/U")
                 output_map[i_pol] = pointsrcs.sim_objects(
                     shape,
                     wcs,
@@ -312,6 +323,7 @@ class PointSourceCatalog(Model):
                     ),
                     ((r, p)),
                 )
+                log.info("Execution of sim_objects for Q/U completed")
             if return_car:
                 assert (
                     coord is None
@@ -330,6 +342,7 @@ class PointSourceCatalog(Model):
                     )
                     * output_units
                 )
+                log.info("Reprojecting to HEALPix completed")
                 if return_car:
                     output_map = (output_map_healpix, output_map)
                 else:
