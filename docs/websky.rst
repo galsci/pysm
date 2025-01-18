@@ -5,6 +5,8 @@ WebSky
 
 The Websky suite of simulated extragalactic component maps, determined from large scale structure light cone realizations and  based on Lagrangian perturbation theory, Peak Patch Lagrangian halo finding, and modeling of SZ and CIB effects, can be read into PySM as precomputed external fits files using InterpolatingComponent.  More information on the Peak Patch halo finding method can be found in `Stein, Alvarez, and Bond (2018) <https://arxiv.org/abs/1810.07727>`_, and selected maps and halo catalogs are available from the `Websky website <http://mocks.cita.utoronto.ca/websky>`_. Some additional Websky-specific information and tools are available at the `SO Websky model repository <https://github.com/simonsobs/websky_model>`_.
 
+The maps released by WebSky by themselves are isotropic and have no correlation with Galactic components, however in PySM we need to decide a reference frame for each model, we decided to identify the products as released by WebSky as being in Galactic reference frame (as all other PySM components), therefore a PySM simulation in Galactic frame can be directly correlated with catalogs and other data products by the Websky team, simulations in Equatorial or Ecliptic need instead to be properly rotated.
+
 The cosmological parameters used for the websky simulations are available at `on the websky website <https://mocks.cita.utoronto.ca/data/websky/v0.0/cosmology.py>`_.
 
 Both CIB and Radio galaxies have been provided as input maps at discrete frequencies to be interpolated over, the frequency span is 18.7 GHz to 1080 GHz.
