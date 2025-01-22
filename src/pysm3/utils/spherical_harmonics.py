@@ -3,7 +3,11 @@ import numpy as np
 import logging
 
 from astropy import units as u
-import pixell.enmap, pixell.curvedsky
+
+try:
+    import pixell.enmap, pixell.curvedsky
+except ImportError:
+    pixell = None
 
 from .. import mpi, utils
 
