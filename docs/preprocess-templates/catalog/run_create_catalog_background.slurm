@@ -6,13 +6,14 @@
 #SBATCH --partition=genx
 #SBATCH --nodes=1
 #SBATCH --time=10:00:00
+#SBATCH --cpus-per-task=48
 #SBATCH --array=0-13
 #SBATCH --mail-user=andrea@andreazonca.com
 #SBATCH --mail-type=ALL
 
 echo $SLURM_ARRAY_TASK_ID
 
-export OMP_NUM_THREADS=$SLURM_CPUS_ON_NODE
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 echo Executing with $OMP_NUM_THREADS threads
 
 export PYTHONUNBUFFERED=1

@@ -65,7 +65,7 @@ def flux2amp(flux, fwhm):
     sigma = fwhm2sigma(fwhm)
     amp = flux / (2 * np.pi * sigma**2)
     # sim_objects fails if amp is zero
-    c = 1e-9 # minimum amplitude
+    c = 1e-8 # clip
     amp[np.logical_and(amp < c, amp >= 0)] = c
     amp[np.logical_and(amp > -c, amp < 0)] = -c
     return amp
@@ -189,7 +189,9 @@ class PointSourceCatalog(Model):
         weights=None,
         output_units=u.uK_RJ,
         car_map_resolution: Optional[u.Quantity[u.arcmin]] = None,
+        coord=None,
         return_car=False,
+        return_healpix=True
     ):
         """Generate a HEALPix or CAR map of the catalog emission integrated on the bandpass
         and convolved with the beam
@@ -209,13 +211,18 @@ class PointSourceCatalog(Model):
         car_map_resolution: float
             Resolution of the CAR map used by pixell to generate the map, if None,
             it is set to half of the resolution of the HEALPix map given by `self.nside`
+        coord: str
+            Coordinate rotation to apply, for example ("G", "C") to rotate from Galactic to
+            Equatorial coordinates. If None, no rotation is applied
         return_car: bool
-            If True return a CAR map, if False return a HEALPix map
+            If True return a CAR map
+        return_healpix: bool
+            If True return a HEALPix map
 
         Returns
         -------
         output_map: np.array
-            Output HEALPix or CAR map"""
+            Output HEALPix or CAR map or tuple with HEALPix and CAR maps"""
 
         convolve_beam = fwhm is not None
         scaling_factor = utils.bandpass_unit_conversion(
@@ -240,7 +247,10 @@ class PointSourceCatalog(Model):
                 log.info(
                     "Rounded CAR map resolution: %s", car_map_resolution.to(u.arcmin)
                 )
+
+        log.info("Computing fluxes for I")
         fluxes_I = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefflux")
+        log.info("Fluxes for I computed")
 
         if convolve_beam:
             from pixell import (
@@ -256,6 +266,8 @@ class PointSourceCatalog(Model):
             log.info("CAR map shape %s", shape)
             output_map = enmap.enmap(np.zeros(shape, dtype=np.float32), wcs)
             r, p = pointsrcs.expand_beam(fwhm2sigma(fwhm.to_value(u.rad)))
+
+            log.info("Reading pointing")
             with h5py.File(self.catalog_filename) as f:
                 pointing = np.vstack(
                     (
@@ -263,11 +275,13 @@ class PointSourceCatalog(Model):
                         np.array(f["phi"][self.catalog_slice]),
                     )
                 )
+            log.info("Reading pointing completed")
 
             amps = flux2amp(
                 fluxes_I.to_value(u.Jy) * scaling_factor.value,
                 fwhm.to_value(u.rad),
             )  # to peak amplitude and to output units
+            log.info("Executing sim_objects for I")
             output_map[0] = pointsrcs.sim_objects(
                 shape=shape,
                 wcs=wcs,
@@ -275,6 +289,7 @@ class PointSourceCatalog(Model):
                 amps=amps,
                 profile=((r, p)),
             )
+            log.info("Execution of sim_objects for I completed")
         else:
             with h5py.File(self.catalog_filename) as f:
                 pix = hp.ang2pix(
@@ -289,7 +304,9 @@ class PointSourceCatalog(Model):
             aggregate(pix, output_map[0], fluxes_I / pix_size * scaling_factor)
 
         del fluxes_I
+        log.info("Computing fluxes for Q/U")
         fluxes_P = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
+        log.info("Fluxes for Q/U computed")
         # set seed so that the polarization angle is always the same for each run
         # could expose to the interface if useful
         np.random.seed(56567)
@@ -300,6 +317,7 @@ class PointSourceCatalog(Model):
             pols = [(1, np.cos)]
             pols.append((2, np.sin))
             for i_pol, sincos in pols:
+                log.info("Executing sim_objects for Q/U")
                 output_map[i_pol] = pointsrcs.sim_objects(
                     shape,
                     wcs,
@@ -312,6 +330,7 @@ class PointSourceCatalog(Model):
                     ),
                     ((r, p)),
                 )
+                log.info("Execution of sim_objects for Q/U completed")
             if return_car:
                 assert (
                     coord is None
@@ -330,6 +349,7 @@ class PointSourceCatalog(Model):
                     )
                     * output_units
                 )
+                log.info("Reprojecting to HEALPix completed")
                 if return_car:
                     output_map = (output_map_healpix, output_map)
                 else:

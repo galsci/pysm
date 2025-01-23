@@ -65,7 +65,7 @@ if os.path.exists(out_filename.replace(".h5", "COMPLETED.txt")):
 
 catalog_size = len(h5py.File(catalog_filename)["theta"])
 
-step = 10
+step = 1
 if step != 1:
     out_filename = out_filename.replace(".h5", f"_sparse{step}.h5")
 
@@ -92,7 +92,7 @@ for slice_start in range(0, catalog_size, slice_size):
         m = temp_m
     else:
         m += temp_m
-    num_slice += 1
+    del temp_m
 
 enmap.write_map(out_filename, m, fmt="hdf")
 
