@@ -1,0 +1,41 @@
+name: Import with base requirements
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test_ci_tests:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - name: Python 3.12 Import Check
+            os: ubuntu-22.04
+            python: 3.12
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - uses: mamba-org/setup-micromamba@v1
+      with:
+        environment-name: test-env
+        create-args: >-
+          python=${{ matrix.python }}
+          netcdf4
+        init-shell: >-
+          bash
+        cache-environment: true
+        post-cleanup: 'all'
+    - name: Install base requirements
+      run: pip install .
+      shell: bash -el {0}
+    - name: Check import
+      run: |
+        python -c "import pysm3"
+      shell: bash -el {0}

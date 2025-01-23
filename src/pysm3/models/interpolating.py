@@ -12,7 +12,11 @@ from .. import units as u
 from .. import utils
 from ..utils import trapz_step_inplace, map2alm
 from .template import Model
-import pixell
+
+try:
+    import pixell
+except ImportError:
+    pixell = None
 
 log = logging.getLogger("pysm3")
 
