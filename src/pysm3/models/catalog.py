@@ -189,7 +189,9 @@ class PointSourceCatalog(Model):
         weights=None,
         output_units=u.uK_RJ,
         car_map_resolution: Optional[u.Quantity[u.arcmin]] = None,
+        coord=None,
         return_car=False,
+        return_healpix=True
     ):
         """Generate a HEALPix or CAR map of the catalog emission integrated on the bandpass
         and convolved with the beam
@@ -209,13 +211,18 @@ class PointSourceCatalog(Model):
         car_map_resolution: float
             Resolution of the CAR map used by pixell to generate the map, if None,
             it is set to half of the resolution of the HEALPix map given by `self.nside`
+        coord: str
+            Coordinate rotation to apply, for example ("G", "C") to rotate from Galactic to
+            Equatorial coordinates. If None, no rotation is applied
         return_car: bool
-            If True return a CAR map, if False return a HEALPix map
+            If True return a CAR map
+        return_healpix: bool
+            If True return a HEALPix map
 
         Returns
         -------
         output_map: np.array
-            Output HEALPix or CAR map"""
+            Output HEALPix or CAR map or tuple with HEALPix and CAR maps"""
 
         convolve_beam = fwhm is not None
         scaling_factor = utils.bandpass_unit_conversion(
