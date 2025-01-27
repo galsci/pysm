@@ -88,6 +88,7 @@ class WebSkyCIB(InterpolatingComponent):
         """
         self.local_folder = local_folder
         self.websky_freqs_float = [
+            1.0,
             17.0,
             18.7,
             21.6,
