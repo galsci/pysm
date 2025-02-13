@@ -111,7 +111,7 @@ def apply_smoothing_and_coord_transform(
             # smoothalm does not support polarized beam
             for i in range(3):
                 try:
-                    beam_window_i = beam_window[:, i]
+                    beam_window_i = beam_window[i, :]
                     log.info("Using polarized beam")
                 except IndexError:
                     beam_window_i = beam_window
