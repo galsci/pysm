@@ -10,8 +10,8 @@ on:
     - main  # GitHub now defaults to 'main' as the name of the primary branch. Change this as needed.
   #  tags: # run CI if specific tags are pushed
   pull_request:
-    # branches: # only build on PRs against 'main' if you need to further limit when CI is run.
-    #    - main
+  schedule:
+    - cron: '0 5 20 * *'  # Runs at 05:00 on the 20th of every month
 
 jobs:
   # Github Actions supports ubuntu, windows, and macos virtual environments:
