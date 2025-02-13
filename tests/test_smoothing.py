@@ -34,7 +34,7 @@ def input_map():
 
 
 def test_smoothing_healpix_beamwindow(input_map):
-    beam_window = hp.gauss_beam(fwhm=FWHM, lmax=LMAX, pol=True)
+    beam_window = hp.gauss_beam(fwhm=FWHM, lmax=LMAX, pol=True).T
 
     smoothed_map = apply_smoothing_and_coord_transform(
         input_map, lmax=LMAX, beam_window=beam_window
