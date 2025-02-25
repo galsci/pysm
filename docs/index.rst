@@ -7,9 +7,18 @@ There is scope for a few options for the model for each component, attempting to
 
 Currently much of the available data is limited in resolution at degree-scale. We therefore make efforts to provide reasonable small-scale simulations to extend the data to higher multipoles. The details of the procedures developed can be found in the accompanying paper.
 
-If you are using this code please cite the PySM 2 paper `Thorne at al <https://arxiv.org/abs/1608.02841>`_
-
 This code is based on the large-scale Galactic part of `Planck Sky Model <http://www.apc.univ-paris7.fr/~delabrou/PSM/psm.html>`_ (`Delabrouille 2012 <https://arxiv.org/abs/1207.3675>`_) code and uses some of its inputs.
+
+Acknowledgement
+---------------
+
+If you are using this code please cite:
+
+* `The Python Sky Model: software for simulating the Galactic microwave sky (Thorne et al, 2017) <https://arxiv.org/abs/1608.02841>`_
+* `The Python Sky Model 3 software (Zonca et al, 2021) <https://arxiv.org/abs/2108.01444>`_
+* Full-Sky Models of Galactic Microwave Emission and Polarization at Sub-arcminute Scales for the Python Sky Model (The PanEx GS Group, in preparation)  :doc:`Author contributions statement <pysm_methods_author_contributions>`.
+
+See the Bibtex format file `CITATION <https://github.com/galsci/pysm/blob/main/CITATION>`_
 
 Models
 ------
