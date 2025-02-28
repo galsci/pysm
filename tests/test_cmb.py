@@ -72,3 +72,28 @@ def test_cmb_lensed(model_tag, freq):
     assert_quantity_allclose(
         expected_output, model.get_emission(freq * u.GHz), rtol=1e-5
     )
+
+
+def test_cmb_lensed_apply_delens():
+    # Addressing issue #213; CMBLensed model was raising a ValueError when
+    # apply_delens=True
+
+    try:
+        model  = pysm3.models.CMBLensed(
+            nside=64, 
+            cmb_spectra='pysm_2/camb_lenspotentialCls.dat',
+            apply_delens=False,
+            delensing_ells='pysm_2/delens_ells.txt'
+        )
+    except ValueError:
+        pytest.fail(f"Unexpected ValueError without apply_delens=True")
+
+    try:
+        model  = pysm3.models.CMBLensed(
+            nside=64, 
+            cmb_spectra='pysm_2/camb_lenspotentialCls.dat',
+            apply_delens=True,
+            delensing_ells='pysm_2/delens_ells.txt'
+        )
+    except ValueError:
+        pytest.fail(f"ValueError raised when applying delensing")
