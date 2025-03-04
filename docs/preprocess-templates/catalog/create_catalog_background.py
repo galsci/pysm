@@ -70,19 +70,17 @@ if os.path.exists(out_filename.replace(".h5", "COMPLETED.txt")):
 catalog_size = len(h5py.File(catalog_filename)["theta"])
 
 step = 1
-if step != 1:
-    out_filename = out_filename.replace(".h5", f"_sparse{step}.h5")
-
-slice_size = int(2.82 * 1e6 * step)
+# slice_size = int(28.2 * 1e6 * step)
 
 fwhm = {8192: 0.9 * u.arcmin, 4096: 2.6 * u.arcmin, 2048: 5.1 * u.arcmin}
 
 m = None
-for slice_start in range(0, catalog_size, slice_size):
+# for slice_start in range(0, catalog_size, slice_size):
+if True:
     gc.collect()
     catalog = PointSourceCatalog(
         catalog_filename,
-        catalog_slice=np.index_exp[slice_start : slice_start + slice_size : step],
+        # catalog_slice=np.index_exp[slice_start : slice_start + slice_size : step],
         nside=nside,
     )
     temp_m = catalog.get_emission(
@@ -98,20 +96,20 @@ for slice_start in range(0, catalog_size, slice_size):
         m += temp_m
     del temp_m
 
-enmap.write_map(out_filename, m, fmt="hdf")
+out_filename = (output_path + f"{freq.value:05.1f}.fits",)
+enmap.write_map(out_filename.replace(".fits", ".h5"), fmt="hdf")
 
-output_map = reproject.map2healpix(
+healpix_map = reproject.map2healpix(
     m,
     nside,
     method="spline",
 )
 
 hp.write_map(
-    output_path + f"{freq.value:05.1f}.fits",
-    output_map,
+    healpix_map,
     column_units="uK_RJ",
     coord="G",
     overwrite=True,
 )
 
-open(out_filename.replace(".h5", "_COMPLETED"), "w").close()
+open(out_filename.replace(".fits", "_COMPLETED"), "w").close()
