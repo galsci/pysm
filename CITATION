@@ -1,3 +1,13 @@
+@article{Panexp_2025,
+      title={Full-sky Models of Galactic Microwave Emission and Polarization at Sub-arcminute Scales for the Python Sky Model}, 
+      author={Experiment Galactic Science Group and Julian Borrill and Susan E. Clark and Jacques Delabrouille and Andrei V. Frolov and Shamik Ghosh and Brandon S. Hensley and Monica D. Hicks and Nicoletta Krachmalnicoff and King Lau and Myra M. Norton and Clement Pryke and Giuseppe Puglisi and Mathieu Remazeilles and Elisa Russier and Benjamin Thorne and Jian Yao and Andrea Zonca},
+      year={2025},
+      eprint={2502.20452},
+      archivePrefix={arXiv},
+      primaryClass={astro-ph.CO},
+      url={https://arxiv.org/abs/2502.20452}, 
+}
+
 @article{Zonca_2021,
   doi = {10.21105/joss.03783},
   url = {https://doi.org/10.21105/joss.03783},
