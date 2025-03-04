@@ -96,7 +96,7 @@ if True:
         m += temp_m
     del temp_m
 
-out_filename = (output_path + f"{freq.value:05.1f}.fits",)
+out_filename = output_path + f"{freq.value:05.1f}.fits"
 enmap.write_map(out_filename.replace(".fits", ".h5"), fmt="hdf")
 
 healpix_map = reproject.map2healpix(
@@ -106,6 +106,7 @@ healpix_map = reproject.map2healpix(
 )
 
 hp.write_map(
+    out_filename,
     healpix_map,
     column_units="uK_RJ",
     coord="G",
