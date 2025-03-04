@@ -33,7 +33,8 @@ freqs = (
         map(
             float,
             [
-                "5.0",
+                "1.0",
+                "10.0",
                 "18.7",
                 "24.5",
                 "44.0",
@@ -47,13 +48,16 @@ freqs = (
                 "729.0",
                 "857.0",
                 "906.0",
+                "1000.0",
             ],
         )
     )
     * u.GHz
 )
 
-freq = freqs[int(os.environ["SLURM_ARRAY_TASK_ID"])]
+assert len(freqs) == 16
+
+freq = freqs[int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))]
 
 out_filename = catalog_filename.replace(
     ".h5", f"_nside_{nside}_map_{freq.value:04.1f}.h5"
