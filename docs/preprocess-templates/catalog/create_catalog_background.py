@@ -97,7 +97,7 @@ if True:
     del temp_m
 
 out_filename = output_path + f"{freq.value:05.1f}.fits"
-enmap.write_map(out_filename.replace(".fits", ".h5"), fmt="hdf")
+enmap.write_map(out_filename.replace(".fits", ".h5"), m, fmt="hdf")
 
 healpix_map = reproject.map2healpix(
     m,
