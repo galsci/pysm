@@ -16,7 +16,7 @@ If you are using this code please cite:
 
 * `The Python Sky Model: software for simulating the Galactic microwave sky (Thorne et al, 2017) <https://arxiv.org/abs/1608.02841>`_
 * `The Python Sky Model 3 software (Zonca et al, 2021) <https://arxiv.org/abs/2108.01444>`_
-* Full-Sky Models of Galactic Microwave Emission and Polarization at Sub-arcminute Scales for the Python Sky Model (The PanEx GS Group, in preparation)  :doc:`Author contributions statement <pysm_methods_author_contributions>`.
+* `Full-Sky Models of Galactic Microwave Emission and Polarization at Sub-arcminute Scales for the Python Sky Model (The PanEx GS Group, submitted to APJ) <https://arxiv.org/abs/2502.20452>`_  :doc:`Author contributions statement <pysm_methods_author_contributions>`.
 
 See the Bibtex format file `CITATION <https://github.com/galsci/pysm/blob/main/CITATION>`_
 
