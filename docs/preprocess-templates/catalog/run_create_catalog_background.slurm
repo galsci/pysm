@@ -7,7 +7,7 @@
 #SBATCH --nodes=1
 #SBATCH --time=10:00:00
 #SBATCH --cpus-per-task=48
-#SBATCH --array=0-13
+#SBATCH --array=0-15
 #SBATCH --mail-user=andrea@andreazonca.com
 #SBATCH --mail-type=ALL
 
