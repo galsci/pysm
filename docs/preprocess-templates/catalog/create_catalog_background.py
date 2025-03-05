@@ -14,6 +14,7 @@ import xarray as xr
 import h5py
 import gc
 import sys
+import logging
 
 pysm3.set_verbosity()
 
@@ -24,6 +25,7 @@ nside = int(sys.argv[2])
 output_path = os.path.dirname(catalog_filename) + f"/{nside}/"
 
 car_map_resolution = None
+
 
 if nside == 8192:
     car_map_resolution = hp.nside2resol(nside, arcmin=True) * u.arcmin / 1.3
@@ -57,11 +59,9 @@ freqs = (
 
 assert len(freqs) == 16
 
-freq = freqs[int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))]
+freq = freqs[int(os.environ.get("SLURM_ARRAY_TASK_ID", 3))]
 
-out_filename = catalog_filename.replace(
-    ".h5", f"_nside_{nside}_map_{freq.value:04.1f}.h5"
-)
+out_filename = output_path + f"{freq.value:05.1f}.fits"
 
 if os.path.exists(out_filename.replace(".h5", "COMPLETED.txt")):
     sys.exit(0)
@@ -76,7 +76,14 @@ fwhm = {8192: 0.9 * u.arcmin, 4096: 2.6 * u.arcmin, 2048: 5.1 * u.arcmin}
 
 m = None
 # for slice_start in range(0, catalog_size, slice_size):
-if True:
+
+completed_file = out_filename.replace(".fits", "_COMPLETED")
+
+if os.path.exists(completed_file):
+    logging.basicConfig(level=logging.INFO)
+    logging.info(f"{completed_file} exists, skipping.")
+    sys.exit(0)
+else:
     gc.collect()
     catalog = PointSourceCatalog(
         catalog_filename,
@@ -96,21 +103,20 @@ if True:
         m += temp_m
     del temp_m
 
-out_filename = output_path + f"{freq.value:05.1f}.fits"
-enmap.write_map(out_filename.replace(".fits", ".h5"), m, fmt="hdf")
+    enmap.write_map(out_filename.replace(".fits", ".h5"), m, fmt="hdf")
 
-healpix_map = reproject.map2healpix(
-    m,
-    nside,
-    method="spline",
-)
+    healpix_map = reproject.map2healpix(
+        m,
+        nside,
+        method="spline",
+    )
 
-hp.write_map(
-    out_filename,
-    healpix_map,
-    column_units="uK_RJ",
-    coord="G",
-    overwrite=True,
-)
+    hp.write_map(
+        out_filename,
+        healpix_map,
+        column_units="uK_RJ",
+        coord="G",
+        overwrite=True,
+    )
 
-open(out_filename.replace(".fits", "_COMPLETED"), "w").close()
+    open(completed_file, "w").close()
