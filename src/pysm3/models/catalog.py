@@ -39,6 +39,7 @@ def aggregate(index, array, values):
     for i, v in zip(index, values):
         array[i] += v
 
+
 @njit
 def fwhm2sigma(fwhm):
     """Converts the Full Width Half Maximum of a Gaussian beam to its standard deviation"""
@@ -65,7 +66,7 @@ def flux2amp(flux, fwhm):
     sigma = fwhm2sigma(fwhm)
     amp = flux / (2 * np.pi * sigma**2)
     # sim_objects fails if amp is zero
-    c = 1e-8 # clip
+    c = 1e-8  # clip
     amp[np.logical_and(amp < c, amp >= 0)] = c
     amp[np.logical_and(amp > -c, amp < 0)] = -c
     return amp
@@ -191,7 +192,7 @@ class PointSourceCatalog(Model):
         car_map_resolution: Optional[u.Quantity[u.arcmin]] = None,
         coord=None,
         return_car=False,
-        return_healpix=True
+        return_healpix=True,
     ):
         """Generate a HEALPix or CAR map of the catalog emission integrated on the bandpass
         and convolved with the beam
@@ -229,8 +230,9 @@ class PointSourceCatalog(Model):
             freqs, weights, output_unit=output_units, input_unit=u.Jy / u.sr
         )
         log.info(
-            "HEALPix map resolution: %s arcmin, nside %d", self.nside,
+            "HEALPix map resolution: %s arcmin, nside %d",
             hp.nside2resol(self.nside, arcmin=True),
+            self.nside,
         )
         pix_size = hp.nside2pixarea(self.nside) * u.sr
 
@@ -250,7 +252,7 @@ class PointSourceCatalog(Model):
 
         log.info("Computing fluxes for I")
         fluxes_I = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefflux")
-        log.info("Fluxes for I computed for %d sources", len(freqs))
+        log.info("Fluxes for I computed for %.2f million sources", len(fluxes_I) / 1e6)
 
         if convolve_beam:
             from pixell import (
@@ -306,7 +308,9 @@ class PointSourceCatalog(Model):
         del fluxes_I
         log.info("Computing fluxes for Q/U")
         fluxes_P = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
-        log.info("Fluxes for Q/U computed for %d sources", len(freqs))
+        log.info(
+            "Fluxes for Q/U computed for %.2f million sources", len(fluxes_I) / 1e6
+        )
         # set seed so that the polarization angle is always the same for each run
         # could expose to the interface if useful
         np.random.seed(56567)
