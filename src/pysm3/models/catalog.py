@@ -230,7 +230,7 @@ class PointSourceCatalog(Model):
             freqs, weights, output_unit=output_units, input_unit=u.Jy / u.sr
         )
         log.info(
-            "HEALPix map resolution: %s arcmin, nside %d",
+            "HEALPix map resolution: %.2e arcmin, nside %d",
             hp.nside2resol(self.nside, arcmin=True),
             self.nside,
         )
@@ -239,7 +239,9 @@ class PointSourceCatalog(Model):
         if convolve_beam:
             if car_map_resolution is None:
                 car_map_resolution = (hp.nside2resol(self.nside) * u.rad) / 2
-                log.info("CAR map resolution: %s", car_map_resolution.to(u.arcmin))
+                log.info(
+                    "Rounded CAR map resolution: %s", car_map_resolution.to(u.arcmin).to_string(precision=2)
+                )
 
             # Make sure the resolution evenly divides the map vertically
             if (car_map_resolution.to_value(u.rad) % np.pi) > 1e-8:
@@ -247,7 +249,7 @@ class PointSourceCatalog(Model):
                     np.pi / np.round(np.pi / car_map_resolution.to_value(u.rad))
                 ) * u.rad
                 log.info(
-                    "Rounded CAR map resolution: %s", car_map_resolution.to(u.arcmin)
+                    "Rounded CAR map resolution: %s", car_map_resolution.to(u.arcmin).to_string(precision=2)
                 )
 
         log.info("Computing fluxes for I")
