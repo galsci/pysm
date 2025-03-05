@@ -229,7 +229,7 @@ class PointSourceCatalog(Model):
             freqs, weights, output_unit=output_units, input_unit=u.Jy / u.sr
         )
         log.info(
-            "HEALPix map resolution: %s arcmin",
+            "HEALPix map resolution: %s arcmin, nside %d", self.nside,
             hp.nside2resol(self.nside, arcmin=True),
         )
         pix_size = hp.nside2pixarea(self.nside) * u.sr
@@ -250,7 +250,7 @@ class PointSourceCatalog(Model):
 
         log.info("Computing fluxes for I")
         fluxes_I = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefflux")
-        log.info("Fluxes for I computed")
+        log.info("Fluxes for I computed for %d sources", len(freqs))
 
         if convolve_beam:
             from pixell import (
@@ -306,7 +306,7 @@ class PointSourceCatalog(Model):
         del fluxes_I
         log.info("Computing fluxes for Q/U")
         fluxes_P = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
-        log.info("Fluxes for Q/U computed")
+        log.info("Fluxes for Q/U computed for %d sources", len(freqs))
         # set seed so that the polarization angle is always the same for each run
         # could expose to the interface if useful
         np.random.seed(56567)
