@@ -240,7 +240,8 @@ class PointSourceCatalog(Model):
             if car_map_resolution is None:
                 car_map_resolution = (hp.nside2resol(self.nside) * u.rad) / 2
                 log.info(
-                    "Rounded CAR map resolution: %s", car_map_resolution.to(u.arcmin).to_string(precision=2)
+                    "Rounded CAR map resolution: %s",
+                    car_map_resolution.to(u.arcmin).to_string(precision=2),
                 )
 
             # Make sure the resolution evenly divides the map vertically
@@ -249,7 +250,8 @@ class PointSourceCatalog(Model):
                     np.pi / np.round(np.pi / car_map_resolution.to_value(u.rad))
                 ) * u.rad
                 log.info(
-                    "Rounded CAR map resolution: %s", car_map_resolution.to(u.arcmin).to_string(precision=2)
+                    "Rounded CAR map resolution: %s",
+                    car_map_resolution.to(u.arcmin).to_string(precision=2),
                 )
 
         log.info("Computing fluxes for I")
@@ -286,6 +288,25 @@ class PointSourceCatalog(Model):
                 fwhm.to_value(u.rad),
             )  # to peak amplitude and to output units
             log.info("Executing sim_objects for I")
+            # import pickle
+
+            # with open(
+            #     "sim_objects_inputs.pkl",
+            #     "wb",
+            # ) as f:
+            #     pickle.dump(
+            #         {
+            #             "shape": shape,
+            #             "wcs": wcs,
+            #             "poss": pointing,
+            #             "amps": amps,
+            #             "profile": (r, p),
+            #         },
+            #         f,
+            #     )
+            # import sys
+
+            # sys.exit(0)
             output_map[0] = pointsrcs.sim_objects(
                 shape=shape,
                 wcs=wcs,
@@ -311,7 +332,7 @@ class PointSourceCatalog(Model):
         log.info("Computing fluxes for Q/U")
         fluxes_P = self.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
         log.info(
-            "Fluxes for Q/U computed for %.2f million sources", len(fluxes_I) / 1e6
+            "Fluxes for Q/U computed for %.2f million sources", len(fluxes_P) / 1e6
         )
         # set seed so that the polarization angle is always the same for each run
         # could expose to the interface if useful
