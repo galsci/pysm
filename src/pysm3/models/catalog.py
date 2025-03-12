@@ -190,8 +190,11 @@ class PointSourceCatalog(Model):
         weights=None,
         output_units=u.uK_RJ,
         car_map_resolution: Optional[u.Quantity[u.arcmin]] = None,
+        lmax=None,
+        output_nside=None,
         coord=None,
         return_car=False,
+        output_car_resol=None,
         return_healpix=True,
     ):
         """Generate a HEALPix or CAR map of the catalog emission integrated on the bandpass
@@ -211,12 +214,19 @@ class PointSourceCatalog(Model):
             Output units of the map
         car_map_resolution: float
             Resolution of the CAR map used by pixell to generate the map, if None,
-            it is set to half of the resolution of the HEALPix map given by `self.nside`
+            it is set to half of the resolution of the HEALPix map given by `self.nside`, unless
+            Nside is above >= 8192, then it is the same resolution of the HEALPix map
+        output_nside : int
+            Output HEALPix nside, if None, the nside used when creating the component (self.nside)
+        lmax: int
+            Not used, all operations are performed in pixel domain
         coord: str
             Coordinate rotation to apply, for example ("G", "C") to rotate from Galactic to
             Equatorial coordinates. If None, no rotation is applied
         return_car: bool
             If True return a CAR map
+        output_car_resol: arcmin
+            Not implemented yet
         return_healpix: bool
             If True return a HEALPix map
 
@@ -236,9 +246,14 @@ class PointSourceCatalog(Model):
         )
         pix_size = hp.nside2pixarea(self.nside) * u.sr
 
+        if return_car:
+            assert output_car_resol is None, "CAR resolution not implemented yet"
+
         if convolve_beam:
             if car_map_resolution is None:
-                car_map_resolution = (hp.nside2resol(self.nside) * u.rad) / 2
+                car_map_resolution = hp.nside2resol(self.nside) * u.rad
+                if self.nside < 8192:
+                    car_map_resolution /= 2
                 log.info(
                     "Rounded CAR map resolution: %s",
                     car_map_resolution.to(u.arcmin).to_string(precision=2),
@@ -370,9 +385,10 @@ class PointSourceCatalog(Model):
                     coord = ",".join([frames_dict[frame] for frame in coord])
 
                 log.info("Reprojecting to HEALPix")
+                output_nside = output_nside or self.nside
                 output_map_healpix = (
                     reproject.map2healpix(
-                        output_map, self.nside, rot=coord, method="spline"
+                        output_map, output_nside, rot=coord, method="spline"
                     )
                     * output_units
                 )
