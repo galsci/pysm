@@ -16,7 +16,7 @@ authors = [
 dependencies = [
     "astropy",
     "h5py",
-    "scipy",
+    "scipy < 1.15",
     "healpy >= 1.16.0",
     "importlib_metadata;python_version<'3.8'",
     "numba",
@@ -59,6 +59,8 @@ test = [
     "pixell == 0.26.0",
     "psutil",
     "pytest",
+    "nbval",
+    "ipykernel",
     "pytest-astropy",
     "tox",
     "xarray",
@@ -78,6 +80,15 @@ include = [
 [tool.pytest.ini_options]
 filterwarnings = [
     'ignore:may indicate binary incompatibility:RuntimeWarning',
+]
+addopts = "-v --nbval --nbval-current-env"
+testpaths = [
+    "tests",
+    "docs/bandpass_integration.ipynb",
+    "docs/customize_components.ipynb",
+    "docs/basic_use.ipynb",
+    "docs/model_data.ipynb",
+    "docs/smoothing_coord_rotation.ipynb"
 ]
 
 ## For debugging purposes, enable printing of logging calls
