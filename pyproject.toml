@@ -81,6 +81,15 @@ include = [
 filterwarnings = [
     'ignore:may indicate binary incompatibility:RuntimeWarning',
 ]
+addopts = "-v --nbval --nbval-current-env"
+testpaths = [
+    "tests",
+    "docs/bandpass_integration.ipynb",
+    "docs/customize_components.ipynb",
+    "docs/basic_use.ipynb",
+    "docs/model_data.ipynb",
+    "docs/smoothing_coord_rotation.ipynb"
+]
 
 ## For debugging purposes, enable printing of logging calls
 
