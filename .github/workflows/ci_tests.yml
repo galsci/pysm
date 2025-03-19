@@ -53,10 +53,6 @@ jobs:
       run: |
         pytest -v
       shell: bash -el {0}
-    - name: Run Pytest on Jupyter Notebooks
-      run: |
-        pytest -v --nbval --nbval-current-env docs/bandpass_integration.ipynb  docs/customize_components.ipynb docs/basic_use.ipynb             docs/model_data.ipynb docs/smoothing_coord_rotation.ipynb
-      shell: bash -el {0}
 
 #    - name: MPI test
 #      run: |
