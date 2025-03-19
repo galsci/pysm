@@ -42,9 +42,10 @@ Release
 -------
 
 * Tag the new version with git
-* ``pip install build --upgrade``
-* ``python -m build --sdist --wheel .``
-* ``twine upload dist/*``
+* Make sure ``hatch`` detects the right version with ``hatch version``
+* Build with ``harch build``
+* Upload to pypi with ``hatch publish``
+* Upload to Github with ``git push --tags``
 
 .. |CI Tests| image:: https://github.com/galsci/pysm/actions/workflows/ci_tests.yml/badge.svg
    :target: https://github.com/galsci/pysm/actions/workflows/ci_tests.yml
