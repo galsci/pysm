@@ -59,6 +59,8 @@ test = [
     "pixell == 0.26.0",
     "psutil",
     "pytest",
+    "nbval",
+    "ipykernel",
     "pytest-astropy",
     "tox",
     "xarray",
