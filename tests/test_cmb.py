@@ -74,26 +74,25 @@ def test_cmb_lensed(model_tag, freq):
     )
 
 
-def test_cmb_lensed_apply_delens():
-    # Addressing issue #213; CMBLensed model was raising a ValueError when
+def test_cmb_lensed_no_delens():
+
+    # Addressing issue #213: CMBLensed model was raising a ValueError when
+    # apply_delens=True. This first confirms that the model works without
     # apply_delens=True
+    model  = pysm3.models.CMBLensed(
+        nside=64, 
+        cmb_spectra='pysm_2/camb_lenspotentialCls.dat',
+        apply_delens=False,
+        delensing_ells='pysm_2/delens_ells.txt'
+    )
 
-    try:
-        model  = pysm3.models.CMBLensed(
-            nside=64, 
-            cmb_spectra='pysm_2/camb_lenspotentialCls.dat',
-            apply_delens=False,
-            delensing_ells='pysm_2/delens_ells.txt'
-        )
-    except ValueError:
-        pytest.fail(f"Unexpected ValueError without apply_delens=True")
+def test_cmb_lensed_delens():
+    # Further addressing issue #213: CMBLensed model raised a ValueError
+    # when apply_delens=True. This confirms it has been resolved.
 
-    try:
-        model  = pysm3.models.CMBLensed(
-            nside=64, 
-            cmb_spectra='pysm_2/camb_lenspotentialCls.dat',
-            apply_delens=True,
-            delensing_ells='pysm_2/delens_ells.txt'
-        )
-    except ValueError:
-        pytest.fail(f"ValueError raised when applying delensing")
+    model  = pysm3.models.CMBLensed(
+        nside=64, 
+        cmb_spectra='pysm_2/camb_lenspotentialCls.dat',
+        apply_delens=True,
+        delensing_ells='pysm_2/delens_ells.txt'
+    )
