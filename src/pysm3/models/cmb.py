@@ -280,9 +280,9 @@ class CMBLensed(CMBMap):
                                                               unpack=True)
         )
 
-        # Remove monopole and dipole, if present in cmb_spectra
+        # Remove monopole and dipole, if L=0 or L=1 present in cmb_spectra
         self.cmb_spectra = self.cmb_spectra[:, self.cmb_spectra[0] >= 2]
-        # Remove monopole and dipole, if present in delensing_ells
+        # Remove monopole and dipole, if L=0 or L=1 present in delensing_ells
         if self.apply_delens:
             self.delensing_ells = self.delensing_ells[:, self.delensing_ells[0] >= 2]
 
