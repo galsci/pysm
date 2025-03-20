@@ -8,7 +8,7 @@
 - Initial implementation of a point source catalog component emission https://github.com/galsci/pysm/pull/187
 - Switch the build system to Hatch https://github.com/galsci/pysm/pull/189
 - Fix shape error in `CMBLensed` preventing use of `apply_delens=True` https://github.com/galsci/pysm/pull/214
-- Fix bug in `CMBLensed` to read spectra that include monopole and dipole 
+- Fix bug in `CMBLensed` to read spectra that include monopole and dipole  https://github.com/galsci/pysm/pull/215
 
 3.4.0 (2023-12-11)
 ==================
