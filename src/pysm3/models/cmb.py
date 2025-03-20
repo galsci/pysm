@@ -281,11 +281,10 @@ class CMBLensed(CMBMap):
         )
 
         # Remove monopole and dipole, if present in cmb_spectra
-        if self.cmb_spectra[0][0] == 0:
-            self.cmb_spectra = self.cmb_spectra[:, 2:]
+        self.cmb_spectra = self.cmb_spectra[:, self.cmb_spectra[0] >= 2]
         # Remove monopole and dipole, if present in delensing_ells
-        if self.apply_delens and self.delensing_ells[0][0] == 0:
-            self.delensing_ells = self.delensing_ells[:, 2:]
+        if self.apply_delens:
+            self.delensing_ells = self.delensing_ells[:, self.delensing_ells[0] >= 2]
 
         self.map = u.Quantity(self.run_taylens(), unit=u.uK_CMB, copy=False)
 
