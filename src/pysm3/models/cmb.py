@@ -279,6 +279,13 @@ class CMBLensed(CMBMap):
             None if delensing_ells is None else self.read_txt(delensing_ells,
                                                               unpack=True)
         )
+
+        # Remove monopole and dipole, if L=0 or L=1 present in cmb_spectra
+        self.cmb_spectra = self.cmb_spectra[:, self.cmb_spectra[0] >= 2]
+        # Remove monopole and dipole, if L=0 or L=1 present in delensing_ells
+        if self.apply_delens:
+            self.delensing_ells = self.delensing_ells[:, self.delensing_ells[0] >= 2]
+
         self.map = u.Quantity(self.run_taylens(), unit=u.uK_CMB, copy=False)
 
     def run_taylens(self):
