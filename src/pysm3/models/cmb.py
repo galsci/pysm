@@ -276,7 +276,8 @@ class CMBLensed(CMBMap):
         self.cmb_seed = cmb_seed
         self.apply_delens = apply_delens
         self.delensing_ells = (
-            None if delensing_ells is None else self.read_txt(delensing_ells)
+            None if delensing_ells is None else self.read_txt(delensing_ells,
+                                                              unpack=True)
         )
         self.map = u.Quantity(self.run_taylens(), unit=u.uK_CMB, copy=False)
 
