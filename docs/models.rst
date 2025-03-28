@@ -81,7 +81,7 @@ Synchrotron
 AME
 ===
 
-- **a1**: We model the AME as a sum of two spinning dust populations based on the Commander code (Planck Collaboration 2015, arXiv:1502.01588). A component is defined by a degree-scale emission template at a reference frequency and a peak frequency of the emission law. Both populations have a spatially varying emission template, one population has a spatially varying peak frequency, and the other population has a spatially constant peak frequency. The emission law is generated using the SpDust2 code (Ali-Haimoud 2008). The nominal model is unpolarized. We add small scales to the emission maps, the method is outlined in `Thorne at al <https://arxiv.org/abs/1608.02841>`. This template comes from PySM 2, so the native resolution is $N_{side}=512$.
+- **a1**: We model the AME as a sum of two spinning dust populations based on the Commander code (Planck Collaboration 2015, arXiv:1502.01588). A component is defined by a degree-scale emission template at a reference frequency and a peak frequency of the emission law. Both populations have a spatially varying emission template, one population has a spatially varying peak frequency, and the other population has a spatially constant peak frequency. The emission law is generated using the SpDust2 code (Ali-Haimoud 2008). The nominal model is unpolarized. We add small scales to the emission maps, the method is outlined in `Thorne at al <https://arxiv.org/abs/1608.02841>`_. This template comes from PySM 2, so the native resolution is $N_{side}=512$.
   
 - **a2**: AME has 2% polarization fraction. Polarized maps simulated with thermal dust angles and nominal AME intensity scaled globally by polarization fraction. Within WMAP/Planck bounds. This template comes from PySM 2, so the native resolution is $N_{side}=512$.
 
@@ -89,7 +89,7 @@ AME
 Free-free
 =========
 
-- **f1**: We model the free-free emission using the analytic model assumed in the Commander fit to the Planck 2015 data (Draine 2011 'Physics of the Interstellar and Intergalactic Medium') to produce a degree-scale map of free-free emission at 30 GHz. We add small scales to this using a procedure outlined in `Thorne at al <https://arxiv.org/abs/1608.02841>`. This template comes from PySM 2, so the native resolution is $N_{side}=512$. This map is then scaled in frequency by applying a spatially constant power law index of -2.14.
+- **f1**: We model the free-free emission using the analytic model assumed in the Commander fit to the Planck 2015 data (Draine 2011 'Physics of the Interstellar and Intergalactic Medium') to produce a degree-scale map of free-free emission at 30 GHz. We add small scales to this using a procedure outlined in `Thorne at al <https://arxiv.org/abs/1608.02841>`_. This template comes from PySM 2, so the native resolution is $N_{side}=512$. This map is then scaled in frequency by applying a spatially constant power law index of -2.14.
 
 CMB
 ===
