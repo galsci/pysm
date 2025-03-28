@@ -10,6 +10,7 @@
 - Switch the build system to Hatch https://github.com/galsci/pysm/pull/189
 - Fix shape error in `CMBLensed` preventing use of `apply_delens=True` https://github.com/galsci/pysm/pull/214
 - Fix bug in `CMBLensed` to read spectra that include monopole and dipole  https://github.com/galsci/pysm/pull/215
+- Specify in the docs that the native resolution of free-free and AME is nside=512
 
 3.4.0 (2023-12-11)
 ==================
