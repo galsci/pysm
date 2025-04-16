@@ -44,7 +44,7 @@ Release
 
 * Tag the new version with git
 * Make sure ``hatch`` detects the right version with ``hatch version``
-* Build with ``harch build``
+* Build with ``hatch build``
 * Upload to pypi with ``hatch publish``
 * Upload to Github with ``git push --tags``
 
