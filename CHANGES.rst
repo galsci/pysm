@@ -1,4 +1,4 @@
-3.4.1 (unreleased)
+3.4.1 (2025-04-15)
 ==================
 - Fix bug in `cib1` at frequencies below 18.7 GHz, created scaled maps with Modified Black Body spectrum down to 1 GHz https://github.com/galsci/pysm/issues/210
 - Make sure models are evaluated in double precision https://github.com/galsci/pysm/pull/196
