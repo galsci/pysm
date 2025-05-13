@@ -19,3 +19,4 @@ from .websky import (
     WebSkyRadioGalaxies,
 )
 from .catalog import PointSourceCatalog
+from .dipole import CMBDipole
