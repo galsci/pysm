@@ -40,9 +40,9 @@ def test_dipole_fit_with_sky():
     from astropy.tests.helper import assert_quantity_allclose
 
     # Use the dip1 preset, which uses the dipole component
-    sky = pysm3.Sky(nside=64, preset_strings=["dip1"])
+    sky = pysm3.Sky(nside=64, preset_strings=["dip1"], output_unit=u.uK_CMB)
     # Evaluate at 100 GHz
-    dipole_map = sky.get_emission(100 * u.GHz, unit=u.uK_CMB)
+    dipole_map = sky.get_emission(100 * u.GHz)
 
     # Fit dipole using healpy
     _, dip_vec = hp.fit_dipole(dipole_map.value)
