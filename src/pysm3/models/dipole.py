@@ -1,6 +1,6 @@
 import numpy as np
 import healpy as hp
-from astropy.constants import c
+from astropy import constants as const
 
 try:
     from numpy import trapezoid
@@ -60,13 +60,19 @@ class CMBDipole:
         dip_lon,
         dip_lat,
         map_dist=None,
+        quadrupole_correction: bool = False,  # New flag
     ):
         self.nside = nside
         self.amp = u.Quantity(amp) if not isinstance(amp, u.Quantity) else amp
         self.T_cmb = u.Quantity(T_cmb) if not isinstance(T_cmb, u.Quantity) else T_cmb
-        self.dip_lat = (u.Quantity(dip_lat) if not isinstance(dip_lat, u.Quantity) else dip_lat).to_value(u.deg)
-        self.dip_lon = (u.Quantity(dip_lon) if not isinstance(dip_lon, u.Quantity) else dip_lon).to_value(u.deg)
+        self.dip_lat = (
+            u.Quantity(dip_lat) if not isinstance(dip_lat, u.Quantity) else dip_lat
+        ).to_value(u.deg)
+        self.dip_lon = (
+            u.Quantity(dip_lon) if not isinstance(dip_lon, u.Quantity) else dip_lon
+        ).to_value(u.deg)
         self.map_dist = map_dist
+        self.quadrupole_correction = quadrupole_correction  # Store flag
 
     @u.quantity_input
     def get_emission(
@@ -100,20 +106,35 @@ class CMBDipole:
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
 
-        # Compute emission at each frequency in the bandpass
-        emission = [
-            ΔT.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz))
-            for freq in freqs
-        ]
+        emission = []
+        for freq in freqs:
+            if self.quadrupole_correction:
+                fx = (const.h * (freq*u.GHz).to(u.Hz) / (const.k_B * (self.T_cmb.to_value(u.K_CMB)*u.K))).decompose()
+                fcor = (fx / 2) * (np.exp(fx) + 1) / (np.exp(fx) - 1)
+                bt = β * cosθ
+                ΔT = self.T_cmb * (bt + fcor * bt**2)
+            emission.append(
+                ΔT.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz))
+            )
 
         if len(freqs) == 1:
             result = emission[0]
         else:
-            # Integrate over bandpass using trapz
             result = (
-                trapezoid(emission.value * weights[:, None], x=freqs, axis=0) * u.uK_RJ
+                trapezoid(
+                    np.stack([e.value for e in emission]) * weights[:, None],
+                    x=freqs,
+                    axis=0,
+                )
+                * u.uK_RJ
             )
 
         assert not np.isnan(result).any(), "Result contains NaN values"
 
         return result
+
+
+class CMBDipoleQuad(CMBDipole):
+    def __init__(self, *args, **kwargs):
+        kwargs["quadrupole_correction"] = True
+        super().__init__(*args, **kwargs)
