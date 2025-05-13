@@ -27,24 +27,50 @@ class CMBMap(Model):
         ----------
         nside: int
             HEALPix N_side parameter of the input maps
-        map_IQU: `pathlib.Path` object
-            Path to a single IQU map
-        map_I, map_Q, map_U: `pathlib.Path` object
-            Paths to the maps to be used as I, Q, U templates.
+        map_IQU: `pathlib.Path` object or array/Quantity
+            Path to a single IQU map or in-memory array/Quantity
+        map_I, map_Q, map_U: `pathlib.Path` object or array/Quantity
+            Paths or arrays to be used as I, Q, U templates.
         """
         super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
+        # Accept map_IQU as either a path or an in-memory array/Quantity
         if map_IQU is not None:
-            self.map = self.read_map(map_IQU, unit=u.uK_CMB, field=(0, 1, 2))
+            if hasattr(map_IQU, 'shape'):
+                arr = map_IQU
+                if not hasattr(arr, 'unit'):
+                    raise ValueError("Input map_IQU must have astropy units (e.g. u.uK_CMB)")
+                if arr.ndim == 1:
+                    arr = arr[np.newaxis, :]
+                if arr.shape[0] not in (1, 3):
+                    raise ValueError("Input map_IQU must have shape (3, npix) or (npix,)")
+                self.map = arr.to(u.uK_CMB)
+            else:
+                self.map = self.read_map(map_IQU, unit=u.uK_CMB, field=(0, 1, 2))
         elif map_I is not None:
-            self.map = self.read_map(map_I, unit=u.uK_CMB, field=0)
-            if map_Q is not None:
-                self.map = [self.map]
+            # Accept map_I, map_Q, map_U as either paths or arrays/Quantities
+            if hasattr(map_I, 'shape'):
+                arrs = [map_I]
                 for m in [map_Q, map_U]:
-                    self.map.append(self.read_map(m, unit=u.uK_CMB))
-                self.map = u.Quantity(self.map, unit=u.uK_CMB)
+                    if m is not None:
+                        arrs.append(m)
+                arrs = [a if hasattr(a, 'unit') else None for a in arrs]
+                if any(a is None for a in arrs):
+                    raise ValueError("All input maps must have astropy units (e.g. u.uK_CMB)")
+                arrs = [a[np.newaxis, :] if a.ndim == 1 else a for a in arrs]
+                arr = np.concatenate(arrs, axis=0)
+                if arr.shape[0] not in (1, 3):
+                    raise ValueError("Input maps must have shape (3, npix) or (npix,)")
+                self.map = arr.to(u.uK_CMB)
+            else:
+                self.map = self.read_map(map_I, unit=u.uK_CMB, field=0)
+                if map_Q is not None:
+                    self.map = [self.map]
+                    for m in [map_Q, map_U]:
+                        self.map.append(self.read_map(m, unit=u.uK_CMB))
+                    self.map = u.Quantity(self.map, unit=u.uK_CMB)
         else:
             msg = "No input map provided"
-            raise (ValueError(msg))
+            raise ValueError(msg)
 
     @u.quantity_input
     def get_emission(
