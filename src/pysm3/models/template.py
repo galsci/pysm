@@ -184,25 +184,28 @@ def extract_hdu_unit(path, hdu=1, field=0):
 
 
 def read_map(path, nside, unit=None, field=0, map_dist=None):
-    """Wrapper of `healpy.read_map` for PySM data. This function also extracts
-    the units from the fits HDU and applies them to the data array to form an
-    `astropy.units.Quantity` object.
-    This function requires that the fits file contains a TUNIT key for each
-    populated field.
-
-    Parameters
-    ----------
-    path : object `pathlib.Path`, or str
-        Path of HEALPix map to be read.
-    nside : int
-        Resolution at which to return map. Map is read in at whatever resolution
-        it is stored, and `healpy.ud_grade` is applied.
-
-    Returns
-    -------
-    map : ndarray
-        Numpy array containing HEALPix map in RING ordering.
+    """Wrapper of `healpy.read_map` for PySM data or in-memory arrays. Accepts
+    either a filename or an in-memory numpy array/Quantity. Applies units and shape validation.
     """
+    # If path is an in-memory array or Quantity, handle directly
+    if hasattr(path, 'shape'):
+        arr = path
+        # Validate units
+        if not hasattr(arr, 'unit'):
+            raise ValueError("Input map must have astropy units (e.g. u.uK_CMB)")
+        # Validate shape: (3, npix) or (npix,) or (1, npix)
+        if arr.ndim == 1:
+            # Only reshape if it's a single-pixel map
+            if arr.shape[0] == 1:
+                arr = arr[np.newaxis, :]
+            # else: leave as (npix,)
+        if arr.shape[0] not in (1, 3) and arr.ndim > 1:
+            raise ValueError("Input map must have shape (3, npix) or (npix,)")
+        # Convert to requested unit if needed
+        if unit is not None:
+            arr = arr.to(unit)
+        return arr
+    # Otherwise, treat as filename and use original logic
     mpi_comm = None if map_dist is None else map_dist.mpi_comm
     pixel_indices = None if map_dist is None else map_dist.pixel_indices
     filename = utils.RemoteData().get(path)
