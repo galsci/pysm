@@ -184,8 +184,47 @@ def extract_hdu_unit(path, hdu=1, field=0):
 
 
 def read_map(path, nside, unit=None, field=0, map_dist=None):
-    """Wrapper of `healpy.read_map` for PySM data or in-memory arrays. Accepts
-    either a filename or an in-memory numpy array/Quantity. Applies units and shape validation.
+    """Read a HEALPix map from a file or accept an in-memory array/Quantity, with unit and shape validation.
+
+    This function is a wrapper for `healpy.read_map` that supports both file-based and in-memory map inputs.
+    It is used throughout PySM to load template maps for all model types (CMB, dust, synchrotron, etc.).
+
+    Parameters
+    ----------
+    path : str or numpy.ndarray or astropy.units.Quantity
+        Path to a FITS file (local or remote), or an in-memory numpy array or astropy Quantity.
+        If an array/Quantity is provided, it must have shape (3, npix), (npix,), or (1, npix),
+        and must have astropy units attached (e.g., `u.uK_CMB`).
+    nside : int
+        Target HEALPix NSIDE for the output map. If the input map is at a different NSIDE,
+        it will be upgraded or downgraded as needed (for file-based inputs).
+    unit : astropy.units.Unit or str, optional
+        Desired output unit. If specified, the map will be converted to this unit.
+        For file-based inputs, the unit is read from the FITS header if not provided.
+    field : int or sequence of int, optional
+        FITS field(s) to read from the file. Ignored for in-memory arrays.
+    map_dist : pysm3.MapDistribution, optional
+        Optional object describing MPI distribution of the map. Used for parallel I/O.
+
+    Returns
+    -------
+    astropy.units.Quantity
+        The loaded map as an astropy Quantity, with shape (3, npix), (npix,), or (1, npix),
+        and with the appropriate units. For in-memory input, the returned object is the input
+        array (possibly reshaped and/or unit-converted).
+
+    Raises
+    ------
+    ValueError
+        If an in-memory array is provided without astropy units, or if the shape is invalid.
+
+    Notes
+    -----
+    - For in-memory input, only arrays with astropy units are accepted. The function validates
+      the shape and units, and converts to the requested unit if needed.
+    - For file-based input, the function uses `healpy.read_map` and handles MPI distribution
+      if `map_dist` is provided. The map is automatically upgraded/downgraded to the requested NSIDE.
+    - This function is used internally by all PySM models to ensure consistent map loading and validation.
     """
     # If path is an in-memory array or Quantity, handle directly
     if hasattr(path, 'shape'):
