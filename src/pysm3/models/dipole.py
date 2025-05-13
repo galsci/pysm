@@ -101,6 +101,8 @@ class CMBDipole:
         β = δ * (δ + 2) / (δ**2 + 2 * δ + 2)
         γ = 1 / np.sqrt(1 - β**2)  # Lorentz factor gamma
 
+        # this is the temperature fluctuation with no quadrupole correction
+        # it does not depend on the frequency
         ΔT = self.T_cmb / (γ * (1 - β * cosθ)) - self.T_cmb
 
         freqs = utils.check_freq_input(freqs)
@@ -112,6 +114,8 @@ class CMBDipole:
                 fx = (const.h * (freq*u.GHz).to(u.Hz) / (const.k_B * (self.T_cmb.to_value(u.K_CMB)*u.K))).decompose()
                 fcor = (fx / 2) * (np.exp(fx) + 1) / (np.exp(fx) - 1)
                 bt = β * cosθ
+                # with quadrupole correction the temperature fluctuation depends on the frequency
+                # so it is overwritten here
                 ΔT = self.T_cmb * (bt + fcor * bt**2)
             emission.append(
                 ΔT.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz))
