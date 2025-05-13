@@ -63,6 +63,56 @@ def test_dipole_fit_with_sky():
     np.testing.assert_allclose(lat, dip_lat, atol=0.01)
 
 
+def test_dipole_quadrupole_correction():
+    nside = 64
+    amp = 3366.6 * u.uK_CMB
+    T_cmb = 2.7255 * u.K_CMB
+    dip_lon = 263.986 * u.deg
+    dip_lat = 48.247 * u.deg
+
+    # Standard dipole
+    dipole = CMBDipole(nside, amp, T_cmb, dip_lon, dip_lat)
+    dipole_map = dipole.get_emission(100 * u.GHz)
+
+    # Dipole with quadrupole correction
+    dipole_quad = CMBDipole(
+        nside, amp, T_cmb, dip_lon, dip_lat, quadrupole_correction=True
+    )
+    dipole_quad_map = dipole_quad.get_emission(100 * u.GHz)
+
+    # The maps should not be identical
+    assert not np.allclose(dipole_map.value, dipole_quad_map.value)
+
+    # The quadrupole-corrected map should differ by a small but nonzero amount
+    diff = np.abs(dipole_map.value - dipole_quad_map.value)
+    assert np.any(diff > 0)
+    # The difference should be small compared to the dipole amplitude
+    assert np.max(diff) < 1e-2 * np.max(np.abs(dipole_map.value))
+
+    # Spherical harmonics transform
+    lmax = 3
+    alm_dipole = hp.map2alm(dipole_map.value, lmax=lmax)
+    alm_quad = hp.map2alm(dipole_quad_map.value, lmax=lmax)
+
+    # Compute power in dipole (l=1) and quadrupole (l=2) for both maps
+    cl_dipole = hp.alm2cl(alm_dipole)
+    cl_quad = hp.alm2cl(alm_quad)
+
+    # Compare dipole (l=1) and quadrupole (l=2) components
+    # l=1 is index 1, l=2 is index 2
+    dipole_power = cl_dipole[1]
+    quad_power = cl_dipole[2]
+    dipole_quad_power = cl_quad[1]
+    quad_quad_power = cl_quad[2]
+
+    # Dipole power should be similar for both
+    np.testing.assert_allclose(dipole_power, dipole_quad_power, rtol=1e-3)
+
+    # Quadrupole power should be larger for the quadrupole-corrected map
+    assert 1.5 * quad_power < quad_quad_power < 2 * quad_power
+
+
 if __name__ == "__main__":
     test_dipole_fit()
     test_dipole_fit_with_sky()
+    test_dipole_quadrupole_correction()
