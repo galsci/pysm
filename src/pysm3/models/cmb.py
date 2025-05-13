@@ -27,24 +27,23 @@ class CMBMap(Model):
         ----------
         nside: int
             HEALPix N_side parameter of the input maps
-        map_IQU: `pathlib.Path` object
-            Path to a single IQU map
-        map_I, map_Q, map_U: `pathlib.Path` object
-            Paths to the maps to be used as I, Q, U templates.
+        map_IQU: `pathlib.Path` object or array/Quantity
+            Path to a single IQU map or in-memory array/Quantity
+        map_I, map_Q, map_U: `pathlib.Path` object or array/Quantity
+            Paths or arrays to be used as I, Q, U templates.
         """
         super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         if map_IQU is not None:
             self.map = self.read_map(map_IQU, unit=u.uK_CMB, field=(0, 1, 2))
         elif map_I is not None:
-            self.map = self.read_map(map_I, unit=u.uK_CMB, field=0)
             if map_Q is not None:
-                self.map = [self.map]
-                for m in [map_Q, map_U]:
-                    self.map.append(self.read_map(m, unit=u.uK_CMB))
-                self.map = u.Quantity(self.map, unit=u.uK_CMB)
+                arrs = [self.read_map(m, unit=u.uK_CMB, field=0) for m in [map_I, map_Q, map_U] if m is not None]
+                self.map = u.Quantity(arrs, unit=u.uK_CMB)
+            else:
+                self.map = self.read_map(map_I, unit=u.uK_CMB, field=0)
         else:
             msg = "No input map provided"
-            raise (ValueError(msg))
+            raise ValueError(msg)
 
     @u.quantity_input
     def get_emission(
