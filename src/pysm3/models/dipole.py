@@ -1,9 +1,17 @@
 import numpy as np
 import healpy as hp
-import astropy.units as u
+from astropy.constants import c
+
+try:
+    from numpy import trapezoid
+except ImportError:
+    from numpy import trapz as trapezoid
+
+from .. import units as u
+from .. import utils
 
 
-class DipoleComponent:
+class CMBDipole:
     """
     Simulate the CMB dipole anisotropy as a full-sky HEALPix map.
 
@@ -13,15 +21,15 @@ class DipoleComponent:
     Parameters
     ----------
     nside : int
-        HEALPix NSIDE parameter for the output map.
-    vel : float
-        Observer velocity with respect to the CMB rest frame, in km/s.
+        HEALPix NSIDE parameter for the output map (dimensionless).
+    amp : float
+        Amplitude of the dipole in micro-Kelvin (uK_CMB).
     T_cmb : float
-        CMB monopole temperature in Kelvin.
+        CMB monopole temperature in Kelvin (K_CMB).
     dip_lon : float
-        Galactic longitude of the dipole direction, in degrees.
+        Galactic longitude of the dipole direction, in degrees (deg).
     dip_lat : float
-        Galactic latitude of the dipole direction, in degrees.
+        Galactic latitude of the dipole direction, in degrees (deg).
 
     Returns
     -------
@@ -43,17 +51,69 @@ class DipoleComponent:
     https://arxiv.org/pdf/2007.04997.pdf
     """
 
-    def __init__(self, nside, vel, T_cmb, dip_lon, dip_lat):
+    @u.quantity_input
+    def __init__(
+        self,
+        nside: int,
+        amp,
+        T_cmb,
+        dip_lon,
+        dip_lat,
+        map_dist=None,
+    ):
         self.nside = nside
-        self.vel = vel * u.km / u.s
-        self.T_cmb = T_cmb * u.K
-        self.dip_lon = np.deg2rad(dip_lon)
-        self.dip_lat = np.deg2rad(dip_lat)
+        self.amp = u.Quantity(amp) if not isinstance(amp, u.Quantity) else amp
+        self.T_cmb = u.Quantity(T_cmb) if not isinstance(T_cmb, u.Quantity) else T_cmb
+        self.dip_lat = (u.Quantity(dip_lat) if not isinstance(dip_lat, u.Quantity) else dip_lat).to_value(u.deg)
+        self.dip_lon = (u.Quantity(dip_lon) if not isinstance(dip_lon, u.Quantity) else dip_lon).to_value(u.deg)
+        self.map_dist = map_dist
 
-    def get_map(self):
+    @u.quantity_input
+    def get_emission(
+        self, freqs: u.Quantity[u.GHz], weights=None
+    ) -> u.Quantity[u.uK_RJ]:
+        """
+        Return the dipole emission map, integrating over the bandpass if needed.
+
+        Parameters
+        ----------
+        freqs : Quantity
+            Frequency or array of frequencies (for bandpass integration).
+        weights : array-like, optional
+            Integration weights for the bandpass.
+
+        Returns
+        -------
+        dipole_map : astropy.units.Quantity
+            Full-sky HEALPix map (array) of the dipole temperature anisotropy in uK_RJ.
+        """
         npix = hp.nside2npix(self.nside)
-        vec = hp.ang2vec(np.pi / 2 - self.dip_lat, self.dip_lon)
+        vec = hp.ang2vec(self.dip_lon, self.dip_lat, lonlat=True)
         pix_dirs = hp.pix2vec(self.nside, np.arange(npix))
-        cos_theta = np.dot(vec, pix_dirs)
-        delta_T = (self.vel / u.c).decompose().value * self.T_cmb.value * cos_theta
-        return delta_T * u.K
+        cosθ = np.dot(vec, pix_dirs)  # cos(theta)
+        δ = (self.amp / self.T_cmb).decompose()
+        β = δ * (δ + 2) / (δ**2 + 2 * δ + 2)
+        γ = 1 / np.sqrt(1 - β**2)  # Lorentz factor gamma
+
+        ΔT = self.T_cmb / (γ * (1 - β * cosθ)) - self.T_cmb
+
+        freqs = utils.check_freq_input(freqs)
+        weights = utils.normalize_weights(freqs, weights)
+
+        # Compute emission at each frequency in the bandpass
+        emission = [
+            ΔT.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz))
+            for freq in freqs
+        ]
+
+        if len(freqs) == 1:
+            result = emission[0]
+        else:
+            # Integrate over bandpass using trapz
+            result = (
+                trapezoid(emission.value * weights[:, None], x=freqs, axis=0) * u.uK_RJ
+            )
+
+        assert not np.isnan(result).any(), "Result contains NaN values"
+
+        return result
