@@ -33,41 +33,14 @@ class CMBMap(Model):
             Paths or arrays to be used as I, Q, U templates.
         """
         super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
-        # Accept map_IQU as either a path or an in-memory array/Quantity
         if map_IQU is not None:
-            if hasattr(map_IQU, 'shape'):
-                arr = map_IQU
-                if not hasattr(arr, 'unit'):
-                    raise ValueError("Input map_IQU must have astropy units (e.g. u.uK_CMB)")
-                if arr.ndim == 1:
-                    arr = arr[np.newaxis, :]
-                if arr.shape[0] not in (1, 3):
-                    raise ValueError("Input map_IQU must have shape (3, npix) or (npix,)")
-                self.map = arr.to(u.uK_CMB)
-            else:
-                self.map = self.read_map(map_IQU, unit=u.uK_CMB, field=(0, 1, 2))
+            self.map = self.read_map(map_IQU, unit=u.uK_CMB, field=(0, 1, 2))
         elif map_I is not None:
-            # Accept map_I, map_Q, map_U as either paths or arrays/Quantities
-            if hasattr(map_I, 'shape'):
-                arrs = [map_I]
-                for m in [map_Q, map_U]:
-                    if m is not None:
-                        arrs.append(m)
-                arrs = [a if hasattr(a, 'unit') else None for a in arrs]
-                if any(a is None for a in arrs):
-                    raise ValueError("All input maps must have astropy units (e.g. u.uK_CMB)")
-                arrs = [a[np.newaxis, :] if a.ndim == 1 else a for a in arrs]
-                arr = np.concatenate(arrs, axis=0)
-                if arr.shape[0] not in (1, 3):
-                    raise ValueError("Input maps must have shape (3, npix) or (npix,)")
-                self.map = arr.to(u.uK_CMB)
+            if map_Q is not None:
+                arrs = [self.read_map(m, unit=u.uK_CMB, field=0) for m in [map_I, map_Q, map_U] if m is not None]
+                self.map = u.Quantity(arrs, unit=u.uK_CMB)
             else:
                 self.map = self.read_map(map_I, unit=u.uK_CMB, field=0)
-                if map_Q is not None:
-                    self.map = [self.map]
-                    for m in [map_Q, map_U]:
-                        self.map.append(self.read_map(m, unit=u.uK_CMB))
-                    self.map = u.Quantity(self.map, unit=u.uK_CMB)
         else:
             msg = "No input map provided"
             raise ValueError(msg)
