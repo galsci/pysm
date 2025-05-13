@@ -112,7 +112,32 @@ def test_dipole_quadrupole_correction():
     assert 1.5 * quad_power < quad_quad_power < 2 * quad_power
 
 
+def test_dipole_preset_dip2_quadrupole():
+    import pysm3
+
+    nside = 64
+    sky1 = pysm3.Sky(nside=nside, preset_strings=["dip1"], output_unit=u.uK_CMB)
+    sky2 = pysm3.Sky(nside=nside, preset_strings=["dip2"], output_unit=u.uK_CMB)
+
+    dipole_map1 = sky1.get_emission([80, 90, 100, 110] * u.GHz)
+    dipole_map2 = sky2.get_emission([80, 90, 100, 110] * u.GHz)
+
+    # Spherical harmonics transform
+    lmax = 3
+    alm1 = hp.map2alm(dipole_map1.value, lmax=lmax)
+    alm2 = hp.map2alm(dipole_map2.value, lmax=lmax)
+
+    cl1 = hp.alm2cl(alm1)
+    cl2 = hp.alm2cl(alm2)
+
+    # Dipole power should be similar
+    np.testing.assert_allclose(cl1[1], cl2[1], rtol=1e-3)
+    # Quadrupole power should be larger for dip2
+    assert cl2[2] > cl1[2]
+
+
 if __name__ == "__main__":
     test_dipole_fit()
     test_dipole_fit_with_sky()
     test_dipole_quadrupole_correction()
+    test_dipole_preset_dip2_quadrupole()
