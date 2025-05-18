@@ -181,3 +181,32 @@ def test_cmb_lensed_delens():
         apply_delens=True,
         delensing_ells='pysm_2/delens_ells.txt'
     )
+
+def test_cmb_map_inmemory():
+    nside = 32
+    npix = 12 * nside ** 2
+    # Create a fake IQU map with astropy units
+    arr = np.ones((3, npix)) * 42
+    arr = arr * u.uK_CMB
+    model = pysm3.CMBMap(map_IQU=arr, nside=nside)
+    freq = 100 * u.GHz
+    # Should return the same map (scaled to uK_RJ)
+    simulated_map = model.get_emission(freq)
+    expected = arr.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq))
+    assert_quantity_allclose(simulated_map, expected)
+
+
+def test_cmb_map_inmemory_no_units():
+    nside = 32
+    npix = 12 * nside ** 2
+    arr = np.ones((3, npix)) * 42  # No units
+    with pytest.raises(ValueError, match="astropy units"):
+        pysm3.CMBMap(map_IQU=arr, nside=nside)
+
+
+def test_cmb_map_inmemory_wrong_shape():
+    nside = 32
+    npix = 12 * nside ** 2
+    arr = np.ones((2, npix)) * 42 * u.uK_CMB  # Wrong shape: should be (1, npix) or (3, npix)
+    with pytest.raises(ValueError, match="shape"):
+        pysm3.CMBMap(map_IQU=arr, nside=nside)
