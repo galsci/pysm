@@ -1,3 +1,7 @@
+3.4.2 (unreleased)
+===================
+- Allow the CMBMap class to accept in-memory arrays (with astropy units) as input for the CMB template, in addition to file paths. Adds validation for units and shape, and includes tests to ensure errors are raised for missing units or incorrect shapes. Also adds a test for correct in-memory usage. See https://github.com/galsci/pysm/issues/222 and PR #223: https://github.com/galsci/pysm/pull/223.
+
 3.4.1 (2025-04-15)
 ==================
 - Fix bug in `cib1` at frequencies below 18.7 GHz, created scaled maps with Modified Black Body spectrum down to 1 GHz https://github.com/galsci/pysm/issues/210
