@@ -1,5 +1,5 @@
-3.4.2 (unreleased)
-===================
+3.4.2 (2025-06-17)
+==================
 - Allow the CMBMap class to accept in-memory arrays (with astropy units) as input for the CMB template, in addition to file paths. Adds validation for units and shape, and includes tests to ensure errors are raised for missing units or incorrect shapes. Also adds a test for correct in-memory usage. See https://github.com/galsci/pysm/issues/222 and PR #223: https://github.com/galsci/pysm/pull/223.
 
 3.4.1 (2025-04-15)
