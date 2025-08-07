@@ -18,5 +18,13 @@ from .websky import (
     WebSkySZ,
     WebSkyRadioGalaxies,
 )
+from .halfdome import (
+    HalfDomeSZ,
+#    SPT_CIB_map_scaling,
+#    HalfDomeCMB,
+#    HalfDomeCIB,
+#    HalfDomeSZ,
+#    HalfDomeRadioGalaxies,
+)
 from .catalog import PointSourceCatalog
 from .dipole import CMBDipole
