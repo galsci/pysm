@@ -74,3 +74,43 @@ def test_no_quadrupole():
     np.testing.assert_allclose(
         generated_100ghz_map_K_CMB.value, ref_0ghz_map.value, rtol=1e-6, atol=1e-6
     )
+
+def test_print_quadrupole_differences():
+    frequencies_to_test = [80, 90, 100, 110] * u.GHz
+    print("\n--- Quadrupole vs No Quadrupole Differences ---")
+    for freq in frequencies_to_test:
+        print(f"\nFrequency: {freq}")
+
+        # CMBDipoleQuad (quadrupole correction enabled)
+        dipole_quad_model = CMBDipoleQuad(
+            nside=NSIDE,
+            amp=DIPOLE_AMP,
+            T_cmb=T_CMB,
+            dip_lon=DIPOLE_LON,
+            dip_lat=DIPOLE_LAT,
+        )
+        map_quad_uK_RJ = dipole_quad_model.get_emission(freq)
+        map_quad_K_CMB = map_quad_uK_RJ.to(u.K_CMB, equivalencies=u.cmb_equivalencies(freq))
+
+        # CMBDipole (no quadrupole correction)
+        dipole_no_quad_model = CMBDipole(
+            nside=NSIDE,
+            amp=DIPOLE_AMP,
+            T_cmb=T_CMB,
+            dip_lon=DIPOLE_LON,
+            dip_lat=DIPOLE_LAT,
+            quadrupole_correction=False,
+        )
+        map_no_quad_uK_RJ = dipole_no_quad_model.get_emission(freq)
+        map_no_quad_K_CMB = map_no_quad_uK_RJ.to(u.K_CMB, equivalencies=u.cmb_equivalencies(freq))
+
+        # Calculate differences
+        abs_diff = np.abs(map_quad_K_CMB.value - map_no_quad_K_CMB.value)
+        
+        # Handle division by zero for relative difference
+        relative_diff = np.zeros_like(abs_diff)
+        non_zero_quad = map_quad_K_CMB.value != 0
+        relative_diff[non_zero_quad] = abs_diff[non_zero_quad] / map_quad_K_CMB.value[non_zero_quad]
+
+        print(f"  Max Absolute Difference: {np.max(abs_diff):.2e} K_CMB")
+        print(f"  Max Relative Difference: {np.max(relative_diff):.2e}")
