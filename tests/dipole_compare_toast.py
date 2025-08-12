@@ -22,6 +22,17 @@ T_CMB = "2.7255 K_CMB"
 DIPOLE_LON = "263.986 deg"
 DIPOLE_LAT = "48.247 deg"
 
+def get_quadrupole_amplitude(hmap, lmax=2):
+    """
+    Calculates the quadrupole amplitude from a HEALPix map.
+    Assumes the map is a temperature map (I).
+    """
+    alm = hp.map2alm(hmap, lmax=lmax)
+    cl = hp.alm2cl(alm, lmax=lmax)
+    C2 = cl[2]
+    quadrupole_amplitude = np.sqrt(C2)
+    return quadrupole_amplitude
+
 @pytest.mark.parametrize("freq", [80, 90, 100, 110] * u.GHz)
 def test_quadrupole_corrected_freqs(freq):
     # Load reference map
@@ -75,13 +86,18 @@ def test_no_quadrupole():
         generated_100ghz_map_K_CMB.value, ref_0ghz_map.value, rtol=1e-6, atol=1e-6
     )
 
-def test_print_quadrupole_differences():
+def test_print_quadrupole_amplitudes():
     frequencies_to_test = [80, 90, 100, 110] * u.GHz
-    print("\n--- Quadrupole vs No Quadrupole Differences ---")
-    for freq in frequencies_to_test:
-        print(f"\nFrequency: {freq}")
+    print("\n--- Quadrupole Amplitudes ---")
+    print("| Frequency | PySM Quadrupole (K_CMB) | PySM No Quadrupole (K_CMB) | TOAST (K_CMB) |")
+    print("|---|---|---|---|")
 
-        # CMBDipoleQuad (quadrupole correction enabled)
+    # Load 0 GHz reference map for TOAST comparison
+    ref_0ghz_map = read_map(REFERENCE_URLS[0 * u.GHz], nside=NSIDE)
+    toast_0ghz_quad_amp = get_quadrupole_amplitude(ref_0ghz_map.value)
+
+    for freq in frequencies_to_test:
+        # PySM Quadrupole (CMBDipoleQuad)
         dipole_quad_model = CMBDipoleQuad(
             nside=NSIDE,
             amp=DIPOLE_AMP,
@@ -91,8 +107,9 @@ def test_print_quadrupole_differences():
         )
         map_quad_uK_RJ = dipole_quad_model.get_emission(freq)
         map_quad_K_CMB = map_quad_uK_RJ.to(u.K_CMB, equivalencies=u.cmb_equivalencies(freq))
+        pysm_quad_amp = get_quadrupole_amplitude(map_quad_K_CMB.value)
 
-        # CMBDipole (no quadrupole correction)
+        # PySM No Quadrupole (CMBDipole)
         dipole_no_quad_model = CMBDipole(
             nside=NSIDE,
             amp=DIPOLE_AMP,
@@ -103,14 +120,7 @@ def test_print_quadrupole_differences():
         )
         map_no_quad_uK_RJ = dipole_no_quad_model.get_emission(freq)
         map_no_quad_K_CMB = map_no_quad_uK_RJ.to(u.K_CMB, equivalencies=u.cmb_equivalencies(freq))
+        pysm_no_quad_amp = get_quadrupole_amplitude(map_no_quad_K_CMB.value)
 
-        # Calculate differences
-        abs_diff = np.abs(map_quad_K_CMB.value - map_no_quad_K_CMB.value)
-        
-        # Handle division by zero for relative difference
-        relative_diff = np.zeros_like(abs_diff)
-        non_zero_quad = map_quad_K_CMB.value != 0
-        relative_diff[non_zero_quad] = abs_diff[non_zero_quad] / map_quad_K_CMB.value[non_zero_quad]
-
-        print(f"  Max Absolute Difference: {np.max(abs_diff):.2e} K_CMB")
-        print(f"  Max Relative Difference: {np.max(relative_diff):.2e}")
+        # Print table row
+        print(f"| {freq} | {pysm_quad_amp:.2e} | {pysm_no_quad_amp:.2e} | {toast_0ghz_quad_amp:.2e} |")
