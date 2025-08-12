@@ -89,14 +89,18 @@ def test_no_quadrupole():
 def test_print_quadrupole_amplitudes():
     frequencies_to_test = [80, 90, 100, 110] * u.GHz
     print("\n--- Quadrupole Amplitudes ---")
-    print("| Frequency | PySM Quadrupole (K_CMB) | PySM No Quadrupole (K_CMB) | TOAST (K_CMB) |")
-    print("|---|---|---|---|")
+    print("| Frequency | PySM Quadrupole (K_CMB) | PySM No Quadrupole (K_CMB) | TOAST 0 GHz (K_CMB) | TOAST (K_CMB) |")
+    print("|---|---|---|---|---|")
 
     # Load 0 GHz reference map for TOAST comparison
     ref_0ghz_map = read_map(REFERENCE_URLS[0 * u.GHz], nside=NSIDE)
     toast_0ghz_quad_amp = get_quadrupole_amplitude(ref_0ghz_map.value)
 
     for freq in frequencies_to_test:
+        # Load reference map for current frequency (TOAST map)
+        reference_map = read_map(REFERENCE_URLS[freq], nside=NSIDE)
+        toast_current_freq_quad_amp = get_quadrupole_amplitude(reference_map.value)
+
         # PySM Quadrupole (CMBDipoleQuad)
         dipole_quad_model = CMBDipoleQuad(
             nside=NSIDE,
@@ -123,4 +127,4 @@ def test_print_quadrupole_amplitudes():
         pysm_no_quad_amp = get_quadrupole_amplitude(map_no_quad_K_CMB.value)
 
         # Print table row
-        print(f"| {freq} | {pysm_quad_amp:.2e} | {pysm_no_quad_amp:.2e} | {toast_0ghz_quad_amp:.2e} |")
+        print(f"| {freq} | {pysm_quad_amp:.2e} | {pysm_no_quad_amp:.2e} | {toast_0ghz_quad_amp:.2e} | {toast_current_freq_quad_amp:.2e} |")
