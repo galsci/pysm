@@ -9,7 +9,7 @@ dynamic = ["version"]
 description = "PySM generates full-sky simulations of Galactic emissions in intensity and polarization"
 readme = "README.rst"
 license.file = "LICENSE"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 authors = [
     { name = "Andrea Zonca", email = "code@andreazonca.com" },
 ]
