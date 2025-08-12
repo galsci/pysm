@@ -77,7 +77,7 @@ class CMBDipole:
     @u.quantity_input
     def get_emission(
         self, freqs: u.Quantity[u.GHz], weights=None
-    ):
+    ) -> u.Quantity[u.uK_RJ]:
         """
         Return the dipole emission map, integrating over the bandpass if needed.
 
@@ -120,9 +120,7 @@ class CMBDipole:
                 emission.append(
                     ΔT_current_freq.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz))
                 )
-            elif freq == 0 * u.GHz: # No quadrupole correction and 0 GHz
-                emission.append(ΔT) # ΔT is already in K
-            else: # No quadrupole correction and non-zero frequency
+            else: # No quadrupole correction
                 emission.append(
                     ΔT.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz))
                 )

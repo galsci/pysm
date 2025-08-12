@@ -7,7 +7,7 @@ from pysm3.models.template import read_map
 
 # Reference data
 NSIDE = 256
-FREQUENCIES = [0, 80, 90, 100, 110] * u.GHz
+FREQUENCIES = [80, 90, 100, 110] * u.GHz
 REFERENCE_URLS = {
     0 * u.GHz: "test_data/dipole/dipole_nside0256_freq000GHz.fits",
     80 * u.GHz: "test_data/dipole/dipole_nside0256_freq080GHz.fits",
@@ -49,13 +49,8 @@ def test_dipole_component(freq):
     # Generate dipole map
     generated_map = dipole_model.get_emission(freq)
 
-    # Convert generated map to K_CMB for comparison, conditionally
-    if freq == 0 * u.GHz:
-        # For 0 GHz, the generated map is already in K
-        generated_map_K_CMB = generated_map
-    else:
-        # For other frequencies, convert from uK_RJ to K_CMB
-        generated_map_K_CMB = generated_map.to(u.K_CMB, equivalencies=u.cmb_equivalencies(freq))
+    # Convert generated map to K_CMB for comparison
+    generated_map_K_CMB = generated_map.to(u.K_CMB, equivalencies=u.cmb_equivalencies(freq))
 
     # Compare maps
     np.testing.assert_allclose(
