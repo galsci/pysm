@@ -78,5 +78,4 @@ uv.lock
 build/
 dist/
 pysm3.egg-info/
-pysm3/
 src/pysm3/_version.py
