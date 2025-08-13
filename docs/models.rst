@@ -102,6 +102,15 @@ CMB
 
 - **c4**: CMB map with the same cosmological parameters and lensed with the convergence map of WebSky 0.4 , available at $N_{side}=512$ and $N_{side}=4096$. Maps are generated with $\ell_{max}=8250$.
 
+CMB Dipole
+==========
+
+The dipole component models the kinematic dipole induced by the Earth's motion relative to the CMB rest frame. This is implemented in the :py:class:`~pysm3.models.dipole.CMBDipole` class.
+
+- **dip1**: This model implements a simple kinematic dipole. The parameters for the amplitude and direction are taken from `Planck intermediate results. LVII. Joint Planck LFI and HFI data processing (2020) <https://arxiv.org/pdf/2007.04997>`_ and the CMB temperature from `The Temperature of the Cosmic Microwave Background (2009) <https://arxiv.org/abs/0911.1955>`_.
+
+- **dip2**: This model is similar to **dip1** but includes a frequency-dependent quadrupole correction. This correction accounts for the relativistic aberration and Doppler effects beyond the simple dipole, which induce a quadrupole moment in the observed CMB. For more details, see `On the proper kinetic quadrupole CMB removal and the quadrupole anomalies (2015) <https://arxiv.org/abs/1504.02076>`_.
+
 CO line emission
 ================
 
