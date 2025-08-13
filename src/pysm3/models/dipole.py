@@ -109,28 +109,31 @@ class CMBDipole:
         weights = utils.normalize_weights(freqs, weights)
 
         emission = []
-        for freq in freqs:
-            if self.quadrupole_correction:
-                fx = (
-                    const.h
-                    * (freq * u.GHz).to(u.Hz)
-                    / (const.k_B * (self.T_cmb.to_value(u.K_CMB) * u.K))
-                ).decompose()
-                fcor = (fx / 2) * (np.exp(fx) + 1) / (np.exp(fx) - 1)
-                bt = β * cosθ
-                # with quadrupole correction the temperature fluctuation depends on the frequency
-                # so it is overwritten here
-                ΔT_current_freq = self.T_cmb * (bt + fcor * bt ** 2)
-                emission.append(
-                    ΔT_current_freq.to(
-                        u.uK_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz)
-                    )
+        if self.quadrupole_correction:
+            # Vectorized calculation for all frequencies
+            fx = (
+                const.h
+                * (freqs * u.GHz).to(u.Hz)
+                / (const.k_B * (self.T_cmb.to_value(u.K_CMB) * u.K))
+            ).decompose()  # shape: (nfreq,)
+            fcor = (fx / 2) * (np.exp(fx) + 1) / (np.exp(fx) - 1)  # shape: (nfreq,)
+            bt = β * cosθ  # shape: (npix,)
+            # Broadcast fcor and bt to shape (nfreq, npix)
+            ΔT_current_freq = self.T_cmb * (
+                bt[None, :] + fcor[:, None] * bt[None, :] ** 2
+            )  # shape: (nfreq, npix)
+            # Convert to uK_RJ for each frequency
+            emission = [
+                ΔT_current_freq[i].to(
+                    u.uK_RJ, equivalencies=u.cmb_equivalencies(freqs[i] * u.GHz)
                 )
-            else:  # No quadrupole correction
-                emission.append(
-                    ΔT.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz))
-                )
-
+                for i in range(len(freqs))
+            ]
+        else:  # No quadrupole correction
+            emission = [
+                ΔT.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz))
+                for freq in freqs
+            ]
         if len(freqs) == 1:
             result = emission[0]
         else:
