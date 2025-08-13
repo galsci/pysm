@@ -17,8 +17,6 @@ REFERENCE_URLS = {
 }
 
 
-
-
 def get_quadrupole_and_dipole_amplitudes(hmap, lmax=2):
     """
     Calculates the quadrupole and dipole amplitudes from a HEALPix map.
@@ -42,7 +40,7 @@ def test_quadrupole_corrected_freqs(freq):
     reference_map = read_map(REFERENCE_URLS[freq], nside=NSIDE)
 
     # Instantiate Sky with dip2 (quadrupole correction enabled)
-    dipole_model = Sky(nside=NSIDE, preset_strings=['dip2'])
+    dipole_model = Sky(nside=NSIDE, preset_strings=["dip2"])
 
     # Generate dipole map
     generated_map = dipole_model.get_emission(freq)
@@ -63,7 +61,7 @@ def test_no_quadrupole():
     ref_0ghz_map = read_map(REFERENCE_URLS[0 * u.GHz], nside=NSIDE)
 
     # Instantiate Sky with dip1 (no quadrupole correction)
-    dipole_model = Sky(nside=NSIDE, preset_strings=['dip1'])
+    dipole_model = Sky(nside=NSIDE, preset_strings=["dip1"])
 
     # Generate map at 100 GHz with no quadrupole correction
     generated_100ghz_map = dipole_model.get_emission(100 * u.GHz)
@@ -74,9 +72,6 @@ def test_no_quadrupole():
     )
 
     # Compare maps
-    # As discussed, this comparison is physically questionable, but requested.
-    # It will likely fail due to physical differences between a 100 GHz map
-    # and a 0 GHz reference map.
     np.testing.assert_allclose(
         generated_100ghz_map_K_CMB.value, ref_0ghz_map.value, rtol=1e-6, atol=1e-6
     )
