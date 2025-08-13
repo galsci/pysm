@@ -96,6 +96,19 @@ def test_print_quadrupole_amplitudes():
         ref_0ghz_map.value
     )
 
+    # PySM No Quadrupole (no quadrupole correction) - constant across frequencies
+    dipole_no_quad_model = Sky(nside=NSIDE, preset_strings=["dip1"])
+    map_no_quad_uK_RJ = dipole_no_quad_model.get_emission(
+        frequencies_to_test[0]
+    )  # Use first freq for emission
+    map_no_quad_K_CMB = map_no_quad_uK_RJ.to(
+        u.K_CMB, equivalencies=u.cmb_equivalencies(frequencies_to_test[0])
+    )
+    (
+        pysm_no_quad_amp_constant,
+        pysm_no_quad_dipole_amp_constant,
+    ) = get_quadrupole_and_dipole_amplitudes(map_no_quad_K_CMB.value)
+
     for freq in frequencies_to_test:
         # Load reference map for current frequency (TOAST map)
         reference_map = read_map(REFERENCE_URLS[freq], nside=NSIDE)
@@ -105,7 +118,7 @@ def test_print_quadrupole_amplitudes():
         ) = get_quadrupole_and_dipole_amplitudes(reference_map.value)
 
         # PySM Quadrupole (quadrupole correction enabled)
-        dipole_quad_model = Sky(nside=NSIDE, preset_strings=['dip2'])
+        dipole_quad_model = Sky(nside=NSIDE, preset_strings=["dip2"])
         map_quad_uK_RJ = dipole_quad_model.get_emission(freq)
         map_quad_K_CMB = map_quad_uK_RJ.to(
             u.K_CMB, equivalencies=u.cmb_equivalencies(freq)
@@ -114,24 +127,11 @@ def test_print_quadrupole_amplitudes():
             map_quad_K_CMB.value
         )
 
-        # PySM No Quadrupole (no quadrupole correction)
-        dipole_no_quad_model = Sky(nside=NSIDE, preset_strings=['dip1'])
-        map_no_quad_uK_RJ = dipole_no_quad_model.get_emission(freq)
-        map_no_quad_K_CMB = map_no_quad_uK_RJ.to(
-            u.K_CMB, equivalencies=u.cmb_equivalencies(freq)
-        )
-        (
-            pysm_no_quad_amp,
-            pysm_no_quad_dipole_amp,
-        ) = get_quadrupole_and_dipole_amplitudes(map_no_quad_K_CMB.value)
-
         # Store data for tables
         quadrupole_data.append(
             {
                 "freq": freq,
                 "pysm_quad": pysm_quad_amp,
-                "pysm_no_quad": pysm_no_quad_amp,
-                "toast_0ghz_quad": toast_0ghz_quad_amp,
                 "toast_current_freq_quad": toast_current_freq_quad_amp,
             }
         )
@@ -139,42 +139,49 @@ def test_print_quadrupole_amplitudes():
             {
                 "freq": freq,
                 "pysm_quad_dipole": pysm_quad_dipole_amp,
-                "pysm_no_quad_dipole": pysm_no_quad_dipole_amp,
-                "toast_0ghz_dipole": toast_0ghz_dipole_amp,
                 "toast_current_freq_dipole": toast_current_freq_dipole_amp,
             }
         )
 
     # Print Quadrupole Table
-    print("\n--- Quadrupole Amplitudes ---")
-    print(
-        "| Frequency | PySM Quad (K_CMB) | PySM No Quad (K_CMB) | TOAST 0 GHz (K_CMB) | TOAST (K_CMB) | Rel Diff (PySM Quad vs TOAST) | Rel Diff (PySM No Quad vs TOAST 0 GHz) |"
-    )
-    print("|---|---|---|---|---|---|---|")
+    print()
+    print("# Quadrupole Amplitudes (K_CMB)")
+    print("| Frequency | PySM Quad | TOAST | Rel Diff (PySM Quad vs TOAST) |")
+    print("|---|---|---|---|---|")
     for row in quadrupole_data:
         rel_diff_pysm_quad_vs_toast = calculate_relative_difference(
             row["pysm_quad"], row["toast_current_freq_quad"]
         )
-        rel_diff_pysm_no_quad_vs_toast_0ghz = calculate_relative_difference(
-            row["pysm_no_quad"], row["toast_0ghz_quad"]
-        )
         print(
-            f"| {row['freq']} | {row['pysm_quad']:.2e} | {row['pysm_no_quad']:.2e} | {row['toast_0ghz_quad']:.2e} | {row['toast_current_freq_quad']:.2e} | {rel_diff_pysm_quad_vs_toast:.2e} | {rel_diff_pysm_no_quad_vs_toast_0ghz:.2e} |"
+            f"| {row['freq']} | {row['pysm_quad']:.4e} | {row['toast_current_freq_quad']:.4e} | {rel_diff_pysm_quad_vs_toast:.4e} |"
         )
+    # No Quadrupole row
+    rel_diff_pysm_no_quad_vs_toast_0ghz = calculate_relative_difference(
+        pysm_no_quad_amp_constant, toast_0ghz_quad_amp
+    )
+    print(
+        f"| No Quad | {pysm_no_quad_amp_constant:.4e} | {toast_0ghz_quad_amp:.4e} | {toast_0ghz_quad_amp:.4e} | {rel_diff_pysm_no_quad_vs_toast_0ghz:.4e} |"
+    )
 
     # Print Dipole Table
-    print("\n--- Dipole Amplitudes ---")
+    print()
+    print()
+    print("# Dipole Amplitudes (K_CMB)")
     print(
-        "| Frequency | PySM Quad Dipole (K_CMB) | PySM No Quad Dipole (K_CMB) | TOAST 0 GHz Dipole (K_CMB) | TOAST Dipole (K_CMB) | Rel Diff (PySM Quad Dipole vs TOAST) | Rel Diff (PySM No Quad Dipole vs TOAST 0 GHz) |"
+        "| Frequency | PySM Quad Dipole | TOAST Dipole | Rel Diff (PySM Quad Dipole vs TOAST) |"
     )
-    print("|---|---|---|---|---|---|---|")
+    print("|---|---|---|---|---|")
     for row in dipole_data:
         rel_diff_pysm_quad_dipole_vs_toast = calculate_relative_difference(
             row["pysm_quad_dipole"], row["toast_current_freq_dipole"]
         )
-        rel_diff_pysm_no_quad_dipole_vs_toast_0ghz = calculate_relative_difference(
-            row["pysm_no_quad_dipole"], row["toast_0ghz_dipole"]
-        )
         print(
-            f"| {row['freq']} | {row['pysm_quad_dipole']:.2e} | {row['pysm_no_quad_dipole']:.2e} | {row['toast_0ghz_dipole']:.2e} | {row['toast_current_freq_dipole']:.2e} | {rel_diff_pysm_quad_dipole_vs_toast:.2e} | {rel_diff_pysm_no_quad_dipole_vs_toast_0ghz:.2e} |"
+            f"| {row['freq']} | {row['pysm_quad_dipole']:.4e} | {row['toast_current_freq_dipole']:.4e} | {rel_diff_pysm_quad_dipole_vs_toast:.4e} |"
         )
+    # No Quadrupole Dipole row
+    rel_diff_pysm_no_quad_dipole_vs_toast_0ghz = calculate_relative_difference(
+        pysm_no_quad_dipole_amp_constant, toast_0ghz_dipole_amp
+    )
+    print(
+        f"| No Quad | {pysm_no_quad_dipole_amp_constant:.4e} | {toast_0ghz_dipole_amp:.4e} | {rel_diff_pysm_no_quad_dipole_vs_toast_0ghz:.4e} |"
+    )
