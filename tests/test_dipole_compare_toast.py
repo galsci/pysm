@@ -160,7 +160,7 @@ def test_print_quadrupole_amplitudes():
         pysm_no_quad_amp_constant, toast_0ghz_quad_amp
     )
     print(
-        f"| No Quad | {pysm_no_quad_amp_constant:.4e} | {toast_0ghz_quad_amp:.4e} | {toast_0ghz_quad_amp:.4e} | {rel_diff_pysm_no_quad_vs_toast_0ghz:.4e} |"
+        f"| No Quad | {pysm_no_quad_amp_constant:.4e} | {toast_0ghz_quad_amp:.4e} | {rel_diff_pysm_no_quad_vs_toast_0ghz:.4e} |"
     )
 
     # Print Dipole Table
