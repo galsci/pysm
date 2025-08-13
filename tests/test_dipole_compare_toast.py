@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import healpy as hp
 from pysm3 import units as u
-from pysm3.models.dipole import CMBDipole
+from pysm3 import Sky
 from pysm3.models.template import read_map
 
 # Reference data
@@ -16,11 +16,7 @@ REFERENCE_URLS = {
     110 * u.GHz: "test_data/dipole/dipole_nside0256_freq110GHz.fits",
 }
 
-# Default parameters from presets.cfg
-DIPOLE_AMP = "3366.6 uK_CMB"
-T_CMB = "2.7255 K_CMB"
-DIPOLE_LON = "263.986 deg"
-DIPOLE_LAT = "48.247 deg"
+
 
 
 def get_quadrupole_and_dipole_amplitudes(hmap, lmax=2):
@@ -45,15 +41,8 @@ def test_quadrupole_corrected_freqs(freq):
     # Load reference map
     reference_map = read_map(REFERENCE_URLS[freq], nside=NSIDE)
 
-    # Instantiate CMBDipoleQuad (quadrupole correction enabled)
-    dipole_model = CMBDipole(
-        nside=NSIDE,
-        amp=DIPOLE_AMP,
-        T_cmb=T_CMB,
-        dip_lon=DIPOLE_LON,
-        dip_lat=DIPOLE_LAT,
-        quadrupole_correction=True,
-    )
+    # Instantiate Sky with dip2 (quadrupole correction enabled)
+    dipole_model = Sky(nside=NSIDE, preset_strings=['dip2'])
 
     # Generate dipole map
     generated_map = dipole_model.get_emission(freq)
@@ -73,15 +62,8 @@ def test_no_quadrupole():
     # Load 0 GHz reference map
     ref_0ghz_map = read_map(REFERENCE_URLS[0 * u.GHz], nside=NSIDE)
 
-    # Instantiate CMBDipole (no quadrupole correction)
-    dipole_model = CMBDipole(
-        nside=NSIDE,
-        amp=DIPOLE_AMP,
-        T_cmb=T_CMB,
-        dip_lon=DIPOLE_LON,
-        dip_lat=DIPOLE_LAT,
-        quadrupole_correction=False,
-    )
+    # Instantiate Sky with dip1 (no quadrupole correction)
+    dipole_model = Sky(nside=NSIDE, preset_strings=['dip1'])
 
     # Generate map at 100 GHz with no quadrupole correction
     generated_100ghz_map = dipole_model.get_emission(100 * u.GHz)
@@ -128,14 +110,7 @@ def test_print_quadrupole_amplitudes():
         ) = get_quadrupole_and_dipole_amplitudes(reference_map.value)
 
         # PySM Quadrupole (quadrupole correction enabled)
-        dipole_quad_model = CMBDipole(
-            nside=NSIDE,
-            amp=DIPOLE_AMP,
-            T_cmb=T_CMB,
-            dip_lon=DIPOLE_LON,
-            dip_lat=DIPOLE_LAT,
-            quadrupole_correction=True,
-        )
+        dipole_quad_model = Sky(nside=NSIDE, preset_strings=['dip2'])
         map_quad_uK_RJ = dipole_quad_model.get_emission(freq)
         map_quad_K_CMB = map_quad_uK_RJ.to(
             u.K_CMB, equivalencies=u.cmb_equivalencies(freq)
@@ -145,14 +120,7 @@ def test_print_quadrupole_amplitudes():
         )
 
         # PySM No Quadrupole (no quadrupole correction)
-        dipole_no_quad_model = CMBDipole(
-            nside=NSIDE,
-            amp=DIPOLE_AMP,
-            T_cmb=T_CMB,
-            dip_lon=DIPOLE_LON,
-            dip_lat=DIPOLE_LAT,
-            quadrupole_correction=False,
-        )
+        dipole_no_quad_model = Sky(nside=NSIDE, preset_strings=['dip1'])
         map_no_quad_uK_RJ = dipole_no_quad_model.get_emission(freq)
         map_no_quad_K_CMB = map_no_quad_uK_RJ.to(
             u.K_CMB, equivalencies=u.cmb_equivalencies(freq)
