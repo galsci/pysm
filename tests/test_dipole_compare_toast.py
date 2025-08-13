@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import healpy as hp
 from pysm3 import units as u
-from pysm3.models.dipole import CMBDipole, CMBDipoleQuad
+from pysm3.models.dipole import CMBDipole
 from pysm3.models.template import read_map
 
 # Reference data
@@ -39,12 +39,13 @@ def test_quadrupole_corrected_freqs(freq):
     reference_map = read_map(REFERENCE_URLS[freq], nside=NSIDE)
 
     # Instantiate CMBDipoleQuad (quadrupole correction enabled)
-    dipole_model = CMBDipoleQuad(
+    dipole_model = CMBDipole(
         nside=NSIDE,
         amp=DIPOLE_AMP,
         T_cmb=T_CMB,
         dip_lon=DIPOLE_LON,
         dip_lat=DIPOLE_LAT,
+        quadrupole_correction=True,
     )
 
     # Generate dipole map
@@ -102,12 +103,13 @@ def test_print_quadrupole_amplitudes():
         toast_current_freq_quad_amp = get_quadrupole_amplitude(reference_map.value)
 
         # PySM Quadrupole (CMBDipoleQuad)
-        dipole_quad_model = CMBDipoleQuad(
+        dipole_quad_model = CMBDipole(
             nside=NSIDE,
             amp=DIPOLE_AMP,
             T_cmb=T_CMB,
             dip_lon=DIPOLE_LON,
             dip_lat=DIPOLE_LAT,
+            quadrupole_correction=True,
         )
         map_quad_uK_RJ = dipole_quad_model.get_emission(freq)
         map_quad_K_CMB = map_quad_uK_RJ.to(u.K_CMB, equivalencies=u.cmb_equivalencies(freq))

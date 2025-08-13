@@ -142,7 +142,4 @@ class CMBDipole:
         return result
 
 
-class CMBDipoleQuad(CMBDipole):
-    def __init__(self, *args, **kwargs):
-        kwargs["quadrupole_correction"] = True
-        super().__init__(*args, **kwargs)
+
