@@ -98,8 +98,8 @@ class CMBDipole:
         pix_dirs = hp.pix2vec(self.nside, np.arange(npix))
         cosθ = np.dot(vec, pix_dirs)  # cos(theta)
         δ = (self.amp / self.T_cmb).decompose()
-        β = δ * (δ + 2) / (δ**2 + 2 * δ + 2)
-        γ = 1 / np.sqrt(1 - β**2)  # Lorentz factor gamma
+        β = δ * (δ + 2) / (δ ** 2 + 2 * δ + 2)
+        γ = 1 / np.sqrt(1 - β ** 2)  # Lorentz factor gamma
 
         # this is the temperature fluctuation with no quadrupole correction
         # it does not depend on the frequency
@@ -111,16 +111,22 @@ class CMBDipole:
         emission = []
         for freq in freqs:
             if self.quadrupole_correction:
-                fx = (const.h * (freq*u.GHz).to(u.Hz) / (const.k_B * (self.T_cmb.to_value(u.K_CMB)*u.K))).decompose()
+                fx = (
+                    const.h
+                    * (freq * u.GHz).to(u.Hz)
+                    / (const.k_B * (self.T_cmb.to_value(u.K_CMB) * u.K))
+                ).decompose()
                 fcor = (fx / 2) * (np.exp(fx) + 1) / (np.exp(fx) - 1)
                 bt = β * cosθ
                 # with quadrupole correction the temperature fluctuation depends on the frequency
                 # so it is overwritten here
-                ΔT_current_freq = self.T_cmb * (bt + fcor * bt**2)
+                ΔT_current_freq = self.T_cmb * (bt + fcor * bt ** 2)
                 emission.append(
-                    ΔT_current_freq.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz))
+                    ΔT_current_freq.to(
+                        u.uK_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz)
+                    )
                 )
-            else: # No quadrupole correction
+            else:  # No quadrupole correction
                 emission.append(
                     ΔT.to(u.uK_RJ, equivalencies=u.cmb_equivalencies(freq * u.GHz))
                 )
@@ -140,6 +146,3 @@ class CMBDipole:
         assert not np.isnan(result).any(), "Result contains NaN values"
 
         return result
-
-
-
