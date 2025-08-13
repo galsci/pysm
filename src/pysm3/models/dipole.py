@@ -60,7 +60,7 @@ class CMBDipole:
         dip_lon,
         dip_lat,
         map_dist=None,
-        quadrupole_correction: bool = False,  # New flag
+        quadrupole_correction: bool = False,
     ):
         self.nside = nside
         self.amp = u.Quantity(amp) if not isinstance(amp, u.Quantity) else amp
@@ -72,7 +72,7 @@ class CMBDipole:
             u.Quantity(dip_lon) if not isinstance(dip_lon, u.Quantity) else dip_lon
         ).to_value(u.deg)
         self.map_dist = map_dist
-        self.quadrupole_correction = quadrupole_correction  # Store flag
+        self.quadrupole_correction = quadrupole_correction
 
     @u.quantity_input
     def get_emission(
