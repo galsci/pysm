@@ -107,9 +107,9 @@ CMB Dipole
 
 The dipole component models the kinematic dipole induced by the Earth's motion relative to the CMB rest frame. This is implemented in the :py:class:`~pysm3.models.dipole.CMBDipole` class.
 
-- **dip1**: This model implements a simple kinematic dipole. The parameters for the amplitude and direction are taken from `Planck intermediate results. LVII. Joint Planck LFI and HFI data processing (2020) <https://arxiv.org/pdf/2007.04997>`_ and the CMB temperature from `The Temperature of the Cosmic Microwave Background (2009) <https://arxiv.org/abs/0911.1955>`_. The dipole amplitude agrees with `toast` at the 1e-5 level.
+- **dip1**: This model implements a simple kinematic dipole. The parameters for the amplitude and direction are taken from `Planck intermediate results. LVII. Joint Planck LFI and HFI data processing (2020) <https://doi.org/10.1051/0004-6361/202038073>`_ and the CMB temperature from `The Temperature of the Cosmic Microwave Background (2009) <https://doi.org/10.1088/0004-637X/707/2/916>`_. The dipole amplitude agrees with `toast` at the 1e-5 level.
 
-- **dip2**: This model is similar to **dip1** but includes a frequency-dependent quadrupole correction. This correction accounts for the relativistic aberration and Doppler effects beyond the simple dipole, which induce a quadrupole moment in the observed CMB. For more details, see `On the proper kinetic quadrupole CMB removal and the quadrupole anomalies (2015) <https://arxiv.org/abs/1504.02076>`_. The quadrupole correction amplitude agrees with `toast` at the 1e-5 level.
+- **dip2**: This model is similar to **dip1** but includes a frequency-dependent quadrupole correction. This correction accounts for the relativistic aberration and Doppler effects beyond the simple dipole, which induce a quadrupole moment in the observed CMB. For more details, see `On the proper kinetic quadrupole CMB removal and the quadrupole anomalies (2015) <https://doi.org/10.1088/1475-7516/2015/06/047>`_. The quadrupole correction amplitude agrees with `toast` at the 1e-5 level.
 
 CO line emission
 ================
