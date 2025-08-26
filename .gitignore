@@ -68,3 +68,14 @@ pip-wheel-metadata/
 obsolete
 src/pysm3/_version.py
 pysm.code-workspace
+
+# Added by Gemini for untracked files
+uv.lock
+**/__pycache__/
+# Explicitly ignore top-level directories that contain untracked files
+# even if they seem to be covered by existing rules, to ensure they are ignored.
+.tox/
+build/
+dist/
+pysm3.egg-info/
+src/pysm3/_version.py
