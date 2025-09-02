@@ -22,7 +22,7 @@ def add_galactic_metadata_to_catalog(catalog_filepath):
 
         # Save the modified catalog back to the same file in NETCDF4 format (which is HDF5 based)
         print(f"Saving modified catalog to: {catalog_filepath}")
-        catalog.to_netcdf(catalog_filepath, format="NETCDF4")
+        catalog.to_netcdf(catalog_filepath, format="NETCDF4", mode="a")
         print("Catalog saved successfully.")
 
     except FileNotFoundError:
