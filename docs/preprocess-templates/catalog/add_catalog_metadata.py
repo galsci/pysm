@@ -31,9 +31,12 @@ def add_galactic_metadata_to_catalog(catalog_filepath):
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
 
-if __name__ == "__main__":
-    # IMPORTANT: Replace this with the actual absolute path to your catalog file.
-    # Based on the notebook, the file is likely located here:
-    catalog_file_path = "/global/cfs/cdirs/sobs/www/users/Radio_WebSky/matched_catalogs_2/websky_high_flux_catalog_1mJy.h5"
+import sys
 
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python add_catalog_metadata.py <catalog_filepath>")
+        sys.exit(1)
+    
+    catalog_file_path = sys.argv[1]
     add_galactic_metadata_to_catalog(catalog_file_path)
