@@ -34,58 +34,65 @@ def test_aggregate():
 def test_evaluate_poly():
     np.random.seed(100)
     for N in [4, 5, 6]:
-        p = np.random.rand(N)
+        p = np.random.rand(N, 1)
         x = np.random.rand(1)[0]
-        assert_allclose(np.polyval(p, x), evaluate_poly(p, x))
+        assert_allclose(np.polyval(p.flatten(), x), evaluate_poly(p, x)[0])
 
 
 def test_evaluate_model_1freq_flat():
-    coeff = np.array([[0, 0, 0, 0, 3.7]])
+    coeff = np.array([[0, 0, 0, 0, 3.7]]).T  # Transpose to (n_coeff, 1)
     freqs = np.array([100])
     weights = np.array([0])  # not used when 1 point
-    assert evaluate_model(freqs, weights, coeff) == np.ones((1, 1)) * 3.7
+    assert np.allclose(evaluate_model(freqs, weights, coeff), np.array([3.7]))
 
 
 def test_evaluate_model_1freq_lin():
-    coeff = np.array([[0, 0, 0, 2, 0]])
+    coeff = np.array([[0, 0, 0, 2, 0]]).T  # Transpose to (n_coeff, 1)
     freqs = np.array([np.exp(3)])
     weights = np.array([0])
-    assert evaluate_model(freqs, weights, coeff) == np.ones((1, 1)) * 6
+    assert np.allclose(evaluate_model(freqs, weights, coeff), np.array([6.0]))
 
 
 def test_evaluate_model_2freq_flat():
-    coeff = np.array([[0, 0, 0, 0, 3.7]])
+    coeff = np.array([[0, 0, 0, 0, 3.7]]).T
     freqs = np.exp(np.array([3, 4]))  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
     weights /= trapezoid(weights, x=freqs)
-    assert evaluate_model(freqs, weights, coeff) == np.ones((1, 1)) * 3.7
+    assert_allclose(evaluate_model(freqs, weights, coeff), np.array([3.7]))
 
 
 def test_evaluate_model_2freq_lin():
-    coeff = np.array([[0, 0, 0, 2, 0]])
+    coeff = np.array([[0, 0, 0, 2, 0]]).T
     freqs = np.exp(np.array([3, 4]))  # ~ 20 and ~ 55 GHz
     weights = np.array([1, 1], dtype=np.float64)
     weights /= trapezoid(weights, x=freqs)
     flux = evaluate_model(freqs, weights, coeff)[0]
     assert flux > 6
     assert flux < 8
-    assert flux == trapezoid(weights * np.array([6, 8]), x=freqs)
+    assert_allclose(flux, trapezoid(weights * np.array([6, 8]), x=freqs))
 
 
 @pytest.fixture(scope="session")
 def test_catalog(tmp_path_factory):
     num_sources = 2
     indices = np.arange(num_sources)
+    num_powers = 5  # Assuming degree 4, so 5 coefficients
 
-    dims = ("index", "power")
+    dims = ("power", "index")  # Changed dimension order
     catalog = xr.Dataset(
         {
-            "logpolycoefflux": (dims, np.zeros((len(indices), 5), dtype=np.float64)),
-            "logpolycoefpolflux": (dims, np.zeros((len(indices), 5), dtype=np.float64)),
+            "logpolycoefflux": (
+                dims,
+                np.zeros((num_powers, len(indices)), dtype=np.float64),
+            ),  # Adjusted shape
+            "logpolycoefpolflux": (
+                dims,
+                np.zeros((num_powers, len(indices)), dtype=np.float64),
+            ),  # Adjusted shape
         },
         coords={
             "index": indices,
-            "power": np.arange(5)[::-1],
+            "power": np.arange(num_powers)[::-1],  # Still highest degree first
             "theta": ("index", np.array([np.pi / 4, np.pi / 2])),
             "phi": ("index", np.zeros(num_sources)),
         },
@@ -94,9 +101,27 @@ def test_catalog(tmp_path_factory):
         catalog[field].attrs["units"] = "rad"
     for field in ["logpolycoefflux", "logpolycoefpolflux"]:
         catalog[field].attrs["units"] = "Jy"
-    catalog["logpolycoefflux"].loc[{"index": 0, "power": 0}] = 3.7
-    catalog["logpolycoefflux"].loc[{"index": 1, "power": 1}] = 2
-    catalog["logpolycoefpolflux"].loc[{"index": 1, "power": 0}] = 5
+    catalog.attrs["description"] = "Test catalog"
+    catalog.attrs["reference_frequency_GHz"] = 100.0
+    catalog.attrs["flux_cutoff_mJy"] = 1.0
+    catalog.attrs["polynomial_degree"] = 4
+    catalog.attrs[
+        "sorted_by"
+    ] = "polyval(logpolycoefflux, log(ref_freq)) with coeff dims (power,index)"
+    catalog.attrs["ref_frame"] = "Galactic"
+    catalog.attrs["generated_utc"] = "2025-09-02T12:00:00.000000+00:00"
+    catalog.attrs["git_commit"] = "test_commit_hash"
+    catalog.attrs["command"] = "test_command"
+    # Adjust loc indexing to match new dimension order (power, index)
+    catalog["logpolycoefflux"].loc[
+        {"power": 0, "index": 0}
+    ] = 3.7  # power 0 is x^0 (constant term)
+    catalog["logpolycoefflux"].loc[
+        {"power": 1, "index": 1}
+    ] = 2  # power 1 is x^1 (linear term)
+    catalog["logpolycoefpolflux"].loc[
+        {"power": 0, "index": 1}
+    ] = 5  # power 0 is x^0 (constant term)
     fn = tmp_path_factory.mktemp("data") / "test_catalog.h5"
     print(netCDF4.__version__)
     catalog.to_netcdf(str(fn), format="NETCDF4")  # requires netcdf4 package

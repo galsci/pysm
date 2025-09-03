@@ -64,7 +64,7 @@ def flux2amp(flux, fwhm):
     amp: float
         Peak amplitude of the Gaussian beam representation of the radio source"""
     sigma = fwhm2sigma(fwhm)
-    amp = flux / (2 * np.pi * sigma**2)
+    amp = flux / (2 * np.pi * sigma ** 2)
     # sim_objects fails if amp is zero
     c = 1e-8  # clip
     amp[np.logical_and(amp < c, amp >= 0)] = c
@@ -148,8 +148,9 @@ class PointSourceCatalog(Model):
         self.catalog_filename = utils.RemoteData().get(catalog_filename)
         self.wcs = target_wcs
         if catalog_slice is None:
-            catalog_slice = np.index_exp[:]
-        self.catalog_slice = catalog_slice
+            self.catalog_slice = slice(None)
+        else:
+            self.catalog_slice = catalog_slice
 
         with h5py.File(self.catalog_filename) as f:
             assert f["theta"].attrs["units"].decode("UTF-8") == "rad"
@@ -165,7 +166,7 @@ class PointSourceCatalog(Model):
         weights = utils.normalize_weights(freqs, weights)
         with h5py.File(self.catalog_filename) as f:
             # New format: coeffs are (power, index)
-            coeffs = np.array(f[coeff][..., self.catalog_slice])
+            coeffs = np.array(f[coeff][:])
             # If catalog_slice is not a full slice, squeeze to (n_coeff, n_sources)
             if coeffs.ndim == 3:
                 # e.g. (n_coeff, n_sources, 1)
