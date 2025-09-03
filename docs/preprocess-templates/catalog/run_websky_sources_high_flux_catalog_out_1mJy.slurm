@@ -14,4 +14,4 @@ echo Executing with $OMP_NUM_THREADS threads
 
 export PYTHONUNBUFFERED=1
 
-papermill websky_sources_high_flux_catalog_out_1mJy.ipynb websky_sources_high_flux_catalog_out_1mJy_executed.ipynb
+python websky_sources_high_flux_catalog_out_1mJy.py
