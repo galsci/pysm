@@ -32,6 +32,8 @@ from __future__ import annotations
 
 import argparse
 import time
+from datetime import datetime, timezone
+import subprocess
 from pathlib import Path
 from typing import List
 
@@ -276,6 +278,28 @@ def main():
     ds_out.attrs["flux_cutoff_mJy"] = args.cutoff_mjy
     ds_out.attrs["polynomial_degree"] = args.degree
     ds_out.attrs["sorted_by"] = "polyval(logpolycoefflux, log(ref_freq)) with coeff dims (power,index)"
+    # Reference frame for theta/phi coordinates
+    ds_out.attrs["ref_frame"] = "Galactic"
+    # Generation timestamp in UTC ISO8601
+    ds_out.attrs["generated_utc"] = datetime.now(timezone.utc).isoformat()
+    # Git commit hash (required)
+    script_dir = Path(__file__).resolve().parent
+    repo_root = None
+    for p in [script_dir] + list(script_dir.parents):
+        if (p / '.git').exists():
+            repo_root = p
+            break
+    if repo_root is None:
+        raise RuntimeError("Cannot determine git repository root (.git not found); aborting.")
+    try:
+        commit = subprocess.check_output(
+            ['git', 'rev-parse', '--verify', 'HEAD'], cwd=repo_root, text=True
+        ).strip()
+    except Exception as e:  # pragma: no cover
+        raise RuntimeError(f"Failed to obtain git commit hash: {e}") from e
+    if not commit:
+        raise RuntimeError("Empty git commit hash returned; aborting.")
+    ds_out.attrs['git_commit'] = commit
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
