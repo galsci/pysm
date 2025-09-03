@@ -1,163 +1,290 @@
+#!/usr/bin/env python
+"""Create a high–flux Websky point–source mini catalog with spectral fits.
+
+This script selects sources above a flux density threshold (default 1 mJy at a
+given reference frequency, default 100 GHz) from a set of Websky-matched
+catalog HDF5 files (one per frequency). For each selected source it fits a
+degree-N polynomial (default degree 4) in log(frequency) to the total and
+polarized flux densities across the provided frequencies. The resulting
+polynomial coefficients and sky coordinates are stored in a compact NetCDF4
+file suitable for use inside PySM or other simulators.
+
+Key improvements over the original notebook-exported script:
+ - Parameterized CLI (frequencies, cutoff, reference frequency, degree, output)
+ - Faster linear least-squares fit (no iterative curve_fit loop)
+ - Deterministic ordering (sorted by flux at reference frequency, descending)
+ - Clean separation into functions & safer file handling (context managers)
+ - Minimal dependencies (removed unused matplotlib/pandas/etc.)
+ - Metadata & units preserved
+ - Deterministic ordering (sorted by fitted model flux at reference frequency, descending)
+
+Example:
+  python websky_sources_high_flux_catalog_out_1mJy.py \
+      --input-pattern 'data/matched_catalogs_2/catalog_{freq:.1f}.h5' \
+      --frequencies 18.7 24.5 44.0 70.0 100.0 143.0 217.0 353.0 545.0 643.0 729.0 857.0 906.0 \
+      --cutoff-mjy 1.0 --ref-freq 100.0 \
+      --output data/websky_high_flux_catalog_1mJy.h5
+
+Requires packages: numpy, xarray, h5py, netCDF4.
+"""
+
+from __future__ import annotations
+
+import argparse
+import time
+from pathlib import Path
+from typing import List
+
 import h5py
 import numpy as np
-import healpy as hp
-import matplotlib.pyplot as plt
-
-freqs = [
-    "18.7",
-    "24.5",
-    "44.0",
-    "70.0",
-    "100.0",
-    "143.0",
-    "217.0",
-    "353.0",
-    "545.0",
-    "643.0",
-    "729.0",
-    "857.0",
-    "906.0",
-]
-
-cat = h5py.File("data/matched_catalogs_2/catalog_100.0.h5", "r")
-
-cutoff_flux = 1e-3
-
-high_flux_sources_mask = cat["flux"][:] > cutoff_flux
-
-(high_flux_sources_mask).sum()
-
-high_flux_sources_mask.mean() * 100
-
-for k, v in cat.items():
-    print(k, v[:3])
-
-(all_indices,) = np.nonzero(high_flux_sources_mask)
-
-len(all_indices)
-
-all_indices = np.array(sorted(all_indices))
-
-all_indices
-
-import pandas as pd
 import xarray as xr
 
-columns = ["theta", "phi", "flux", "polarized flux"]
 
-flux = xr.DataArray(
-    data=np.zeros((len(all_indices), len(freqs)), dtype=np.float64),
-    coords={"index": all_indices, "freq": list(map(float, freqs))},
-    name="flux",
-)
-fluxnorm = flux.copy()
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Build a reduced high-flux Websky catalog with spectral polynomial coefficients"
+    )
+    parser.add_argument(
+        "--input-pattern",
+        required=False,
+        default="data/matched_catalogs_2/catalog_{freq:.1f}.h5",
+        help="Pattern for per-frequency input HDF5 files. Must contain {freq}.",
+    )
+    parser.add_argument(
+        "--frequencies",
+        nargs="*",
+        type=float,
+        default=[
+            18.7,
+            24.5,
+            44.0,
+            70.0,
+            100.0,
+            143.0,
+            217.0,
+            353.0,
+            545.0,
+            643.0,
+            729.0,
+            857.0,
+            906.0,
+        ],
+        help="Frequencies in GHz (must match available files).",
+    )
+    parser.add_argument(
+        "--cutoff-mjy",
+        type=float,
+        default=1.0,
+        help="Flux density cutoff in mJy at the reference frequency.",
+    )
+    parser.add_argument(
+        "--ref-freq",
+        type=float,
+        default=100.0,
+        help="Reference frequency in GHz at which cutoff and sorting are applied (via fitted model).",
+    )
+    parser.add_argument(
+        "--degree",
+        type=int,
+        default=4,
+        help="Polynomial degree in log(frequency) for the spectral fit.",
+    )
+    parser.add_argument(
+        "--output",
+        required=False,
+        default="data/websky_high_flux_catalog_1mJy.h5",
+        help="Output NetCDF filename (will be overwritten).",
+    )
+    parser.add_argument(
+        "--progress-every",
+        type=int,
+        default=200,
+        help="Progress print interval (number of sources).",
+    )
+    return parser.parse_args()
 
-polarized_flux = flux.copy()
 
-sources_xr = xr.Dataset(
-    {"flux": flux, "polarized_flux": polarized_flux, "fluxnorm": fluxnorm}
-)
-for freq in freqs:
-    print(freq)
-    cat = h5py.File(f"data/matched_catalogs_2/catalog_{freq}.h5", "r")
-    for column in ["flux", "polarized_flux"]:
-        sources_xr[column].loc[dict(index=all_indices, freq=float(freq))] = cat[
-            column.replace("_", " ")
-        ][high_flux_sources_mask]
-
-sources_xr
-
-min_idx = int(sources_xr.flux.sel(freq=100).argmin().item())
-max_idx = int(sources_xr.flux.sel(freq=100).argmax().item())
-print("Index with minimum flux at 100 GHz:", min_idx)
-print("Index with maximum flux at 100 GHz:", max_idx)
-
-sources_xr = sources_xr.sortby(sources_xr.flux.sel(freq=100.0), ascending=False)
-
-len(sources_xr)
-
-max_loc = int(sources_xr.flux.sel(freq=100).argmax().item())
-min_loc = int(sources_xr.flux.sel(freq=100).argmin().item())
-print("Location (position) of maximum flux at 100 GHz:", max_loc)
-print("Location (position) of minimum flux at 100 GHz:", min_loc)
-
-sources_xr["fluxnorm"] = sources_xr["flux"] / sources_xr["flux"].sel(freq=100)
-
-sources_xr["logpolycoefflux"] = xr.DataArray(
-    np.zeros((len(all_indices), 5), dtype=np.float64),
-    dims=["index", "power"],
-    coords={"power": np.arange(5)[::-1]},
-)
-sources_xr["logpolycoefnorm"] = sources_xr["logpolycoefflux"].copy()
-sources_xr["logpolycoefpolflux"] = sources_xr["logpolycoefflux"].copy()
-
-from scipy.optimize import curve_fit
-import time
+def open_catalog(filename: str | Path):
+    if not Path(filename).exists():
+        raise FileNotFoundError(f"Input catalog not found: {filename}")
+    return h5py.File(filename, "r")
 
 
-def model(freq, a, b, c, d, e):
-    log_freq = np.log(freq)
-    return a * log_freq ** 4 + b * log_freq ** 3 + c * log_freq ** 2 + d * log_freq + e
+def select_high_flux_indices(
+    ref_filename: str | Path, cutoff_jy: float
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return boolean mask and sorted indices of sources above cutoff.
+
+    Parameters
+    ----------
+    ref_filename : str | Path
+        HDF5 catalog filename at the reference frequency.
+    cutoff_jy : float
+        Flux density cutoff in Jy.
+    """
+    with open_catalog(ref_filename) as f:  # type: ignore[call-arg]
+        # h5py stubs are loose; add ignores where needed
+        flux = np.asarray(f["flux"][...], dtype=np.float64)  # type: ignore[index]
+        mask = flux > cutoff_jy
+        (indices,) = np.nonzero(mask)
+    return mask, np.sort(indices)
 
 
-start_time = time.time()
-total = len(sources_xr.coords["index"])
-indices = sources_xr.coords["index"]
-iterator = indices
+def build_flux_dataset(
+    indices: np.ndarray,
+    mask: np.ndarray,
+    freqs: List[float],
+    input_pattern: str,
+) -> xr.Dataset:
+    """Load flux & polarized flux for selected sources across frequencies."""
 
-for i, s in enumerate(iterator):
-    sources_xr["logpolycoefflux"].loc[dict(index=s)] = curve_fit(
-        model, sources_xr.coords["freq"], sources_xr.flux.sel(index=s)
-    )[0]
-    sources_xr["logpolycoefpolflux"].loc[dict(index=s)] = curve_fit(
-        model, sources_xr.coords["freq"], sources_xr.polarized_flux.sel(index=s)
-    )[0]
-    sources_xr["logpolycoefnorm"].loc[dict(index=s)] = curve_fit(
-        model, sources_xr.coords["freq"], sources_xr.fluxnorm.sel(index=s)
-    )[0]
-    if (i + 1) % 100 == 0 or (i + 1) == total:
-        elapsed = time.time() - start_time
-        rate = (i + 1) / elapsed
-        remaining = (total - (i + 1)) / rate if rate > 0 else float("inf")
-        msg = f"ETA: {int(remaining // 3600)}h {int((remaining % 3600) // 60)}m"
-        print(f"Processed {i+1}/{total} | {msg}")
+    nsrc = len(indices)
+    freq_arr = np.array(freqs, dtype=float)
+    flux = xr.DataArray(
+        np.zeros((nsrc, len(freqs)), dtype=np.float64),
+        dims=("index", "freq"),
+        coords={"index": indices, "freq": freq_arr},
+        name="flux",
+    )
+    pol_flux = flux.copy(data=np.zeros_like(flux.data))
 
-sources_xr.logpolycoefflux.min(), sources_xr.logpolycoefflux.max()
+    have_polarized = True
+    theta = phi = None  # will set on first iteration
+    for fghz in freqs:
+        filename = input_pattern.format(freq=fghz)
+        with open_catalog(filename) as cat:  # type: ignore[call-arg]
+            flux_vals = (
+                np.asarray(cat["flux"][...], dtype=np.float64)[mask]  # type: ignore[index]
+            )
+            flux.loc[dict(freq=fghz)] = flux_vals
+            if "polarized flux" in cat:
+                pol_flux_vals = (
+                    np.asarray(cat["polarized flux"][...], dtype=np.float64)[  # type: ignore[index]
+                        mask
+                    ]
+                )
+                pol_flux.loc[dict(freq=fghz)] = pol_flux_vals
+            else:
+                have_polarized = False
+            if theta is None:
+                theta = np.asarray(cat["theta"][...], dtype=np.float64)[mask]  # type: ignore[index]
+                phi = np.asarray(cat["phi"][...], dtype=np.float64)[mask]  # type: ignore[index]
 
-output_catalog = sources_xr[["logpolycoefflux", "logpolycoefpolflux"]]
+    ds = xr.Dataset({"flux": flux})
+    if have_polarized:
+        ds["polarized_flux"] = pol_flux
+    else:  # drop placeholder if not present
+        pol_flux = None  # type: ignore
+    ds = ds.assign_coords(theta=("index", theta), phi=("index", phi))
+    ds.theta.attrs.update(units="rad", reference_frame="Galactic")
+    ds.phi.attrs.update(units="rad", reference_frame="Galactic")
+    return ds
 
-output_catalog.logpolycoefflux.attrs["units"] = "Jy"
-output_catalog.logpolycoefpolflux.attrs["units"] = "Jy"
 
-for coord in ["theta", "phi"]:
-    output_catalog = output_catalog.assign_coords(
-        **{coord: (("index"), cat[coord][high_flux_sources_mask].astype(np.float64))}
+def fit_log_poly(ds: xr.Dataset, degree: int, progress_every: int = 200) -> xr.Dataset:
+    """Vectorized polynomial fit in log(frequency) for (polarized) flux.
+
+    Uses a single lstsq per (flux / polarized_flux) array instead of per-source loop.
+    """
+    freqs = ds.freq.values
+    logf = np.log(freqs)
+    deg = degree
+    powers = np.arange(deg, -1, -1)
+    A = np.vstack([logf ** p for p in powers]).T  # (Nfreq, deg+1)
+
+    # Arrange data as (Nfreq, Nsrc)
+    Y_flux = ds.flux.transpose("freq", "index").values  # (Nfreq, Nsrc)
+    t0 = time.time()
+    X_flux = np.linalg.lstsq(A, Y_flux, rcond=None)[0]  # (deg+1, Nsrc)
+    print(
+        f"Flux fit: solved for {Y_flux.shape[1]} sources in {time.time()-t0:.2f}s (vectorized)"
     )
 
-output_filename = "data/websky_high_flux_catalog_1mJy.h5"
+    ds["logpolycoefflux"] = xr.DataArray(
+        X_flux.T,
+        dims=("index", "power"),
+        coords={"index": ds.index.values, "power": powers},
+        attrs={"units": "Jy"},
+    )
 
-output_catalog.coords["theta"].attrs["units"] = "rad"
-output_catalog.coords["phi"].attrs["units"] = "rad"
-output_catalog.coords["theta"].attrs["reference_frame"] = "Galactic"
-output_catalog.coords["phi"].attrs["reference_frame"] = "Galactic"
+    if "polarized_flux" in ds:
+        t1 = time.time()
+        Y_pol = ds.polarized_flux.transpose("freq", "index").values
+        X_pol = np.linalg.lstsq(A, Y_pol, rcond=None)[0]
+        print(
+            f"Polarized flux fit: solved for {Y_pol.shape[1]} sources in {time.time()-t1:.2f}s (vectorized)"
+        )
+        ds["logpolycoefpolflux"] = xr.DataArray(
+            X_pol.T,
+            dims=("index", "power"),
+            coords={"index": ds.index.values, "power": powers},
+            attrs={"units": "Jy"},
+        )
+    return ds
 
-output_catalog.attrs["description"] = (
-    "Websky catalog of sources with flux > 1 mJy at 100 GHz, fitted with a 4th order polynomial in log frequency. "
-    "Galactic reference frame. Sorted by flux at 100 GHz (descending). "
-    "The 'index' coordinate gives the original index in the Websky catalog."
-)
 
-output_catalog.to_netcdf(
-    output_filename, format="NETCDF4", mode="w"
-)  # requires netcdf4 package
+def evaluate_flux_at_logfreq(coeff_da: xr.DataArray, log_freq: float) -> xr.DataArray:
+    """Evaluate polynomial (coefficients stored highest degree first) at log_freq using numpy.polyval.
 
-import xarray
+    Parameters
+    ----------
+    coeff_da : xr.DataArray
+        DataArray with dims (index, power) ordered from highest to lowest degree.
+    log_freq : float
+        log(reference_frequency_GHz)
+    """
+    coeffs = coeff_da.values  # shape (Nsrc, deg+1)
+    # np.polyval expects coeff array (deg+1,) or (deg+1, ...); loop vectorization:
+    fitted = np.polyval(coeffs, log_freq)  # shape (Nsrc,)
+    return xr.DataArray(fitted, dims=("index"), coords={"index": coeff_da.index})
 
-xarray.open_dataset(output_filename)
 
-import h5py
+def main():
+    args = parse_args()
+    freqs = args.frequencies
+    ref_freq = args.ref_freq
+    if ref_freq not in freqs:
+        raise ValueError("Reference frequency must be included in --frequencies list")
+    cutoff_jy = args.cutoff_mjy * 1e-3  # mJy -> Jy
 
-f = h5py.File(output_filename, "r")
-f["logpolycoefflux"]
+    ref_filename = args.input_pattern.format(freq=ref_freq)
+    print(f"Selecting sources from {ref_filename} with cutoff {cutoff_jy} Jy")
+    mask, indices = select_high_flux_indices(ref_filename, cutoff_jy)
+    print(f"Selected {len(indices)} sources above threshold.")
 
-f["logpolycoefflux"].attrs["units"]
+    ds = build_flux_dataset(indices, mask, freqs, args.input_pattern)
+
+    # Fit spectral polynomial coefficients first
+    ds = fit_log_poly(ds, args.degree, progress_every=args.progress_every)
+
+    # Sort by fitted (modeled) flux at the reference frequency (descending) using np.polyval (no storage)
+    log_ref = np.log(ref_freq)
+    sort_key = evaluate_flux_at_logfreq(ds.logpolycoefflux, log_ref)
+    ds = ds.sortby(sort_key, ascending=False)
+
+    base_vars = ["logpolycoefflux"]
+    if "logpolycoefpolflux" in ds:
+        base_vars.append("logpolycoefpolflux")
+    ds_out = ds[base_vars]
+
+    ds_out.attrs["description"] = (
+        f"Websky sources with flux > {args.cutoff_mjy} mJy at {ref_freq} GHz. "
+        f"Polynomial degree {args.degree} fit in log(frequency) for flux (and polarized flux if available). "
+    "Frequencies in GHz. Ordered by descending fitted flux at reference frequency (polynomial evaluated at ref freq). "
+        "'index' gives original catalog index before selection/sorting."
+    )
+    ds_out.attrs["reference_frequency_GHz"] = ref_freq
+    ds_out.attrs["flux_cutoff_mJy"] = args.cutoff_mjy
+    ds_out.attrs["polynomial_degree"] = args.degree
+    ds_out.attrs["sorted_by"] = "polyval(logpolycoefflux, log(ref_freq)) (not stored)"
+
+    output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    print(f"Writing {output_path} ...")
+    ds_out.to_netcdf(output_path, format="NETCDF4", mode="w")
+    print("Done.")
+
+
+if __name__ == "__main__":  # pragma: no cover
+    # Allow import without executing; run only when invoked as script
+    main()
