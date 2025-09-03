@@ -1,5 +1,6 @@
 Unreleased
 ==========
+- Fix radio galaxies catalog ordering (new `rg2` model) https://github.com/galsci/pysm/pull/225
 - Implementation and testing of the CMB dipole model, including the creation of `dip1` and `dip2` models, unit tests, enhanced test output, and a fix for CMBLensed handling monopole and dipole. Also includes updates to documentation and presets. https://github.com/galsci/pysm/pull/215
 
 3.4.2 (2025-06-17)
