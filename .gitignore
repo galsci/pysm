@@ -65,6 +65,7 @@ pip-wheel-metadata/
 
 *.log
 *.out
+*.err
 obsolete
 src/pysm3/_version.py
 pysm.code-workspace
