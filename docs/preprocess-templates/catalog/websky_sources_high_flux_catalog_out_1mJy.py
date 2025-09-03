@@ -157,16 +157,16 @@ def build_flux_dataset(
     for fghz in freqs:
         filename = input_pattern.format(freq=fghz)
         with open_catalog(filename) as cat:  # type: ignore[call-arg]
-            flux_vals = (
-                np.asarray(cat["flux"][...], dtype=np.float64)[mask]  # type: ignore[index]
-            )
+            flux_vals = np.asarray(cat["flux"][...], dtype=np.float64)[
+                mask
+            ]  # type: ignore[index]
             flux.loc[dict(freq=fghz)] = flux_vals
             if "polarized flux" in cat:
-                pol_flux_vals = (
-                    np.asarray(cat["polarized flux"][...], dtype=np.float64)[  # type: ignore[index]
-                        mask
-                    ]
-                )
+                pol_flux_vals = np.asarray(
+                    cat["polarized flux"][...], dtype=np.float64
+                )[  # type: ignore[index]
+                    mask
+                ]
                 pol_flux.loc[dict(freq=fghz)] = pol_flux_vals
             else:
                 have_polarized = False
@@ -194,7 +194,7 @@ def fit_log_poly(ds: xr.Dataset, degree: int, progress_every: int = 200) -> xr.D
     logf = np.log(freqs)
     deg = degree
     powers = np.arange(deg, -1, -1)
-    A = np.vstack([logf ** p for p in powers]).T  # (Nfreq, deg+1)
+    A = np.vstack([logf**p for p in powers]).T  # (Nfreq, deg+1)
 
     # Arrange data as (Nfreq, Nsrc)
     Y_flux = ds.flux.transpose("freq", "index").values  # (Nfreq, Nsrc)
@@ -223,7 +223,10 @@ def fit_log_poly(ds: xr.Dataset, degree: int, progress_every: int = 200) -> xr.D
             X_pol,
             dims=("power", "index"),
             coords={"power": powers, "index": ds.index.values},
-            attrs={"units": "Jy", "coeff_orientation": "power_first_highest_degree_first"},
+            attrs={
+                "units": "Jy",
+                "coeff_orientation": "power_first_highest_degree_first",
+            },
         )
     return ds
 
@@ -273,13 +276,18 @@ def main():
     ds_out.attrs["description"] = (
         f"Websky sources with flux > {args.cutoff_mjy} mJy at {ref_freq} GHz. "
         f"Polynomial degree {args.degree} fit in log(frequency) for flux (and polarized flux if available). "
-    "Frequencies in GHz. Ordered by descending fitted flux at reference frequency (polynomial evaluated at ref freq). "
-        "'index' gives original catalog index before selection/sorting."
+        "Frequencies in GHz. Ordered by descending fitted flux at reference frequency (polynomial evaluated at ref freq). "
+        "'index' gives original catalog index before selection/sorting. "
+        "NOTE: Coefficient arrays are stored transposed relative to PySM 3.4.1 and 3.4.2 (which used (index,power)). "
+        "Now dims are (power,index) with highest degree first, enabling direct "
+        "numpy.polyval(coeffs, log_freq) without any transpose step."
     )
     ds_out.attrs["reference_frequency_GHz"] = ref_freq
     ds_out.attrs["flux_cutoff_mJy"] = args.cutoff_mjy
     ds_out.attrs["polynomial_degree"] = args.degree
-    ds_out.attrs["sorted_by"] = "polyval(logpolycoefflux, log(ref_freq)) with coeff dims (power,index)"
+    ds_out.attrs["sorted_by"] = (
+        "polyval(logpolycoefflux, log(ref_freq)) with coeff dims (power,index)"
+    )
     # Reference frame for theta/phi coordinates
     ds_out.attrs["ref_frame"] = "Galactic"
     # Generation timestamp in UTC ISO8601
@@ -288,22 +296,24 @@ def main():
     script_dir = Path(__file__).resolve().parent
     repo_root = None
     for p in [script_dir] + list(script_dir.parents):
-        if (p / '.git').exists():
+        if (p / ".git").exists():
             repo_root = p
             break
     if repo_root is None:
-        raise RuntimeError("Cannot determine git repository root (.git not found); aborting.")
+        raise RuntimeError(
+            "Cannot determine git repository root (.git not found); aborting."
+        )
     try:
         commit = subprocess.check_output(
-            ['git', 'rev-parse', '--verify', 'HEAD'], cwd=repo_root, text=True
+            ["git", "rev-parse", "--verify", "HEAD"], cwd=repo_root, text=True
         ).strip()
     except Exception as e:  # pragma: no cover
         raise RuntimeError(f"Failed to obtain git commit hash: {e}") from e
     if not commit:
         raise RuntimeError("Empty git commit hash returned; aborting.")
-    ds_out.attrs['git_commit'] = commit
+    ds_out.attrs["git_commit"] = commit
     # Full command invocation
-    ds_out.attrs['command'] = " ".join(shlex.quote(a) for a in sys.argv)
+    ds_out.attrs["command"] = " ".join(shlex.quote(a) for a in sys.argv)
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
