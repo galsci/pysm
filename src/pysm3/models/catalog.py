@@ -166,7 +166,7 @@ class PointSourceCatalog(Model):
         weights = utils.normalize_weights(freqs, weights)
         with h5py.File(self.catalog_filename) as f:
             # New format: coeffs are (power, index)
-            coeffs = np.array(f[coeff][:])
+            coeffs = np.array(f[coeff][:, self.catalog_slice])
             # If catalog_slice is not a full slice, squeeze to (n_coeff, n_sources)
             if coeffs.ndim == 3:
                 # e.g. (n_coeff, n_sources, 1)

@@ -255,3 +255,32 @@ def test_catalog_class_map_healpix(test_catalog):
         phi=phi[1],
     )
     assert_allclose(flux, catalog_flux.max().value, rtol=4e-2)  # loose 4%
+
+
+def test_catalog_slicing_get_fluxes(test_catalog):
+    nside = 8  # Add nside
+    # Test with a slice that selects the second source (index 1)
+    catalog = PointSourceCatalog(test_catalog, nside=nside, catalog_slice=slice(1, 2))
+    freqs = np.exp(np.array([3, 4])) * u.GHz
+    weights = np.array([1, 1], dtype=np.float64)
+    flux = catalog.get_fluxes(freqs, weights=weights)
+
+    # The second source has a linear term (coeff 2 for power 1)
+    # For logfreqs [3, 4], the fluxes should be [2*3, 2*4] = [6, 8]
+    # After bandpass integration, it should be the same as test_evaluate_model_2freq_lin
+    normalized_weights = utils.normalize_weights(utils.check_freq_input(freqs), weights)
+    expected_flux = (
+        trapezoid(normalized_weights * np.array([6, 8]), x=freqs.to_value(u.GHz)) * u.Jy
+    )
+
+    assert_allclose(flux[0], expected_flux)
+
+    # Test with a slice that selects the first source (index 0)
+    catalog = PointSourceCatalog(test_catalog, nside=nside, catalog_slice=slice(0, 1))
+    freqs = np.exp(np.array([3, 4])) * u.GHz
+    weights = np.array([1, 1], dtype=np.float64)
+    flux = catalog.get_fluxes(freqs, weights=weights)
+
+    # The first source has a constant term (coeff 3.7 for power 0)
+    # After bandpass integration, it should be 3.7
+    assert_allclose(flux[0], 3.7 * u.Jy)
