@@ -200,11 +200,12 @@ def fit_log_poly(ds: xr.Dataset, degree: int, progress_every: int = 200) -> xr.D
         f"Flux fit: solved for {Y_flux.shape[1]} sources in {time.time()-t0:.2f}s (vectorized)"
     )
 
+    # Store coefficients with dims (power, index) so np.polyval(coeffs, logf) works directly.
     ds["logpolycoefflux"] = xr.DataArray(
-        X_flux.T,
-        dims=("index", "power"),
-        coords={"index": ds.index.values, "power": powers},
-        attrs={"units": "Jy"},
+        X_flux,
+        dims=("power", "index"),
+        coords={"power": powers, "index": ds.index.values},
+        attrs={"units": "Jy", "coeff_orientation": "power_first_highest_degree_first"},
     )
 
     if "polarized_flux" in ds:
@@ -215,28 +216,26 @@ def fit_log_poly(ds: xr.Dataset, degree: int, progress_every: int = 200) -> xr.D
             f"Polarized flux fit: solved for {Y_pol.shape[1]} sources in {time.time()-t1:.2f}s (vectorized)"
         )
         ds["logpolycoefpolflux"] = xr.DataArray(
-            X_pol.T,
-            dims=("index", "power"),
-            coords={"index": ds.index.values, "power": powers},
-            attrs={"units": "Jy"},
+            X_pol,
+            dims=("power", "index"),
+            coords={"power": powers, "index": ds.index.values},
+            attrs={"units": "Jy", "coeff_orientation": "power_first_highest_degree_first"},
         )
     return ds
 
 
 def evaluate_flux_at_logfreq(coeff_da: xr.DataArray, log_freq: float) -> xr.DataArray:
-    """Evaluate polynomial (coefficients stored highest degree first) at log_freq using numpy.polyval.
+    """Evaluate polynomial at log_freq using numpy.polyval.
 
-    Parameters
-    ----------
-    coeff_da : xr.DataArray
-        DataArray with dims (index, power) ordered from highest to lowest degree.
-    log_freq : float
-        log(reference_frequency_GHz)
+    Expects coeff_da with dims (power, index) where 'power' is ordered from
+    highest degree to 0. This matches how we store coefficients, enabling:
+        np.polyval(coeff_da.values, log_freq)
+    to yield an array of shape (Nsrc,).
     """
-    coeffs = coeff_da.values  # shape (Nsrc, deg+1)
-    # np.polyval expects coeff array (deg+1,) or (deg+1, ...); loop vectorization:
-    fitted = np.polyval(coeffs, log_freq)  # shape (Nsrc,)
-    return xr.DataArray(fitted, dims=("index"), coords={"index": coeff_da.index})
+    coeff_aligned = coeff_da.transpose("power", "index")  # ensure ordering
+    coeffs = coeff_aligned.values  # (deg+1, Nsrc)
+    fitted = np.polyval(coeffs, log_freq)  # (Nsrc,)
+    return xr.DataArray(fitted, dims=("index",), coords={"index": coeff_da.index})
 
 
 def main():
@@ -276,7 +275,7 @@ def main():
     ds_out.attrs["reference_frequency_GHz"] = ref_freq
     ds_out.attrs["flux_cutoff_mJy"] = args.cutoff_mjy
     ds_out.attrs["polynomial_degree"] = args.degree
-    ds_out.attrs["sorted_by"] = "polyval(logpolycoefflux, log(ref_freq)) (not stored)"
+    ds_out.attrs["sorted_by"] = "polyval(logpolycoefflux, log(ref_freq)) with coeff dims (power,index)"
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
