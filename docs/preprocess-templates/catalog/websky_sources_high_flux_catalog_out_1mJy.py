@@ -34,6 +34,8 @@ import argparse
 import time
 from datetime import datetime, timezone
 import subprocess
+import sys
+import shlex
 from pathlib import Path
 from typing import List
 
@@ -300,6 +302,8 @@ def main():
     if not commit:
         raise RuntimeError("Empty git commit hash returned; aborting.")
     ds_out.attrs['git_commit'] = commit
+    # Full command invocation
+    ds_out.attrs['command'] = " ".join(shlex.quote(a) for a in sys.argv)
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
