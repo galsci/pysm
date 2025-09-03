@@ -19,11 +19,11 @@ Key improvements over the original notebook-exported script:
  - Deterministic ordering (sorted by fitted model flux at reference frequency, descending)
 
 Example:
-  python websky_sources_high_flux_catalog_out_1mJy.py \
-      --input-pattern 'data/matched_catalogs_2/catalog_{freq:.1f}.h5' \
-      --frequencies 18.7 24.5 44.0 70.0 100.0 143.0 217.0 353.0 545.0 643.0 729.0 857.0 906.0 \
-      --cutoff-mjy 1.0 --ref-freq 100.0 \
-      --output data/websky_high_flux_catalog_1mJy.h5
+    python websky_sources_high_flux_catalog_out_1mJy.py \
+            --input-pattern 'data/matched_catalogs_2/catalog_{freq:.1f}.h5' \
+            --frequencies 18.7 24.5 44.0 70.0 100.0 143.0 217.0 353.0 545.0 643.0 729.0 857.0 906.0 \
+            --cutoff-mjy 1.0 --ref-freq 100.0 \
+            --output data/websky_high_flux_catalog_1mJy_2025.05.12.h5
 
 Requires packages: numpy, xarray, h5py, netCDF4.
 """
@@ -96,8 +96,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         required=False,
-        default="data/websky_high_flux_catalog_1mJy.h5",
-        help="Output NetCDF filename (will be overwritten).",
+        default=None,
+        help="Output NetCDF filename. If omitted, a name of the form 'data/websky_high_flux_catalog_<cutoff>mJy_YYYY.MM.DD.h5' is generated automatically.",
     )
     parser.add_argument(
         "--progress-every",
@@ -315,7 +315,17 @@ def main():
     # Full command invocation
     ds_out.attrs["command"] = " ".join(shlex.quote(a) for a in sys.argv)
 
-    output_path = Path(args.output)
+    # Determine output filename (date-stamped) if not explicitly provided
+    if args.output is None:
+        date_tag = datetime.now(timezone.utc).strftime("%Y.%m.%d")
+        if float(args.cutoff_mjy).is_integer():
+            cutoff_tag = f"{int(args.cutoff_mjy)}mJy"
+        else:
+            cutoff_tag = f"{args.cutoff_mjy}mJy"
+        auto_name = f"websky_high_flux_catalog_{cutoff_tag}_{date_tag}.h5"
+        output_path = Path("data") / auto_name
+    else:
+        output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     print(f"Writing {output_path} ...")
     ds_out.to_netcdf(output_path, format="NETCDF4", mode="w")
