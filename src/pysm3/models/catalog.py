@@ -64,7 +64,7 @@ def flux2amp(flux, fwhm):
     amp: float
         Peak amplitude of the Gaussian beam representation of the radio source"""
     sigma = fwhm2sigma(fwhm)
-    amp = flux / (2 * np.pi * sigma**2)
+    amp = flux / (2 * np.pi * sigma ** 2)
     # sim_objects fails if amp is zero
     c = 1e-8  # clip
     amp[np.logical_and(amp < c, amp >= 0)] = c
@@ -73,54 +73,41 @@ def flux2amp(flux, fwhm):
 
 
 @njit
-def evaluate_poly(p, x):
-    """Low level polynomial evaluation, both input are 1D
-    same interface of np.polyval.
-    Having this implemented in numba should allow numba
-    to provide better optimization. If not, just use
-    np.polyval directly."""
-
-    out = 0
-    N = len(p)
-    for i in range(N):
-        out += p[i] * x ** (N - 1 - i)
-    out = max(0, out)
+def evaluate_poly(coeffs, x):
+    """
+    Evaluate polynomial for each source at value x.
+    coeffs: shape (n_coeff, n_sources) (power, index)
+    x: float (log-frequency)
+    Returns: shape (n_sources,)
+    """
+    n_coeff, n_sources = coeffs.shape
+    out = np.zeros(n_sources, dtype=np.float64)
+    for i_source in range(n_sources):
+        val = 0.0
+        for i_coeff in range(n_coeff):
+            val += coeffs[i_coeff, i_source] * x ** (n_coeff - 1 - i_coeff)
+        out[i_source] = max(0, val)
     return out
 
 
 @njit
-def evaluate_model(freqs, weights, coeff):
-    """Integrate log polynomial model across the bandpass for
-    each source in the catalog
-
-    Parameters
-    ----------
-    freqs: np.array
-        Array of frequencies in GHz
-    weights: np.array
-        Array of relative bandpass weights already normalized
-        Same length of freqs
-    coeff: 2D np.array (n_sources, n_coeff)
-        Array of log polynomial coefficients for each source
-
-    Returns
-    -------
-    flux: np.array
-        Array of the flux of each source integrated over the band
+def evaluate_model(freqs, weights, coeffs):
     """
-    n_sources = coeff.shape[0]
+    Integrate log polynomial model across the bandpass for each source in the catalog.
+    coeffs: shape (n_coeff, n_sources) (power, index)
+    """
+    n_coeff, n_sources = coeffs.shape
     logfreqs = np.log(freqs)
     out = np.zeros(n_sources, dtype=np.float64)
     assert len(freqs) == len(weights)
     if len(freqs) == 1:
-        for i_source in range(n_sources):
-            out[i_source] = evaluate_poly(coeff[i_source, :], logfreqs[0])
+        out = evaluate_poly(coeffs, logfreqs[0])
     else:
-        flux = np.zeros(len(freqs), dtype=np.float64)
+        flux = np.zeros((len(freqs), n_sources), dtype=np.float64)
+        for i_freq in range(len(freqs)):
+            flux[i_freq, :] = evaluate_poly(coeffs, logfreqs[i_freq])
         for i_source in range(n_sources):
-            for i_freq in range(len(freqs)):
-                flux[i_freq] = evaluate_poly(coeff[i_source, :], logfreqs[i_freq])
-            out[i_source] = trapezoid(flux * weights, x=freqs)
+            out[i_source] = trapezoid(flux[:, i_source] * weights, x=freqs)
     return out
 
 
@@ -161,8 +148,9 @@ class PointSourceCatalog(Model):
         self.catalog_filename = utils.RemoteData().get(catalog_filename)
         self.wcs = target_wcs
         if catalog_slice is None:
-            catalog_slice = np.index_exp[:]
-        self.catalog_slice = catalog_slice
+            self.catalog_slice = slice(None)
+        else:
+            self.catalog_slice = catalog_slice
 
         with h5py.File(self.catalog_filename) as f:
             assert f["theta"].attrs["units"].decode("UTF-8") == "rad"
@@ -177,9 +165,13 @@ class PointSourceCatalog(Model):
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         with h5py.File(self.catalog_filename) as f:
-            flux = evaluate_model(
-                freqs, weights, np.array(f[coeff][self.catalog_slice])
-            )
+            # New format: coeffs are (power, index)
+            coeffs = np.array(f[coeff][:, self.catalog_slice])
+            # If catalog_slice is not a full slice, squeeze to (n_coeff, n_sources)
+            if coeffs.ndim == 3:
+                # e.g. (n_coeff, n_sources, 1)
+                coeffs = np.squeeze(coeffs, axis=-1)
+            flux = evaluate_model(freqs, weights, coeffs)
         return flux * u.Jy
 
     @u.quantity_input
@@ -231,7 +223,7 @@ class PointSourceCatalog(Model):
             If True return a HEALPix map
 
         Returns
-        -------
+        ------ue-
         output_map: np.array
             Output HEALPix or CAR map or tuple with HEALPix and CAR maps"""
 
