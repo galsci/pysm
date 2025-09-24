@@ -18,7 +18,7 @@ Related scientific papers
 
 See `CITATION <https://github.com/galsci/pysm/blob/main/CITATION>`_
 
-* `Full-sky Models of Galactic Microwave Emission and Polarization (Pan-Experiment Galactic Science Group, 2025) <https://arxiv.org/abs/2502.20452>`_
+* `Full-sky Models of Galactic Microwave Emission and Polarization at Subarcminute Scales for the Python Sky Model (The PanEx GS Group, ApJ 991, 23, 2025) <https://iopscience.iop.org/article/10.3847/1538-4357/adf212>`_
 * `The Python Sky Model 3 software (Zonca et al, 2021) <https://arxiv.org/abs/2108.01444>`_
 * `The Python Sky Model: software for simulating the Galactic microwave sky (Thorne et al, 2017) <https://arxiv.org/abs/1608.02841>`_
 
