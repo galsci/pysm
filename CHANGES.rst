@@ -1,6 +1,11 @@
 Unreleased
 ==========
+
+3.4.3 (2025-10-02)
+==================
+- Update documentation and citations to reference the published PanEx ApJ paper https://github.com/galsci/pysm/pull/227
 - Fix radio galaxies catalog ordering (new `rg2` model) and update its shape for compatibility with `np.polyval` https://github.com/galsci/pysm/pull/225
+- Finalize the CMB dipole component implementation, adding dedicated tests, documentation, and preset updates https://github.com/galsci/pysm/pull/220
 - Implementation and testing of the CMB dipole model, including the creation of `dip1` and `dip2` models, unit tests, enhanced test output, and a fix for CMBLensed handling monopole and dipole. Also includes updates to documentation and presets. https://github.com/galsci/pysm/pull/215
 
 3.4.2 (2025-06-17)
