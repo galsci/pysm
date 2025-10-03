@@ -1,6 +1,6 @@
-===============================
+================================
 PySM Methods Paper Contributions
-===============================
+================================
 
 **Julian Borrill**: Coordinated simulation efforts with early versions of the models across multiple collaborations, contributed to the writing of Section 1
 

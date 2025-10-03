@@ -1,6 +1,5 @@
 # flake8: noqa
 import warnings
-from astropy.utils.exceptions import AstropyDeprecationWarning
 
 warnings.filterwarnings("ignore", message="may indicate binary incompatibility")
 

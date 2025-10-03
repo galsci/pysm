@@ -28,6 +28,7 @@
 import os
 import sys
 import datetime
+import warnings
 from importlib import import_module
 
 try:
@@ -50,6 +51,11 @@ config = SphinxConfig(
     globalns=globals(),
     config_overrides={"version": pysm3.__version__},
 )
+
+nbsphinx_widgets_path = ""
+
+# Suppress noisy SyntaxWarning messages from legacy notebooks
+warnings.filterwarnings("ignore", category=SyntaxWarning, message="invalid escape sequence")
 
 
 # -- General configuration ----------------------------------------------------
@@ -206,6 +212,6 @@ linkcheck_anchors = False
 #     nitpick_ignore.append((dtype, six.u(target)))
 
 extensions += ["nbsphinx", "sphinx_math_dollar", "sphinx.ext.mathjax"]
-exclude_patterns += ["_build", "**.ipynb_checkpoints", "**utils*"]
+exclude_patterns += ["_build", "**.ipynb_checkpoints"]
 nbsphinx_kernel_name = "python3"
 nbsphinx_execute = "never"

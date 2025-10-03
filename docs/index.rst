@@ -189,6 +189,50 @@ All the tutorials are Jupyter Notebooks and can be accessed `from the repository
   customize_components
   mpi
 
+Template preprocessing notebooks
+================================
+
+The following notebooks document the data-processing workflow used to build the
+high-resolution templates shipped with PySM.
+
+.. toctree::
+  :maxdepth: 1
+
+  Commander dust preprocessing <preprocess-templates/reproduce_pysm2_dust_pol>
+  WMAP synchrotron preprocessing <preprocess-templates/reproduce_pysm2_sync_pol>
+  Small-scale dust generation overview <preprocess-templates/small_scale_dust_pysm3>
+  Generate dust small-scale artifacts <preprocess-templates/small_scale_dust_pysm3_generate_artifacts>
+  Generate PySM3 dust templates <preprocess-templates/small_scale_dust_pysm3_generate_templates>
+  Synchrotron beta small-scale modelling <preprocess-templates/synchrotron_beta>
+  Synchrotron curvature modelling <preprocess-templates/synchrotron_curvature>
+  Log-pol-tens formalism notebook <preprocess-templates/synchrotron_template_logpoltens>
+  WebSky bright source catalog workflow <preprocess-templates/websky_sources_high_flux_catalog>
+  Verify dust templates <preprocess-templates/verify_templates/verify_templates_dust>
+  Verify synchrotron templates <preprocess-templates/verify_templates/verify_templates_synch>
+
+Catalog generation notebooks
+============================
+
+.. toctree::
+  :maxdepth: 1
+
+  Create WebSky background catalog with Dask <preprocess-templates/catalog/background_create_websky_catalog_dask>
+  Assemble WebSky background catalog with Dask <preprocess-templates/catalog/background_dask_assemble_catalog>
+  Compare catalog and original WebSky sources <preprocess-templates/catalog/compare_catalog_to_original_websky>
+  Inspect WebSky high-flux catalog output <preprocess-templates/catalog/websky_sources_high_flux_catalog_out_1mJy>
+
+Template utility notebooks
+==========================
+
+.. toctree::
+  :maxdepth: 1
+
+  GNILC dust spectral index and temperature maps <preprocess-templates/gnilc_dust_spectralindex_Tdust>
+  Generate GNILC spectral index and temperature maps <preprocess-templates/utils_gnilc_generate_map_spectralindex_Td>
+  Generate synchrotron amplitude map <preprocess-templates/utils_synch_generate_map>
+  Compute synchrotron curvature harmonic coefficients <preprocess-templates/utils_synch_generate_map_curvature>
+  Generate synchrotron spectral index map <preprocess-templates/utils_synch_generate_map_spectralindex>
+
 Contributing
 ============
 
@@ -196,6 +240,15 @@ Contributing
   :maxdepth: 2
 
   contributing
+
+Supplementary material
+======================
+
+.. toctree::
+  :maxdepth: 1
+
+  websky
+  pysm_methods_author_contributions
 
 Reference/API
 =============
