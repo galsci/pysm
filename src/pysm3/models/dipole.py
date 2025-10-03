@@ -44,8 +44,8 @@ class CMBDipole:
 
     where θ is the angle between the dipole direction and the line of sight.
 
-    Reference
-    ---------
+    References
+    ----------
     For the best-fit parameters, see Table 1 of
     "Planck intermediate results. LVII. Joint Planck LFI and HFI data processing"
     https://arxiv.org/pdf/2007.04997.pdf

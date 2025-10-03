@@ -42,11 +42,41 @@ For any question or issue with the software `open an issue <https://github.com/g
 Release
 -------
 
-* Tag the new version with git
-* Make sure ``hatch`` detects the right version with ``hatch version``
-* Build with ``hatch build``
-* Upload to pypi with ``hatch publish``
-* Upload to Github with ``git push --tags``
+1. Review ``CHANGES.rst`` and move the entries you want to ship out of the
+   ``Unreleased`` section into a dated ``<version> (<YYYY-MM-DD>)`` heading.
+   Commit the changelog update (and any other release-related changes).
+2. Ensure the working tree is clean and up to date with ``git status`` and
+   ``git pull``.
+3. Create or refresh a local environment using ``uv``::
+
+       uv venv .venv
+       uv pip install --python .venv/bin/python pip hatch
+
+   Activate it for the remaining steps with ``source .venv/bin/activate``.
+4. Run the test suite (at least ``pytest``) to verify the release build.
+5. Create the annotated release tag, e.g. ``git tag -a 3.4.3 -m "Release 3.4.3"``.
+6. Confirm Hatch picks up the tagged version::
+
+       hatch version
+
+   The output should match the tag (no ``.dev`` suffix).
+7. Build the distribution artifacts::
+
+       hatch build
+
+8. Publish to PyPI using your API token. Hatch reads credentials from
+   ``~/.pypirc`` (username ``__token__``). Alternatively export
+   ``HATCH_INDEX_USER=__token__`` and ``HATCH_INDEX_AUTH=<pypi-token>`` before
+   running::
+
+       hatch publish --no-prompt
+
+9. Push the tag (and any commits) to GitHub::
+
+       git push --tags
+
+10. Draft the GitHub release notes referencing the matching ``CHANGES.rst``
+    entry and announce the release as needed.
 
 .. |CI Tests| image:: https://github.com/galsci/pysm/actions/workflows/ci_tests.yml/badge.svg
    :target: https://github.com/galsci/pysm/actions/workflows/ci_tests.yml
