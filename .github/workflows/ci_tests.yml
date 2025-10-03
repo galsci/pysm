@@ -5,6 +5,7 @@
 name: CI Tests
 
 on:
+  workflow_dispatch:
   push:
     branches:
     - main  # GitHub now defaults to 'main' as the name of the primary branch. Change this as needed.
