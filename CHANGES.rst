@@ -1,5 +1,6 @@
 Unreleased
 ==========
+- Add NumPy 2 support by replacing deprecated `np.trapz` with `trapezoid` https://github.com/galsci/pysm/pull/231
 
 3.4.3 (2025-10-02)
 ==================

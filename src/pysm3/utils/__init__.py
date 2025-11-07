@@ -5,6 +5,12 @@
 import logging
 
 import numpy as np
+
+try:
+    from numpy import trapezoid
+except ImportError:
+    from numpy import trapz as trapezoid
+
 from numba import njit
 
 from .. import units as u
@@ -115,11 +121,11 @@ def normalize_weights(freqs, weights):
     else:
         if weights is None:
             weights = np.ones(len(freqs), dtype=np.float64)
-        weights = weights / np.trapz(weights, freqs)
+        weights = weights / trapezoid(weights, freqs)
         weights = (weights * u.uK_RJ).to_value(
             (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
         )
-        return weights / np.trapz(weights, freqs)
+        return weights / trapezoid(weights, freqs)
 
 
 def bandpass_unit_conversion(
@@ -162,20 +168,20 @@ def bandpass_unit_conversion(
             weights = np.ones(len(freqs), dtype=np.float64)
         else:
             weights = weights.copy()
-        weights /= np.trapz(weights, freqs)
+        weights /= trapezoid(weights, freqs)
         if weights.min() < cut:
             good = np.logical_not(weights < cut)
             log.info(f"Removing {(good==0).sum()}/{len(good)} points below {cut}")
             weights = weights[good]
             freqs = freqs[good]
-            weights /= np.trapz(weights, freqs)
+            weights /= trapezoid(weights, freqs)
         weights_to_rj = (weights * input_unit).to_value(
             (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
         )
         weights_to_out = (weights * output_unit).to_value(
             (u.Jy / u.sr), equivalencies=u.cmb_equivalencies(freqs * u.GHz)
         )
-        factor = np.trapz(weights_to_rj, freqs) / np.trapz(weights_to_out, freqs)
+        factor = trapezoid(weights_to_rj, freqs) / trapezoid(weights_to_out, freqs)
     return factor * u.Unit(output_unit / input_unit)
 
 
