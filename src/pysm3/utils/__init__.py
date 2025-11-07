@@ -5,12 +5,13 @@
 import logging
 
 import numpy as np
-from numba import njit
 
 try:
     from numpy import trapezoid
 except ImportError:
     from numpy import trapz as trapezoid
+
+from numba import njit
 
 from .. import units as u
 from .add_metadata import add_metadata  # noqa: F401
