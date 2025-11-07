@@ -10,7 +10,18 @@ description = "PySM generates full-sky simulations of Galactic emissions in inte
 readme = "README.rst"
 license.file = "LICENSE"
 requires-python = ">=3.9"
+keywords = [
+    "cmb",
+    "galactic-foregrounds",
+    "polarization",
+    "simulation",
+    "astrophysics",
+    "full-sky",
+]
 authors = [
+    { name = "Andrea Zonca", email = "code@andreazonca.com" },
+]
+maintainers = [
     { name = "Andrea Zonca", email = "code@andreazonca.com" },
 ]
 dependencies = [
@@ -37,10 +48,14 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/galsci/pysm"
-Documentation = "https://pysm3.readthedocs.io/"
+Homepage = "https://pysm3.readthedocs.io/"
+Repository = "https://github.com/galsci/pysm"
 "Bug Tracker" = "https://github.com/galsci/pysm/issues"
 Changelog = "https://github.com/galsci/pysm/blob/main/CHANGES.rst"
+Documentation = "https://pysm3.readthedocs.io/"
+Citation = "https://github.com/galsci/pysm/blob/main/CITATION"
+"JOSS Paper" = "https://doi.org/10.21105/joss.03783"
+"ApJ 2025 Paper" = "https://iopscience.iop.org/article/10.3847/1538-4357/adf212"
 
 [project.optional-dependencies]
 docs = [
