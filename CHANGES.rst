@@ -1,6 +1,6 @@
 Unreleased
 ==========
-- Add NumPy 2 support by replacing deprecated `np.trapz` with `trapezoid` https://github.com/galsci/pysm/pull/231
+- Add NumPy 2 support by replacing deprecated `np.trapz` with `trapezoid` https://github.com/galsci/pysm/pull/232
 
 3.4.3 (2025-10-02)
 ==================
@@ -23,6 +23,7 @@ Unreleased
 - Updated `pixell` from 0.17.3 to 0.26.0 https://github.com/galsci/pysm/pull/183
 - Initial implementation of a point source catalog component emission https://github.com/galsci/pysm/pull/187
 - Switch the build system to Hatch https://github.com/galsci/pysm/pull/189
+- Add nbval-based notebook regression tests to CI and refresh tutorial notebooks to keep outputs stable https://github.com/galsci/pysm/pull/217
 - Fix shape error in `CMBLensed` preventing use of `apply_delens=True` https://github.com/galsci/pysm/pull/214
 - Fix bug in `CMBLensed` to read spectra that include monopole and dipole  https://github.com/galsci/pysm/pull/215
 - Specify in the docs that the native resolution of free-free and AME is nside=512
