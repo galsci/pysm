@@ -77,7 +77,6 @@ test = [
     "nbval",
     "ipykernel",
     "pytest-astropy",
-    "tox",
     "xarray",
 ]
 
