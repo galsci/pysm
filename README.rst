@@ -11,6 +11,8 @@ MPI.
 
 See the documentation at https://pysm3.readthedocs.io
 
+Contributor guidelines, coding standards, and testing expectations are documented in ``AGENTS.md`` (Repository Guidelines).
+
 See changes in ``CHANGES.rst`` in the repository.
 
 Related scientific papers
@@ -29,10 +31,10 @@ See the `documentation <https://pysm3.readthedocs.io/en/latest/#installation>`_
 
 * Install with ``pip install .`` or with ``pip install .[test]`` to also install the requirements for running tests
 * Optionally, if you have an MPI environment available and you would like to test the MPI capabilities of PySM, install ``mpi4py`` and ``libsharp``, check the documentation link above for more details.
-* Check code style with ``tox -e codestyle``
-* Test with ``pytest`` or ``tox -e test``
+* Check code style with ``uv run flake8 src/pysm3 --count --max-line-length=100``
+* Test with ``uv run pytest -v``
 * Building docs requires ``pandoc``, not the python package, the actual ``pandoc`` command line tool, install it with conda or your package manager
-* Build docs locally with ``tox -e build_docs``
+* Build docs locally with ``uv run sphinx-build -W -b html docs docs/_build/html``
 
 Support
 -------
