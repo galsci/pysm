@@ -69,6 +69,9 @@ docs = [
 mpi = [
     "mpi4py",
 ]
+bandpass_sampler = [
+    "scikit-learn",
+]
 test = [
     "netcdf4",
     "pixell == 0.26.0",
@@ -78,7 +81,11 @@ test = [
     "ipykernel",
     "pytest-astropy",
     "xarray",
+    "scikit-learn",
 ]
+
+[project.scripts]
+pysm_bandpass_sampler = "pysm3.bandpass_sampler_cli:main"
 
 [tool.hatch.version]
 source = "vcs"
@@ -99,6 +106,7 @@ addopts = "-v --nbval --nbval-current-env"
 testpaths = [
     "tests",
     "docs/bandpass_integration.ipynb",
+    "docs/bandpass_sampling.ipynb",
     "docs/customize_components.ipynb",
     "docs/basic_use.ipynb",
     "docs/model_data.ipynb",
