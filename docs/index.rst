@@ -185,6 +185,7 @@ All the tutorials are Jupyter Notebooks and can be accessed `from the repository
   basic_use
   model_data
   bandpass_integration
+  bandpass_sampling
   smoothing_coord_rotation
   customize_components
   mpi

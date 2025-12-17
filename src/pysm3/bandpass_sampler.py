@@ -57,13 +57,19 @@ def bandpass_distribution_function(bnu, nu):
     b = scipy.interpolate.interp1d(x=nu, y=bnu)
 
     # Estimate the CDF by integrating from min to each frequency
-    Pnu = np.array(
-        [scipy.integrate.quad(b, a=nu.min(), b=inu)[0] for inu in nu[1:]]
+    # Include the first frequency explicitly with CDF value 0
+    Pnu = np.concatenate(
+        [
+            [0.0],
+            np.array(
+                [scipy.integrate.quad(b, a=nu.min(), b=inu)[0] for inu in nu[1:]]
+            ),
+        ]
     )
 
-    # Interpolate the inverse CDF
+    # Interpolate the inverse CDF over the full frequency range
     Binterp = scipy.interpolate.interp1d(
-        Pnu, nu[:-1] + np.diff(nu), bounds_error=False, fill_value="extrapolate"
+        Pnu, nu, bounds_error=False, fill_value="extrapolate"
     )
     return Binterp
 
@@ -95,7 +101,7 @@ def search_optimal_kernel_bandwidth(x):
             "Install it with: pip install scikit-learn"
         )
 
-    bandwidths = np.logspace(np.log(0.1), np.log(2), 64)
+    bandwidths = np.logspace(np.log10(0.1), np.log10(2), 64)
     grid = GridSearchCV(
         KernelDensity(kernel="gaussian"), {"bandwidth": bandwidths}, cv=LeaveOneOut()
     )

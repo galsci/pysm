@@ -18,10 +18,20 @@ from .utils import (
     apply_smoothing_and_coord_transform,
     map2alm,
 )
+# Import functions that don't require scikit-learn
 from .bandpass_sampler import (
     bandpass_distribution_function,
-    search_optimal_kernel_bandwidth,
-    bandpass_kresampling,
     compute_moments,
-    resample_bandpass,
 )
+
+# Conditionally import functions that require scikit-learn
+try:
+    from .bandpass_sampler import (
+        search_optimal_kernel_bandwidth,
+        bandpass_kresampling,
+        resample_bandpass,
+    )
+except ImportError:
+    # Functions will raise ImportError when called if scikit-learn is not available
+    # This allows the module to load but provides clear error messages
+    pass

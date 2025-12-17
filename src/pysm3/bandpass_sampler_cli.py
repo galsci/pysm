@@ -45,6 +45,13 @@ def load_bandpass(filename):
     """
     try:
         data = np.loadtxt(filename, skiprows=1)
+        # Handle case where a single data row produces a 1D array
+        if data.ndim == 1:
+            if data.size < 2:
+                raise ValueError(
+                    "Input file must have at least 2 columns and 1 data row"
+                )
+            data = data.reshape(1, -1)
         if data.shape[1] < 2:
             raise ValueError("Input file must have at least 2 columns")
         nu = data[:, 0]
