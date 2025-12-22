@@ -1,6 +1,7 @@
 Unreleased
 ==========
 - Add NumPy 2 support by replacing deprecated `np.trapz` with `trapezoid` https://github.com/galsci/pysm/pull/232
+- Add HalfDome TSZ maps (new 'tsz2' model) to pysm. Create new documentation and code following the same structural approach used for WebSky.
 
 3.4.3 (2025-10-02)
 ==================
