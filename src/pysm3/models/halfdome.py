@@ -40,6 +40,7 @@ class HalfDomeSZ(Model):
         nside,
         version="0.1",
         sz_type="thermal",
+        map_sz="y_b16_halo_res1_s{seed}.fits",
         seed = 0,
         max_nside=None,
         map_dist=None,
@@ -54,19 +55,19 @@ class HalfDomeSZ(Model):
         super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         self.version = str(version)
         self.sz_type = sz_type
+        self.map_sz = map_sz.format(seed=SEEDS[seed])
         self.remote_data = utils.RemoteData()
-        filename = self.remote_data.get(self.get_filename(seed))
+        filename = self.remote_data.get(self.get_filename())
         self.m = self.read_map(filename, field=0, unit=u.uK_CMB)
 
-    def get_filename(self, seed):
+    def get_filename(self):
         """Get SZ filenames for a halfdome version"""
 
         path = Path("halfdome") / self.version
-        s = SEEDS[seed]
         if self.sz_type == "kinetic":
-            path = path / "ksz.fits"
+            path = path / "ksz" / self.map_sz
         elif self.sz_type == "thermal":
-            path = path / f"tsz/ymock_seed_{s}.fits"
+            path = path / "tsz" / self.map_sz
 
         return str(path)
 

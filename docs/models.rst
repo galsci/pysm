@@ -138,7 +138,7 @@ Sunyaev–Zeldovich emission
 
 - **tsz1**: Thermal SZ emission from WebSky 0.4. Available at $N_{side}=8192$. For more details see :ref:`websky`.
 
-- **tsz2**: Thermal SZ emission from HalfDome 0.1. Available at $N_{side}=8192$. For more details see :ref:`halfdome`.
+- **tsz2**: Thermal SZ emission from HalfDome 0.1. Generated using xgpaint with Battaglia16 profiles. Eleven realizations available at $N_{side}=8192$. For more details see :ref:`halfdome`.
 
 - **ksz1**: Kinetic SZ emission from WebSky 0.4. Available at $N_{side}=4096$. For more details see :ref:`websky`.
 
