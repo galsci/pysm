@@ -190,6 +190,14 @@ All the tutorials are Jupyter Notebooks and can be accessed `from the repository
   customize_components
   mpi
 
+Bandpass Sampling Validation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. toctree::
+  :hidden:
+
+  bandpass_sampling_comparison
+
 Template preprocessing notebooks
 ================================
 
