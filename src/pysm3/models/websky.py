@@ -218,19 +218,27 @@ class WebSkyRadioGalaxies(WebSkyCIB):
 
 
 class SimpleSZ(Model):
-    """Simple SZ model with a single frequency-independent map
+    """Simple, frequency-independent SZ model using a single template map.
+
+    This component uses a precomputed SZ template map that is independent of
+    observing frequency. The same sky template is used at all frequencies and
+    is retrieved via ``template_name``.
 
     Parameters
     ----------
-
     nside : int
-        HEALPix NSIDE of the output maps
-    template_path : str
-        path to the FITS file containing the template
+        HEALPix NSIDE of the output maps.
+    template_name : str
+        Name or key identifying the SZ template map to download/load via
+        :class:`pysm3.models.utils.RemoteData`. The template is expected to be
+        a single-frequency SZ map in units of uK_CMB.
     sz_type : str
-        "kinetic" or "thermal"
+        Type of SZ effect to model, either ``"kinetic"`` or ``"thermal"``.
     max_nside : int
-        maximum NSIDE at which the input maps are available
+        Maximum HEALPix NSIDE at which the input template map is available.
+    map_dist : object, optional
+        HEALPix map distribution helper or MPI communicator-like object used
+        by the base :class:`Model` class to handle distributed maps.
     """
 
     def __init__(
@@ -239,12 +247,10 @@ class SimpleSZ(Model):
         template_name,
         sz_type,
         max_nside,
-        version=None,
         map_dist=None,
     ):
 
         super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
-        self.version = str(version)
         self.sz_type = sz_type
         self.remote_data = utils.RemoteData()
         filename = self.remote_data.get(template_name)
