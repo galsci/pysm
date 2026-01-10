@@ -214,4 +214,5 @@ linkcheck_anchors = False
 extensions += ["nbsphinx", "sphinx_math_dollar", "sphinx.ext.mathjax"]
 exclude_patterns += ["_build", "**.ipynb_checkpoints"]
 nbsphinx_kernel_name = "python3"
-nbsphinx_execute = "always"
+# Only execute notebooks that have no outputs (empty notebooks)
+nbsphinx_execute = "auto"
