@@ -19,9 +19,19 @@ from pysm3 import (
 
 
 @pytest.mark.parametrize("sz_type", ["thermal"]) # , "kinetic"]) (kinetic not implemented yet)
-def test_halfdome_sz_seeds(sz_type):
+def test_halfdome_sz_seeds(tmp_path, monkeypatch, sz_type):
 
-    nside = 128
+    os.environ.pop("PYSM_LOCAL_DATA", None)
+    monkeypatch.setattr(utils.data, "PREDEFINED_DATA_FOLDERS", [str(tmp_path)])
+
+    nside = 8
+    shape = hp.nside2npix(nside)
+    path = tmp_path / "halfdome" / "0.1" / "tsz"
+    path.mkdir(parents=True)
+    hp.write_map(path / "y_b16_halo_res1_s100.fits", np.ones(shape, dtype=np.float32))
+    hp.write_map(
+        path / "y_b16_halo_res1_s102.fits", np.ones(shape, dtype=np.float32) * 2
+    )
 
     tsz_0 = HalfDomeSZ(nside, "0.1", sz_type=sz_type, seed=0)
     tsz_1 = HalfDomeSZ(nside, "0.1", sz_type=sz_type, seed=1)
