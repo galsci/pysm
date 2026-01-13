@@ -1,9 +1,7 @@
-# Important: it is important to import netCDF4 before `h4py` is imported
-# to avoid "HDF Error" under Ubuntu with pip
-# This does not happen with conda packages
+# Important: import netCDF4 before h5py to avoid "HDF Error" under Ubuntu with pip.
+import netCDF4
 import h5py
 import healpy as hp
-import netCDF4
 import numpy as np
 
 try:
