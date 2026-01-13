@@ -36,23 +36,14 @@ jobs:
         mkdir -p "$HOME" "$ASTROPY_CACHE_DIR" "$ASTROPY_CONFIG_DIR" \
           "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$TMPDIR"
       shell: bash -el {0}
-    - uses: mamba-org/setup-micromamba@v1
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        environment-name: test-env
-        create-args: >-
-          python=${{ matrix.python }}
-          netcdf4
-        init-shell: >-
-          bash
-        cache-environment: true
-        post-cleanup: 'all'
+        python-version: ${{ matrix.python }}
     - name: Install base requirements
-      run: pip install .
-      shell: bash -el {0}
-    - name: Free package caches
       run: |
-        micromamba clean --all --yes
-        rm -rf ~/.cache/pip
+        python -m pip install --upgrade pip
+        python -m pip install --no-cache-dir .
       shell: bash -el {0}
     - name: Check import
       run: |
