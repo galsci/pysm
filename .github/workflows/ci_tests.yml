@@ -20,9 +20,6 @@ jobs:
   ci_tests:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
-    env:
-      ASTROPY_CACHE_DIR: ${{ env.RUNNER_TEMP }}/astropy-cache
-      TMPDIR: ${{ env.RUNNER_TEMP }}/astropy-tmp
     strategy:
       matrix:
         include:
@@ -40,6 +37,11 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+    - name: Set temp locations
+      run: |
+        echo "ASTROPY_CACHE_DIR=$RUNNER_TEMP/astropy-cache" >> "$GITHUB_ENV"
+        echo "TMPDIR=$RUNNER_TEMP/astropy-tmp" >> "$GITHUB_ENV"
+      shell: bash -el {0}
     - name: Prepare cache directories
       run: mkdir -p "$ASTROPY_CACHE_DIR" "$TMPDIR"
       shell: bash -el {0}
