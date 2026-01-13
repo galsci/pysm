@@ -11,8 +11,8 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     env:
-      ASTROPY_CACHE_DIR: ${{ runner.temp }}/astropy-cache
-      TMPDIR: ${{ runner.temp }}/astropy-tmp
+      ASTROPY_CACHE_DIR: ${{ env.RUNNER_TEMP }}/astropy-cache
+      TMPDIR: ${{ env.RUNNER_TEMP }}/astropy-tmp
     strategy:
       matrix:
         include:
