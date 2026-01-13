@@ -37,6 +37,11 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+    - name: Free disk space
+      run: |
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+        df -h
+      shell: bash -el {0}
     - name: Set temp locations
       run: |
         echo "ASTROPY_CACHE_DIR=$RUNNER_TEMP/astropy-cache" >> "$GITHUB_ENV"
