@@ -152,11 +152,16 @@ class PointSourceCatalog(Model):
         else:
             self.catalog_slice = catalog_slice
 
+        def _attr_to_str(value):
+            if isinstance(value, (bytes, np.bytes_)):
+                return value.decode("utf-8")
+            return str(value)
+
         with h5py.File(self.catalog_filename) as f:
-            assert f["theta"].attrs["units"].decode("UTF-8") == "rad"
-            assert f["phi"].attrs["units"].decode("UTF-8") == "rad"
-            assert f["logpolycoefflux"].attrs["units"].decode("UTF-8") == "Jy"
-            assert f["logpolycoefpolflux"].attrs["units"].decode("UTF-8") == "Jy"
+            assert _attr_to_str(f["theta"].attrs["units"]) == "rad"
+            assert _attr_to_str(f["phi"].attrs["units"]) == "rad"
+            assert _attr_to_str(f["logpolycoefflux"].attrs["units"]) == "Jy"
+            assert _attr_to_str(f["logpolycoefpolflux"].attrs["units"]) == "Jy"
 
         assert map_dist is None, "Distributed execution not supported"
 
