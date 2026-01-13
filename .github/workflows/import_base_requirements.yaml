@@ -22,14 +22,24 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+    - name: Prepare large temp dir
+      run: |
+        if [ -d /mnt ]; then
+          sudo mkdir -p /mnt/runner-temp
+          sudo chown "$USER":"$USER" /mnt/runner-temp
+          echo "PYSM_TEMP_ROOT=/mnt/runner-temp" >> "$GITHUB_ENV"
+        else
+          echo "PYSM_TEMP_ROOT=$RUNNER_TEMP" >> "$GITHUB_ENV"
+        fi
+      shell: bash -el {0}
     - name: Set temp locations
       run: |
-        echo "ASTROPY_CACHE_DIR=$RUNNER_TEMP/astropy-cache" >> "$GITHUB_ENV"
-        echo "ASTROPY_CONFIG_DIR=$RUNNER_TEMP/astropy-config" >> "$GITHUB_ENV"
-        echo "XDG_CACHE_HOME=$RUNNER_TEMP/xdg-cache" >> "$GITHUB_ENV"
-        echo "XDG_CONFIG_HOME=$RUNNER_TEMP/xdg-config" >> "$GITHUB_ENV"
-        echo "TMPDIR=$RUNNER_TEMP/astropy-tmp" >> "$GITHUB_ENV"
-        echo "HOME=$RUNNER_TEMP/home" >> "$GITHUB_ENV"
+        echo "ASTROPY_CACHE_DIR=$PYSM_TEMP_ROOT/astropy-cache" >> "$GITHUB_ENV"
+        echo "ASTROPY_CONFIG_DIR=$PYSM_TEMP_ROOT/astropy-config" >> "$GITHUB_ENV"
+        echo "XDG_CACHE_HOME=$PYSM_TEMP_ROOT/xdg-cache" >> "$GITHUB_ENV"
+        echo "XDG_CONFIG_HOME=$PYSM_TEMP_ROOT/xdg-config" >> "$GITHUB_ENV"
+        echo "TMPDIR=$PYSM_TEMP_ROOT/astropy-tmp" >> "$GITHUB_ENV"
+        echo "HOME=$PYSM_TEMP_ROOT/home" >> "$GITHUB_ENV"
       shell: bash -el {0}
     - name: Prepare cache directories
       run: |
