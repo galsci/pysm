@@ -11,8 +11,8 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     env:
-      ASTROPY_CACHE_DIR: /mnt/astropy-cache
-      TMPDIR: /mnt/astropy-tmp
+      ASTROPY_CACHE_DIR: ${{ runner.temp }}/astropy-cache
+      TMPDIR: ${{ runner.temp }}/astropy-tmp
     strategy:
       matrix:
         include:
@@ -40,6 +40,11 @@ jobs:
         post-cleanup: 'all'
     - name: Install base requirements
       run: pip install .
+      shell: bash -el {0}
+    - name: Free package caches
+      run: |
+        micromamba clean --all --yes
+        rm -rf ~/.cache/pip
       shell: bash -el {0}
     - name: Check import
       run: |
