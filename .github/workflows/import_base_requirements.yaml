@@ -10,6 +10,9 @@ jobs:
   test_ci_tests:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    env:
+      ASTROPY_CACHE_DIR: ${{ runner.temp }}/astropy-cache
+      TMPDIR: ${{ runner.temp }}
     strategy:
       matrix:
         include:
