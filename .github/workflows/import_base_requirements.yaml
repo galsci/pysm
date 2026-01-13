@@ -29,9 +29,12 @@ jobs:
         echo "XDG_CACHE_HOME=$RUNNER_TEMP/xdg-cache" >> "$GITHUB_ENV"
         echo "XDG_CONFIG_HOME=$RUNNER_TEMP/xdg-config" >> "$GITHUB_ENV"
         echo "TMPDIR=$RUNNER_TEMP/astropy-tmp" >> "$GITHUB_ENV"
+        echo "HOME=$RUNNER_TEMP/home" >> "$GITHUB_ENV"
       shell: bash -el {0}
     - name: Prepare cache directories
-      run: mkdir -p "$ASTROPY_CACHE_DIR" "$ASTROPY_CONFIG_DIR" "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$TMPDIR"
+      run: |
+        mkdir -p "$HOME" "$ASTROPY_CACHE_DIR" "$ASTROPY_CONFIG_DIR" \
+          "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$TMPDIR"
       shell: bash -el {0}
     - uses: mamba-org/setup-micromamba@v1
       with:
