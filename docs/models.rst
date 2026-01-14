@@ -138,7 +138,15 @@ Sunyaev–Zeldovich emission
 
 - **tsz1**: Thermal SZ emission from WebSky 0.4. Available at $N_{side}=8192$. For more details see :ref:`websky`.
 
+- **tsz2**: Thermal SZ emission from the `Agora simulations <https://doi.org/10.1093/mnras/stae1031>`_ (based on BAHAMAS hydrodynamical simulations). Available at $N_{side}=8192$.
+
+- **tsz3**: Lensed Thermal SZ emission from the `Agora simulations <https://doi.org/10.1093/mnras/stae1031>`_. Available at $N_{side}=8192$.
+
 - **ksz1**: Kinetic SZ emission from WebSky 0.4. Available at $N_{side}=4096$. For more details see :ref:`websky`.
+
+- **ksz2**: Kinetic SZ emission from the `Agora simulations <https://doi.org/10.1093/mnras/stae1031>`_ (based on BAHAMAS hydrodynamical simulations). Available at $N_{side}=8192$.
+
+- **ksz3**: Lensed Kinetic SZ emission from the `Agora simulations <https://doi.org/10.1093/mnras/stae1031>`_. Available at $N_{side}=8192$.
 
 Radio galaxies
 ==============
