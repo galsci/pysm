@@ -136,6 +136,8 @@ Cosmic Infrared Background
 Sunyaev–Zeldovich emission
 ==========================
 
+* `Comparison of WebSky and Agora SZ templates <preprocess-templates/verify_templates/compare_websky_agora_sz.ipynb>`_
+
 - **tsz1**: Thermal SZ emission from WebSky 0.4. Available at $N_{side}=8192$. For more details see :ref:`websky`.
 
 - **tsz2**: Thermal SZ emission from the `Agora simulations <https://doi.org/10.1093/mnras/stae1031>`_ (based on BAHAMAS hydrodynamical simulations). Available at $N_{side}=8192$.
