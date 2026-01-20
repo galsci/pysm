@@ -191,7 +191,7 @@ All the tutorials are Jupyter Notebooks and can be accessed `from the repository
   mpi
 
 Bandpass Sampling Validation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+============================
 
 .. toctree::
   :hidden:
