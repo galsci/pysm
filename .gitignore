@@ -80,3 +80,5 @@ build/
 dist/
 pysm3.egg-info/
 src/pysm3/_version.py
+data/
+production-data/
