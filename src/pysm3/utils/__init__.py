@@ -30,12 +30,14 @@ log = logging.getLogger("pysm3")
 def set_verbosity(level=logging.INFO):
     logger = logging.getLogger("pysm3")
     logger.setLevel(level)
-    if not logger.hasHandlers():
-        handler = logging.StreamHandler()
-        handler.setFormatter(
-            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        )
-        logger.addHandler(handler)
+    if logger.hasHandlers():
+        logger.handlers.clear()
+    handler = logging.StreamHandler()
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    )
+    logger.addHandler(handler)
+    logger.propagate = False
 
 
 def get_relevant_frequencies(freqs, low, high):
