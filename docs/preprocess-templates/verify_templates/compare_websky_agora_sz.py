@@ -157,7 +157,7 @@ print(
 
 # %% [markdown]
 # ### Reference: WebSky Figure 5 (tSZ)
-# ![WebSky Figure 5](websky_fig5_tsz.png)
+# ![WebSky Figure 5](figure5.png)
 #
 # *Comparison note*: The plot below shows the Compton-y power spectrum in log-log scale.
 
@@ -195,6 +195,7 @@ ax.grid(True, which="both", alpha=0.3)
 ax.legend(loc="upper left")
 ax.set_ylim(1e-3, 2.0)
 fig.tight_layout()
+fig.savefig("tsz_power_spectrum.png")
 
 # %%
 # Kinematic SZ Comparisons
@@ -309,7 +310,7 @@ print(
 
 # %% [markdown]
 # ### Reference: WebSky Figure 6 (kSZ)
-# ![WebSky Figure 6](websky_fig6.png)
+# ![WebSky Figure 6](figure6.png)
 #
 # *Comparison note*: The kSZ power spectrum is plotted in semilogx with units of uK^2.
 #
@@ -317,6 +318,8 @@ print(
 # WebSky and Agora have significantly different simulation box sizes; WebSky's larger volume allows it to capture these large-scale bulk motions more effectively than Agora. 
 # Importantly, the high-$\ell$ behavior—which is dominated by the small-scale kinematic effect—remains (substantially) consistent between the models. 
 # As shown in Agora Figure 16 (below), current empirical constraints from data are at very high $\ell$ and carry large uncertainties. 
+# ![Agora Figure 16](figure16.png)
+#
 # We document these differences here to ensure users are aware of the modeling choices and their impact on the large-scale power.
 
 # %%
@@ -339,3 +342,33 @@ ax.grid(True, which="both", alpha=0.3)
 ax.legend(loc="lower left")
 ax.set_ylim(0, 2.6)
 fig.tight_layout()
+fig.savefig("ksz_power_spectrum.png")
+
+# %%
+# Create composite plots for report
+import matplotlib.image as mpimg
+
+fig_tsz, axes_tsz = plt.subplots(1, 2, figsize=(12, 5))
+axes_tsz[0].imshow(mpimg.imread("tsz_power_spectrum.png"))
+axes_tsz[0].axis("off")
+axes_tsz[0].set_title("PySM tSZ Power Spectrum")
+axes_tsz[1].imshow(mpimg.imread("figure5.png"))
+axes_tsz[1].axis("off")
+axes_tsz[1].set_title("WebSky Figure 5 (Reference)")
+plt.tight_layout()
+plt.savefig("tsz_composite.png")
+plt.show()
+
+fig_ksz, axes_ksz = plt.subplots(1, 3, figsize=(18, 5))
+axes_ksz[0].imshow(mpimg.imread("ksz_power_spectrum.png"))
+axes_ksz[0].axis("off")
+axes_ksz[0].set_title("PySM kSZ Power Spectrum")
+axes_ksz[1].imshow(mpimg.imread("figure6.png"))
+axes_ksz[1].axis("off")
+axes_ksz[1].set_title("WebSky Figure 6 (Reference)")
+axes_ksz[2].imshow(mpimg.imread("figure16.png"))
+axes_ksz[2].axis("off")
+axes_ksz[2].set_title("Agora Figure 16 (Reference)")
+plt.tight_layout()
+plt.savefig("ksz_composite.png")
+plt.show()
