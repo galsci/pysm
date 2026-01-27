@@ -7,10 +7,8 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
-
-git:
-  lfs:
-    enabled: true
+  commands:
+    - git lfs pull
 
 python:
   install:
