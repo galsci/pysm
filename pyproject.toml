@@ -96,6 +96,21 @@ version-file = "src/pysm3/_version.py"
 include = [
     "/src/pysm3",
 ]
+packages = [
+    "src/pysm3",
+]
+
+[tool.hatch.build.targets.wheel]
+include = [
+    "/src/pysm3/**",
+    "src/pysm3/data/*",
+]
+packages = [
+    "src/pysm3",
+]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/pysm3/data/presets.cfg" = "pysm3/data/presets.cfg"
 
 [tool.pytest.ini_options]
 filterwarnings = [

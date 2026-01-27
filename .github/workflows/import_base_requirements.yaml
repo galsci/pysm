@@ -37,5 +37,5 @@ jobs:
       shell: bash -el {0}
     - name: Check import
       run: |
-        python -c "import pysm3"
+        PYTHONPATH=src python -c "import pysm3"
       shell: bash -el {0}

@@ -1,11 +1,11 @@
 import os.path
-from pathlib import Path
 
 import numpy as np
 from numba import njit
 
-import pysm3 as pysm
-import pysm3.units as u
+from ..utils import check_freq_input, normalize_weights
+from ..utils import trapz_step_inplace
+from .. import units as u
 
 from .. import utils
 from .cmb import CMBMap
@@ -218,47 +218,52 @@ class WebSkyRadioGalaxies(WebSkyCIB):
         return filenames
 
 
-class WebSkySZ(Model):
+class SimpleSZ(Model):
+    """Simple, frequency-independent SZ model using a single template map.
+
+    This component uses a precomputed SZ template map that is independent of
+    observing frequency. The same sky template is used at all frequencies and
+    is retrieved via ``template_name``.
+
+    Parameters
+    ----------
+    nside : int
+        HEALPix NSIDE of the output maps.
+    template_name : str
+        Name or key identifying the SZ template map to download/load via
+        :class:`pysm3.models.utils.RemoteData`. The template is expected to be
+        a single-frequency SZ map in units of uK_CMB.
+    sz_type : str
+        Type of SZ effect to model, either ``"kinetic"`` or ``"thermal"``.
+    max_nside : int
+        Maximum HEALPix NSIDE at which the input template map is available.
+    map_dist : object, optional
+        HEALPix map distribution helper or MPI communicator-like object used
+        by the base :class:`Model` class to handle distributed maps.
+    """
+
     def __init__(
         self,
         nside,
-        version="0.4",
-        sz_type="kinetic",
-        max_nside=None,
+        template_name,
+        sz_type,
+        max_nside,
         map_dist=None,
     ):
 
-        if max_nside is None:
-            if sz_type == "kinetic":
-                max_nside = 4096
-            if sz_type == "thermal":
-                max_nside = 8192
         super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
-        self.version = str(version)
         self.sz_type = sz_type
         self.remote_data = utils.RemoteData()
-        filename = self.remote_data.get(self.get_filename())
+        filename = self.remote_data.get(template_name)
         self.m = self.read_map(filename, field=0, unit=u.uK_CMB)
-
-    def get_filename(self):
-        """Get SZ filenames for a websky version"""
-
-        path = Path("websky") / self.version
-
-        if self.sz_type == "kinetic":
-            path = path / "ksz.fits"
-        elif self.sz_type == "thermal":
-            path = path / "tsz_8192_hp.fits"
-
-        return str(path)
 
     @u.quantity_input
     def get_emission(
         self, freqs: u.Quantity[u.GHz], weights=None
     ) -> u.Quantity[u.uK_RJ]:
 
-        freqs = pysm.check_freq_input(freqs)
-        weights = pysm.normalize_weights(freqs, weights)
+        freqs = check_freq_input(freqs)
+        weights = normalize_weights(freqs, weights)
 
         # input map is in uK_CMB, we multiply the weights which are
         # in uK_RJ by the conversion factor of uK_CMB->uK_RJ
@@ -280,7 +285,7 @@ def get_sz_emission_numba(freqs, weights, m, is_thermal):
     output = np.zeros((3, len(m)), dtype=np.float64)
     for i in range(len(freqs)):
         signal = m * y2uK_CMB(freqs[i]) if is_thermal else m.astype(np.float64)
-        pysm.utils.trapz_step_inplace(freqs, weights, i, signal, output[0])
+        trapz_step_inplace(freqs, weights, i, signal, output[0])
     return output
 
 
