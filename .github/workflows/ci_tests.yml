@@ -37,6 +37,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        lfs: true
     - uses: mamba-org/setup-micromamba@v1
       with:
         environment-name: test-env

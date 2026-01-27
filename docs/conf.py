@@ -55,7 +55,9 @@ config = SphinxConfig(
 nbsphinx_widgets_path = ""
 
 # Suppress noisy SyntaxWarning messages from legacy notebooks
-warnings.filterwarnings("ignore", category=SyntaxWarning, message="invalid escape sequence")
+warnings.filterwarnings(
+    "ignore", category=SyntaxWarning, message="invalid escape sequence"
+)
 
 
 # -- General configuration ----------------------------------------------------
@@ -211,7 +213,12 @@ linkcheck_anchors = False
 #     target = target.strip()
 #     nitpick_ignore.append((dtype, six.u(target)))
 
-extensions += ["nbsphinx", "sphinx_math_dollar", "sphinx.ext.mathjax"]
+extensions += [
+    "nbsphinx",
+    "sphinx_math_dollar",
+    "sphinx.ext.mathjax",
+    "sphinx_lfs_content",
+]
 exclude_patterns += ["_build", "**.ipynb_checkpoints"]
 nbsphinx_kernel_name = "python3"
 nbsphinx_execute = "never"

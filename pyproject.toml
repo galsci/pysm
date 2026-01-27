@@ -65,6 +65,7 @@ docs = [
     "sphinx-pyproject",
     "sphinx-astropy",
     "sphinx-math-dollar",
+    "sphinx_lfs_content",
 ]
 mpi = [
     "mpi4py",

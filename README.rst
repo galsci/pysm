@@ -31,6 +31,7 @@ See the `documentation <https://pysm3.readthedocs.io/en/latest/#installation>`_
 
 * Install with ``pip install .`` or with ``pip install .[test]`` to also install the requirements for running tests
 * Optionally, if you have an MPI environment available and you would like to test the MPI capabilities of PySM, install ``mpi4py`` and ``libsharp``, check the documentation link above for more details.
+* This repository uses Git LFS for Jupyter notebook files (*.ipynb). Ensure Git LFS is installed and run ``git lfs pull`` after cloning to fetch large files.
 * Check code style with ``uv run flake8 src/pysm3 --count --max-line-length=100``
 * Test with ``uv run pytest -v``
 * Building docs requires ``pandoc``, not the python package, the actual ``pandoc`` command line tool, install it with conda or your package manager
