@@ -7,9 +7,6 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
-  commands:
-    - curl -L https://github.com/git-lfs/git-lfs/releases/download/v3.7.1/git-lfs-linux-amd64-v3.7.1.tar.gz | tar xz
-    - $PWD/git-lfs-linux-amd64-v3.7.1/git-lfs pull
 
 python:
   install:
