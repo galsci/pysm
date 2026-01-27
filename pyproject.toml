@@ -90,10 +90,16 @@ version-file = "src/pysm3/_version.py"
 include = [
     "/src/pysm3",
 ]
+packages = [
+    "src/pysm3",
+]
 
 [tool.hatch.build.targets.wheel]
 include = [
     "/src/pysm3/**",
+]
+packages = [
+    "src/pysm3",
 ]
 
 [tool.pytest.ini_options]
