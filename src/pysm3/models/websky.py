@@ -3,8 +3,9 @@ import os.path
 import numpy as np
 from numba import njit
 
-import pysm3 as pysm
-import pysm3.units as u
+from ..utils import check_freq_input, normalize_weights
+from ..utils import trapz_step_inplace
+from .. import units as u
 
 from .. import utils
 from .cmb import CMBMap
@@ -261,8 +262,8 @@ class SimpleSZ(Model):
         self, freqs: u.Quantity[u.GHz], weights=None
     ) -> u.Quantity[u.uK_RJ]:
 
-        freqs = pysm.check_freq_input(freqs)
-        weights = pysm.normalize_weights(freqs, weights)
+        freqs = check_freq_input(freqs)
+        weights = normalize_weights(freqs, weights)
 
         # input map is in uK_CMB, we multiply the weights which are
         # in uK_RJ by the conversion factor of uK_CMB->uK_RJ
@@ -284,7 +285,7 @@ def get_sz_emission_numba(freqs, weights, m, is_thermal):
     output = np.zeros((3, len(m)), dtype=np.float64)
     for i in range(len(freqs)):
         signal = m * y2uK_CMB(freqs[i]) if is_thermal else m.astype(np.float64)
-        pysm.utils.trapz_step_inplace(freqs, weights, i, signal, output[0])
+        trapz_step_inplace(freqs, weights, i, signal, output[0])
     return output
 
 
