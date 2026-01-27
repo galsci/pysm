@@ -8,6 +8,10 @@ build:
   tools:
     python: "3.11"
 
+git:
+  lfs:
+    enabled: true
+
 python:
   install:
     - method: pip
