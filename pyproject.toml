@@ -91,6 +91,11 @@ include = [
     "/src/pysm3",
 ]
 
+[tool.hatch.build.targets.wheel]
+include = [
+    "/src/pysm3/data/**",
+]
+
 [tool.pytest.ini_options]
 filterwarnings = [
     'ignore:may indicate binary incompatibility:RuntimeWarning',

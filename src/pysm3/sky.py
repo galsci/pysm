@@ -7,8 +7,6 @@ Objects:
 """
 
 import toml
-
-from . import data
 from . import units as u
 from .models import *
 from .models import Model
@@ -67,7 +65,9 @@ except ImportError:
     import importlib_resources as pkg_resources
 
 
-PRESET_MODELS = toml.loads(pkg_resources.read_text(data, "presets.cfg"))
+PRESET_MODELS = toml.loads(
+    pkg_resources.files("pysm3").joinpath("data", "presets.cfg").read_text()
+)
 
 
 def get_pysm_emission(preset_string, nside):
