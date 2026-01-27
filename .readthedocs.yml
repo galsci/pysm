@@ -8,7 +8,8 @@ build:
   tools:
     python: "3.11"
   commands:
-    - apt-get update && apt-get install -y git-lfs
+    - curl -L https://github.com/git-lfs/git-lfs/releases/download/v3.7.1/git-lfs-linux-amd64-v3.7.1.tar.gz | tar xz
+    - export PATH=$PWD/git-lfs:$PATH
     - git lfs pull
 
 python:
