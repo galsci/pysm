@@ -136,9 +136,21 @@ Cosmic Infrared Background
 Sunyaev–Zeldovich emission
 ==========================
 
+* `Comparison of WebSky and Agora SZ templates <preprocess-templates/verify_templates/compare_websky_agora_sz.ipynb>`_
+
 - **tsz1**: Thermal SZ emission from WebSky 0.4. Available at $N_{side}=8192$. For more details see :ref:`websky`.
 
+- **tsz2**: Thermal SZ emission from the `Agora simulations <https://doi.org/10.1093/mnras/stae1031>`_ (based on BAHAMAS hydrodynamical simulations). Available at $N_{side}=8192$.
+
+- **tsz3**: Lensed Thermal SZ emission from the `Agora simulations <https://doi.org/10.1093/mnras/stae1031>`_. Available at $N_{side}=8192$.
+
+- **tsz4**: Thermal SZ emission from the `HalfDome simulations <https://doi.org/10.48550/arXiv.2407.17462>`_. Available at $N_{side}=8192$. Multiple realizations are available by overriding the `template_name` with seeds: 100 (default), 102, 104, 106, 108, 110, 112, 114, 116, 118, 120. For example: `halfdome/0.1/tsz/y_b16_halo_res1_s102.fits`. Multiple realizations are available by overriding the `template_name` with seeds: 100 (default), 102, 104, 106, 108, 110, 112, 114, 116, 118, 120. For example: `halfdome/0.1/tsz/y_b16_halo_res1_s102.fits`.
+
 - **ksz1**: Kinetic SZ emission from WebSky 0.4. Available at $N_{side}=4096$. For more details see :ref:`websky`.
+
+- **ksz2**: Kinetic SZ emission from the `Agora simulations <https://doi.org/10.1093/mnras/stae1031>`_ (based on BAHAMAS hydrodynamical simulations). Available at $N_{side}=8192$.
+
+- **ksz3**: Lensed Kinetic SZ emission from the `Agora simulations <https://doi.org/10.1093/mnras/stae1031>`_. Available at $N_{side}=8192$.
 
 Radio galaxies
 ==============
