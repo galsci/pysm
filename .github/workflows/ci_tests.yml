@@ -52,7 +52,7 @@ jobs:
       shell: bash -el {0}
     - name: Run Pytest
       run: |
-        pytest -v
+        PYTHONPATH=src pytest -v
       shell: bash -el {0}
 
 #    - name: MPI test
