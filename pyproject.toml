@@ -93,7 +93,7 @@ include = [
 
 [tool.hatch.build.targets.wheel]
 include = [
-    "/src/pysm3/data/**",
+    "/src/pysm3/**",
 ]
 
 [tool.pytest.ini_options]
