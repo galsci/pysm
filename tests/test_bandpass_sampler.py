@@ -219,3 +219,100 @@ def test_bandpass_normalization():
         assert abs(integral - 1.0) < 0.01
     except ImportError:
         pytest.skip("scikit-learn not installed")
+
+
+def test_narrow_bandpass():
+    """Test resampling with a very narrow bandpass."""
+    nu = np.linspace(99, 101, 50)  # Very narrow 2 GHz range
+    centroid = 100.0
+    sigma = 0.5  # Very narrow sigma
+    bnu = np.exp(-0.5 * ((nu - centroid) / sigma) ** 2)
+
+    try:
+        from numpy import trapezoid
+    except ImportError:
+        from numpy import trapz as trapezoid
+
+    bnu_norm = bnu / trapezoid(bnu, nu)
+
+    # Test that moments work with narrow bandpass
+    computed_centroid, computed_bandwidth = pysm3.compute_moments(nu, bnu_norm)
+    assert abs(computed_centroid - centroid) < 0.1
+    assert computed_bandwidth > 0
+
+
+@pytest.mark.skipif(
+    not hasattr(pysm3, "resample_bandpass"),
+    reason="scikit-learn not available",
+)
+def test_wide_bandpass():
+    """Test resampling with a very wide bandpass."""
+    nu = np.linspace(50, 150, 200)  # Very wide 100 GHz range
+    centroid = 100.0
+    sigma = 25.0  # Very wide sigma
+    bnu = np.exp(-0.5 * ((nu - centroid) / sigma) ** 2)
+
+    try:
+        results = pysm3.resample_bandpass(
+            nu, bnu, num_wafers=2, bootstrap_size=128, random_seed=42
+        )
+
+        # Should still produce valid results
+        assert len(results) == 2
+        for result in results:
+            assert result["bandwidth"] > 0
+            assert 50 <= result["centroid"] <= 150
+    except ImportError:
+        pytest.skip("scikit-learn not installed")
+
+
+@pytest.mark.skipif(
+    not hasattr(pysm3, "resample_bandpass"),
+    reason="scikit-learn not available",
+)
+def test_asymmetric_bandpass():
+    """Test resampling with an asymmetric bandpass."""
+    nu = np.linspace(90, 110, 100)
+    # Create an asymmetric bandpass (skewed distribution)
+    bnu = np.exp(-0.5 * ((nu - 95) / 3) ** 2) + 0.5 * np.exp(
+        -0.5 * ((nu - 105) / 8) ** 2
+    )
+
+    try:
+        results = pysm3.resample_bandpass(
+            nu, bnu, num_wafers=2, bootstrap_size=64, random_seed=42
+        )
+
+        # Should still produce valid normalized results
+        try:
+            from numpy import trapezoid
+        except ImportError:
+            from numpy import trapz as trapezoid
+
+        for result in results:
+            integral = trapezoid(result["weights"], result["frequency"])
+            assert abs(integral - 1.0) < 0.01
+            assert result["bandwidth"] > 0
+    except ImportError:
+        pytest.skip("scikit-learn not installed")
+
+
+def test_compute_moments_edge_cases():
+    """Test moment computation with edge cases."""
+    # Single peak at center
+    nu = np.linspace(90, 110, 100)
+    bnu = np.zeros(100)
+    bnu[50] = 1.0  # Delta function at center
+
+    try:
+        from numpy import trapezoid
+    except ImportError:
+        from numpy import trapz as trapezoid
+
+    bnu_norm = bnu / trapezoid(bnu, nu)
+
+    centroid, bandwidth = pysm3.compute_moments(nu, bnu_norm)
+    # Centroid should be at the peak
+    assert abs(centroid - 100.0) < 0.5
+    # Bandwidth should be very small
+    assert bandwidth < 1.0
