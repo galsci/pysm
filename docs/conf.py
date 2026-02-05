@@ -226,6 +226,3 @@ extensions += [
 exclude_patterns += ["_build", "**.ipynb_checkpoints"]
 nbsphinx_kernel_name = "python3"
 nbsphinx_execute = "auto"
-exclude_patterns += ["_build", "**.ipynb_checkpoints"]
-nbsphinx_kernel_name = "python3"
-nbsphinx_execute = "never"
