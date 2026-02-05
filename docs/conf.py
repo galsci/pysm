@@ -221,8 +221,11 @@ extensions += [
 ]
 
 # Execute notebooks at build time only if they have no stored outputs.
-# This keeps notebooks in git clean (no outputs) while ensuring the docs
-# build validates that notebooks run end-to-end.
+# Many notebooks in this repository (e.g. template-preprocessing workflows)
+# require large external datasets and must not be executed on Read the Docs.
+# We therefore disable execution globally and selectively enable it in a small
+# number of self-contained tutorial notebooks via per-notebook metadata:
+# `{"nbsphinx": {"execute": "always"}}`.
 exclude_patterns += ["_build", "**.ipynb_checkpoints"]
 nbsphinx_kernel_name = "python3"
-nbsphinx_execute = "auto"
+nbsphinx_execute = "never"

@@ -60,6 +60,7 @@ Citation = "https://github.com/galsci/pysm/blob/main/CITATION"
 [project.optional-dependencies]
 docs = [
     "ipykernel",
+    "matplotlib",
     "nbsphinx",
     "pandoc",
     "sphinx-pyproject",
@@ -77,6 +78,7 @@ test = [
     "pytest",
     "nbval",
     "ipykernel",
+    "matplotlib",
     "pytest-astropy",
     "xarray",
 ]
