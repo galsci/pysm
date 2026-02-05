@@ -104,6 +104,7 @@ testpaths = [
     "tests",
     "docs/bandpass_integration.ipynb",
     "docs/bandpass_sampling.ipynb",
+    "docs/bandpass_sampling_comparison.ipynb",
     "docs/customize_components.ipynb",
     "docs/basic_use.ipynb",
     "docs/model_data.ipynb",

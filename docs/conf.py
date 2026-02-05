@@ -219,6 +219,13 @@ extensions += [
     "sphinx.ext.mathjax",
     "sphinx_lfs_content",
 ]
+
+# Execute notebooks at build time only if they have no stored outputs.
+# This keeps notebooks in git clean (no outputs) while ensuring the docs
+# build validates that notebooks run end-to-end.
+exclude_patterns += ["_build", "**.ipynb_checkpoints"]
+nbsphinx_kernel_name = "python3"
+nbsphinx_execute = "auto"
 exclude_patterns += ["_build", "**.ipynb_checkpoints"]
 nbsphinx_kernel_name = "python3"
 nbsphinx_execute = "never"
