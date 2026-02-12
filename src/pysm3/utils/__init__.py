@@ -23,6 +23,11 @@ from .photometry import (
 )
 from .small_scales import sigmoid  # noqa: F401
 from .spherical_harmonics import apply_smoothing_and_coord_transform, map2alm
+from .cache import (
+    get_cache_filename,  # noqa: F401
+    get_or_create_cached_preset_map,  # noqa: F401
+    get_or_create_cached_preset_map_subprocess,  # noqa: F401
+)
 
 log = logging.getLogger("pysm3")
 
