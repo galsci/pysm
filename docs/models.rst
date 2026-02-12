@@ -77,7 +77,6 @@ Synchrotron
 
 - **s7**: a power law with a curved index. The model uses the same templates and the same spectral index map of **s5**, the curvature term is based on the smoothed intensity template matched to the patch measured by the ARCADE experiment (Kogut, A. 2012, ApJ, 753, 110) and has random small scale fluctuations added, see `the relevant notebook <preprocess-templates/synchrotron_curvature.ipynb>`_. The curvature map is available at $N_{side}=2048/4096/8192$.
 
-
 AME
 ===
 
@@ -146,3 +145,19 @@ Radio galaxies
 - **rg1**: Emission from Radio Galaxies simulated with WebSky 0.4, sources are not polarized. Available at $N_{side}=4096$ at the same input frequencies of CIB and then interpolated. For more details see :ref:`websky`.
 - **rg2**: Brightest Radio Galaxies from WebSky 0.4, flux above ``1 mJy`` at ``100 GHz``, about 370k individual point sources simulated on-the-fly in pixel space from a catalog of sources to the desired resolution and beam using `pixell.sim_objects`. The sources are polarized with a polarization angle generated randomly with a fixed seed, so they are consistent across runs. It is complementary to **rg3**. See `the notebook used to produce the catalog <preprocess-templates/catalog/websky_sources_high_flux_catalog_out_1mJy.ipynb>`_ and `the notebook comparing the rg2 and rg3 to rg1 <preprocess-templates/catalog/compare_catalog_to_original_websky.ipynb>`_. Relies on :class:`~pysm3.PointSourceCatalog`. The catalog itself is available at `NERSC <https://portal.nersc.gov/cfs/cmb/pysm-data/websky/0.4/radio_catalog/>`_, the format is easy to read with ``xarray``, it contains the coordinates of the sources and the polynomial coefficients to generate the flux at the desired frequency.
 - **rg3**: Background Radio Galaxies from WebSky 0.4, flux below ``1 mJy`` at ``100 GHz``, about 280 million individual point sources pre-simulated at Nside 2048, 4096 and 8192 at a set of input frequencies and smoothed in pixel space to a fiducial beam. It interpolates across HEALPix maps at different frequencies for bandpass integration then applies the differential beam in spherical harmonics space. Sources are polarized, same technique used for **rg2**. See the notebooks used to `produce <preprocess-templates/catalog/background_create_websky_catalog_dask.ipynb>`_ and `assemble <preprocess-templates/catalog/background_dask_assemble_catalog.ipynb>`_ the catalogs and the `maps <preprocess-templates/catalog/create_catalog_background.py>`_. Relies on :class:`~pysm3.InterpolatingComponent`.
+
+Gaussian foregrounds
+====================
+
+These components are intentionally synthetic. Unlike the other PySM foreground
+models, they do not inherit large-scale morphology from sky data products
+(e.g. Planck/WMAP templates), but instead are full-sky Gaussian realizations
+drawn from simple harmonic-space power laws. They are therefore best suited to
+algorithm development, pipeline checks, and controlled forecasting tests, not
+for validating behavior that depends on realistic Galactic structures.
+For a worked comparison against template-based models, see
+`Gaussian foreground comparison notebook <gaussian_fg_comparison.ipynb>`_.
+
+- **gd0**: Gaussian random dust model (T,Q,U) with power-law :math:`D_\ell` and modified blackbody frequency scaling in thermodynamic units. Polarization defaults follow the Simons Observatory Gaussian-foreground setup from Wolz et al. (2024): :math:`A_{EE}=56`, :math:`A_{BB}=28`, :math:`\alpha_{EE}=-0.32`, :math:`\alpha_{BB}=-0.16`, :math:`\beta_d=1.54`, :math:`T_d=20` K at :math:`\nu_0=353` GHz. The TT recipe is: define :math:`D_\ell^{TT}=A_{TT}(\ell/80)^{\alpha_{TT}}`, convert to :math:`C_\ell`, draw Gaussian :math:`a_{\ell m}`, then synthesize :math:`T` with ``healpy``. Defaults are :math:`A_{TT}=5600` and :math:`\alpha_{TT}=-0.8` (equivalent to :math:`C_\ell \propto \ell^{-2.8}`), motivated by diffuse dust/cirrus intensity angular power spectrum measurements, e.g. `Miville-Deschênes et al. 2007 <https://arxiv.org/abs/0708.4414>`_.
+
+- **gs0**: Gaussian random synchrotron model (T,Q,U) with power-law :math:`D_\ell` and power-law frequency scaling in thermodynamic units. Polarization defaults follow the Simons Observatory Gaussian-foreground setup from Wolz et al. (2024): :math:`A_{EE}=9`, :math:`A_{BB}=1.6`, :math:`\alpha_{EE}=-0.7`, :math:`\alpha_{BB}=-0.93`, :math:`\beta_s=-3` at :math:`\nu_0=23` GHz. The TT recipe is: define :math:`D_\ell^{TT}=A_{TT}(\ell/80)^{\alpha_{TT}}`, convert to :math:`C_\ell`, draw Gaussian :math:`a_{\ell m}`, then synthesize :math:`T` with ``healpy``. Defaults are :math:`A_{TT}=100` and :math:`\alpha_{TT}=-0.8` (equivalent to :math:`C_\ell \propto \ell^{-2.8}`), within the observed diffuse synchrotron intensity angular power spectrum range, e.g. `La Porta et al. 2008 <https://arxiv.org/abs/0804.4587>`_.
