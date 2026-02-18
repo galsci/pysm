@@ -28,7 +28,7 @@ def apply_smoothing_and_coord_transform(
     map2alm_lsq_maxiter=None,
     map_dist=None,
 ):
-    """Apply smoothing and coordinate rotation to an input map
+    r"""Apply smoothing and coordinate rotation to an input map
 
     it applies the `healpy.smoothing` Gaussian smoothing kernel if `map_dist`
     is None, otherwise applies distributed smoothing with `libsharp`.
