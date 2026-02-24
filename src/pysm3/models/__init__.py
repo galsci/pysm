@@ -20,3 +20,4 @@ from .websky import (
 )
 from .catalog import PointSourceCatalog
 from .dipole import CMBDipole
+from .gaussian_fg import GaussianDust, GaussianPolarizedForeground, GaussianSynchrotron

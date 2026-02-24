@@ -189,6 +189,8 @@ All the tutorials are Jupyter Notebooks and can be accessed `from the repository
   bandpass_sampling_comparison
   smoothing_coord_rotation
   customize_components
+  gaussian_fg_comparison
+  cache_utils
   mpi
 
 Template preprocessing notebooks

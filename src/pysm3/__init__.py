@@ -17,6 +17,9 @@ from .utils import (
     set_verbosity,
     apply_smoothing_and_coord_transform,
     map2alm,
+    get_cache_filename,
+    get_or_create_cached_preset_map,
+    get_or_create_cached_preset_map_subprocess,
 )
 
 from .bandpass_sampler import (  # noqa: E402

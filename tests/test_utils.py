@@ -116,6 +116,44 @@ def test_remotedata_globalpath(tmp_path):
     assert filename == str(test_file)
 
 
+def test_cached_preset_map(tmp_path):
+    cache_dir = tmp_path / "cache"
+    freq = 95 * u.GHz
+
+    first = pysm3.get_or_create_cached_preset_map(
+        preset_string="gd0",
+        nside=8,
+        freq=freq,
+        cache_dir=cache_dir,
+    )
+    second = pysm3.get_or_create_cached_preset_map(
+        preset_string="gd0",
+        nside=8,
+        freq=freq,
+        cache_dir=cache_dir,
+    )
+
+    cache_file = cache_dir / pysm3.get_cache_filename("gd0", 8, freq.to_value(u.GHz))
+    assert cache_file.exists()
+    np.testing.assert_allclose(first, second)
+
+
+def test_cached_preset_map_subprocess(tmp_path):
+    cache_dir = tmp_path / "cache_subprocess"
+    freq = 95 * u.GHz
+
+    cached = pysm3.get_or_create_cached_preset_map_subprocess(
+        preset_string="gd0",
+        nside=8,
+        freq=freq,
+        cache_dir=cache_dir,
+    )
+
+    cache_file = cache_dir / pysm3.get_cache_filename("gd0", 8, freq.to_value(u.GHz))
+    assert cache_file.exists()
+    assert cached.shape == (3, 12 * 8 * 8)
+
+
 @pytest.fixture
 def test_fits_file(tmp_path):
     d = tmp_path / "sub"
