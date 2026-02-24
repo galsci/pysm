@@ -154,7 +154,7 @@ class GaussianDust(GaussianPolarizedForeground):
     (equivalently :math:`C_\ell^{TT} \propto \ell^{-2.8}`), chosen to be
     consistent with diffuse dust/cirrus intensity angular power spectrum
     measurements, e.g.
-    Miville-Deschenes et al. (2007): https://arxiv.org/abs/0708.4414
+    Miville-Deschenes et al. (2007): https://www.aanda.org/articles/aa/abs/2007/26/aa6962-06/aa6962-06.html
     """
 
     def __init__(
@@ -217,7 +217,7 @@ class GaussianSynchrotron(GaussianPolarizedForeground):
     (equivalently :math:`C_\ell^{TT} \propto \ell^{-2.8}`), which lies inside
     the diffuse synchrotron intensity angular power spectrum range (roughly
     :math:`C_\ell \propto \ell^{-2.6}` to :math:`\ell^{-3.0}`), e.g.
-    La Porta et al. (2008): https://arxiv.org/abs/0804.4587
+    La Porta et al. (2008): https://www.aanda.org/articles/aa/abs/2008/09/aa8435-07/aa8435-07.html
     """
 
     def __init__(
