@@ -49,7 +49,7 @@ jobs:
         cache-environment: true
         post-cleanup: 'all'
     - name: Install package
-      run: pip install .[test]
+      run: pip install -e .[test]
       shell: bash -el {0}
     - name: Run Pytest
       run: |
