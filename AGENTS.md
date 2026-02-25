@@ -95,3 +95,4 @@ When working with sky models, these tags are commonly used:
 - Commits: short imperative sentences (e.g., "Add dust layer interpolation")
 - Reference issues in commit body: `Fixes #123`
 - PRs need: concise summary, test results checklist, links to rendered docs if applicable
+- Always use the GitHub CLI `gh` when interacting with GitHub (PRs, issues, checks, comments)

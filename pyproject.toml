@@ -60,6 +60,7 @@ Citation = "https://github.com/galsci/pysm/blob/main/CITATION"
 [project.optional-dependencies]
 docs = [
     "ipykernel",
+    "matplotlib",
     "nbsphinx",
     "pandoc",
     "sphinx-pyproject",
@@ -77,9 +78,13 @@ test = [
     "pytest",
     "nbval",
     "ipykernel",
+    "matplotlib",
     "pytest-astropy",
     "xarray",
 ]
+
+[project.scripts]
+pysm_bandpass_sampler = "pysm3.bandpass_sampler_cli:main"
 
 [tool.hatch.version]
 source = "vcs"
@@ -115,6 +120,8 @@ addopts = "-v --nbval --nbval-current-env"
 testpaths = [
     "tests",
     "docs/bandpass_integration.ipynb",
+    "docs/bandpass_sampling.ipynb",
+    "docs/bandpass_sampling_comparison.ipynb",
     "docs/customize_components.ipynb",
     "docs/basic_use.ipynb",
     "docs/model_data.ipynb",

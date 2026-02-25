@@ -2,6 +2,7 @@ Unreleased
 ==========
 - Add NumPy 2 support by replacing deprecated `np.trapz` with `trapezoid` https://github.com/galsci/pysm/pull/232
 - Add SZ model presets in `presets.cfg`: ksz2, tsz2, ksz3, tsz3 (Agora), tsz4 (HalfDome) https://github.com/galsci/pysm/pull/244
+- Add bandpass sampling utilities (NumPy/SciPy implementation), documentation notebooks, and reference-based validation tests https://github.com/galsci/pysm/pull/247
 
 3.4.3 (2025-10-02)
 ==================
