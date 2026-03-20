@@ -35,7 +35,7 @@ See the `documentation <https://pysm3.readthedocs.io/en/latest/#installation>`_
 * Check code style with ``uv run flake8 src/pysm3 --count --max-line-length=100``
 * Test with ``uv run pytest -v``
 * Building docs requires ``pandoc``, not the python package, the actual ``pandoc`` command line tool, install it with conda or your package manager
-* Build docs locally with ``uv run sphinx-build -W -b html docs docs/_build/html``
+* Build docs locally with ``uv run --extra docs sphinx-build -W -b html docs docs/_build/html``
 
 Support
 -------

@@ -44,7 +44,7 @@ uv run pytest tests/test_dust.py -v
 uv run flake8 src/pysm3 --count --max-line-length=100
 
 # Build documentation
-uv run sphinx-build -W -b html docs docs/_build/html
+uv run --extra docs sphinx-build -W -b html docs docs/_build/html
 
 # Coverage report
 uv run pytest --cov pysm3 --cov-report=xml
