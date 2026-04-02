@@ -95,6 +95,9 @@ include = [
     "/src/pysm3/**",
 ]
 
+[tool.hatch.build.targets.sdist.force-include]
+"src/pysm3/data/presets.cfg" = "src/pysm3/data/presets.cfg"
+
 [tool.hatch.build.targets.wheel]
 include = [
     "/src/pysm3/**",
