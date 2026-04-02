@@ -29,7 +29,6 @@ dependencies = [
     "h5py",
     "scipy >= 1.10, < 1.15",
     "healpy >= 1.16.0",
-    "importlib_metadata;python_version<'3.8'",
     "numba",
     "numpy >= 1.21",
     "toml",
@@ -62,7 +61,6 @@ docs = [
     "ipykernel",
     "matplotlib",
     "nbsphinx",
-    "pandoc",
     "sphinx-pyproject",
     "sphinx-astropy",
     "sphinx-math-dollar",
@@ -94,11 +92,11 @@ version-file = "src/pysm3/_version.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "/src/pysm3",
+    "/src/pysm3/**",
 ]
-packages = [
-    "src/pysm3",
-]
+
+[tool.hatch.build.targets.sdist.force-include]
+"src/pysm3/data/presets.cfg" = "src/pysm3/data/presets.cfg"
 
 [tool.hatch.build.targets.wheel]
 include = [
