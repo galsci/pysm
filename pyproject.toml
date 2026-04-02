@@ -61,7 +61,6 @@ docs = [
     "ipykernel",
     "matplotlib",
     "nbsphinx",
-    "pandoc",
     "sphinx-pyproject",
     "sphinx-astropy",
     "sphinx-math-dollar",
