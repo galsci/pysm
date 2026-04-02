@@ -29,7 +29,6 @@ dependencies = [
     "h5py",
     "scipy >= 1.10, < 1.15",
     "healpy >= 1.16.0",
-    "importlib_metadata;python_version<'3.8'",
     "numba",
     "numpy >= 1.21",
     "toml",
