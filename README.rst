@@ -54,6 +54,7 @@ Release
 
        uv venv .venv
        uv pip install --python .venv/bin/python pip hatch
+       uv pip install --python .venv/bin/python -e .[test]
 
    Activate it for the remaining steps with ``source .venv/bin/activate``.
 4. Run the test suite (at least ``pytest``) to verify the release build.
