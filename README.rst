@@ -75,11 +75,15 @@ Release
 
        hatch publish --no-prompt
 
-9. Push the tag (and any commits) to GitHub::
+9. Update the ``conda-forge/pysm3-feedstock`` recipe for the new release (or
+   merge the bot PR if it already exists) so the conda package is published as
+   well.
+
+10. Push the tag (and any commits) to GitHub::
 
        git push --tags
 
-10. Draft the GitHub release notes referencing the matching ``CHANGES.rst``
+11. Draft the GitHub release notes referencing the matching ``CHANGES.rst``
     entry and announce the release as needed.
 
 .. |CI Tests| image:: https://github.com/galsci/pysm/actions/workflows/ci_tests.yml/badge.svg
