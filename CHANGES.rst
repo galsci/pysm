@@ -4,8 +4,6 @@
 - Drop Python 3.9 support (EOL; healpy >=1.18.1 requires Python >=3.10) https://github.com/galsci/pysm/pull/260
 - Add free-free small-scale template generation notebook https://github.com/galsci/pysm/pull/251
 - Add HalfDome TSZ model (``tsz4``) and documentation https://github.com/galsci/pysm/pull/244
-- Add custom beam window support https://github.com/galsci/pysm/pull/190
-- Upgrade JOSS paper build actions to v4
 
 Unreleased
 ==========
