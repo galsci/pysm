@@ -94,7 +94,7 @@ Free-free
 CMB
 ===
 
-- **c1**: A lensed CMB realisation is computed using Taylens, a code to compute a lensed CMB realisation using nearest-neighbour Taylor interpolation (`taylens <https://github.com/amaurea/taylens>`_; Naess, S. K. and Louis, T. JCAP 09 001, 2013, astro-ph/1307.0719). This code takes, as an input, a set of unlensed Cl's generated using `CAMB <http://www.camb.info/>`_. The params.ini is in the Ancillary directory.
+- **c1**: A lensed CMB realisation is computed using Taylens, a code to compute a lensed CMB realisation using nearest-neighbour Taylor interpolation (`taylens <https://github.com/amaurea/taylens>`_; Naess, S. K. and Louis, T. JCAP 09 001, 2013, astro-ph/1307.0719). This code takes, as an input, a set of unlensed Cl's generated using `CAMB <http://www.camb.info/>`_. The cosmological parameters used to generate the unlensed Cl's are the best-fit ΛCDM parameters from the Planck 2015 data, as stated in Section 2.5 of the `PySM 2 paper <https://arxiv.org/abs/1608.02841>`_ (Thorne et al. 2017, MNRAS 469, 2821). The specific parameter values are given in `Planck 2015 results XIII. Cosmological parameters <https://arxiv.org/abs/1502.01589>`_ (Planck Collaboration 2016, A&A 594, A13). Note that the CAMB ``params.ini`` file referenced in the original PySM 2 documentation is not included in the public PySM repositories.
 
 - **c2**: Precomputed lensed CMB map of the **c1** model at $N_{side}=512$.
 
