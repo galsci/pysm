@@ -94,7 +94,109 @@ Free-free
 CMB
 ===
 
-- **c1**: A lensed CMB realisation is computed using Taylens, a code to compute a lensed CMB realisation using nearest-neighbour Taylor interpolation (`taylens <https://github.com/amaurea/taylens>`_; Naess, S. K. and Louis, T. JCAP 09 001, 2013, astro-ph/1307.0719). This code takes, as an input, a set of unlensed Cl's generated using `CAMB <http://www.camb.info/>`_. The cosmological parameters used to generate the unlensed Cl's are the best-fit ΛCDM parameters from the Planck 2015 data, as stated in Section 2.5 of the `PySM 2 paper <https://arxiv.org/abs/1608.02841>`_ (Thorne et al. 2017, MNRAS 469, 2821). The specific parameter values are given in `Planck 2015 results XIII. Cosmological parameters <https://arxiv.org/abs/1502.01589>`_ (Planck Collaboration 2016, A&A 594, A13). Note that the CAMB ``params.ini`` file referenced in the original PySM 2 documentation is not included in the public PySM repositories.
+- **c1**: A lensed CMB realisation is computed using Taylens, a code to
+  compute a lensed CMB realisation using nearest-neighbour Taylor
+  interpolation (`taylens <https://github.com/amaurea/taylens>`_; Naess,
+  S. K. and Louis, T. JCAP 09 001, 2013, astro-ph/1307.0719). This code
+  takes, as an input, a set of unlensed Cl's generated using `CAMB
+  <http://www.camb.info/>`_. The unlensed Cl's were computed using CAMB
+  with the best-fit ΛCDM cosmological parameters from the Planck 2015
+  TT,TE,EE+lowP data combination, as stated in Section 2.5 of the `PySM 2
+  paper <https://arxiv.org/abs/1608.02841>`_ (Thorne et al. 2017, MNRAS
+  469, 2821) and detailed in `Planck 2015 results XIII. Cosmological
+  parameters <https://arxiv.org/abs/1502.01589>`_ (Planck Collaboration
+  2016, A&A 594, A13, Table 4).
+
+  The CAMB ``params.ini`` file used to generate the unlensed Cl's is
+  included in the PySM 3 documentation:
+  :download:`cmb_c1_params.ini <cmb_c1_params.ini>`.
+  This file was recovered from the ``Ancillaries`` directory of the
+  original PySM 2 development repository (see `issue #262
+  <https://github.com/galsci/pysm/issues/262>`_ and `PR #263
+  <https://github.com/galsci/pysm/pull/263>`_).
+
+  The key cosmological parameters from ``params.ini`` are:
+
+  .. list-table:: C1 model CAMB parameters
+     :header-rows: 1
+     :widths: 35 20 45
+
+     * - Parameter
+       - Value
+       - Description
+     * - ``ombh2``
+       - 0.02225
+       - Physical baryon density, :math:`\Omega_b h^2`
+     * - ``omch2``
+       - 0.1198
+       - Physical cold dark matter density, :math:`\Omega_c h^2`
+     * - ``omnuh2``
+       - 0.00064
+       - Physical neutrino density, :math:`\Omega_\nu h^2`
+     * - ``omk``
+       - 0
+       - Curvature density, :math:`\Omega_k` (flat universe)
+     * - ``hubble``
+       - 70
+       - Hubble constant, :math:`H_0` (km/s/Mpc)
+     * - ``temp_cmb``
+       - 2.7255
+       - CMB temperature, :math:`T_{\rm CMB}` (K)
+     * - ``helium_fraction``
+       - 0.24
+       - Primordial helium mass fraction, :math:`Y_{\rm He}`
+     * - ``massless_neutrinos``
+       - 2.046
+       - Effective number of massless neutrinos, :math:`N_{\rm eff}`
+     * - ``re_optical_depth``
+       - 0.06
+       - Reionization optical depth, :math:`\tau`
+     * - ``scalar_spectral_index(1)``
+       - 0.9645
+       - Scalar spectral index, :math:`n_s`
+     * - ``scalar_amp(1)``
+       - 2.1e-9
+       - Scalar amplitude, :math:`A_s`
+     * - ``pivot_scalar``
+       - 0.05
+       - Scalar pivot scale, :math:`k_{\rm pivot}` (Mpc\ :sup:`-1`\ )
+     * - ``initial_ratio(1)``
+       - 0.0
+       - Tensor-to-scalar ratio, :math:`r`
+     * - ``l_max_scalar``
+       - 2200
+       - Maximum multipole for scalar spectra
+
+  These parameter values match the Planck 2015 TT,TE,EE+lowP best-fit
+  ΛCDM cosmology from Table 4 of `Planck 2015 results XIII
+  <https://arxiv.org/abs/1502.01589>`_ (Planck Collaboration 2016, A&A
+  594, A13):
+
+  .. list-table:: Planck 2015 TT,TE,EE+lowP best-fit parameters (Table 4)
+     :header-rows: 1
+     :widths: 35 35 30
+
+     * - Parameter
+       - Value
+       - params.ini match
+     * - :math:`\Omega_b h^2`
+       - 0.02225 ± 0.00016
+       - ``ombh2 = 0.02225``
+     * - :math:`\Omega_c h^2`
+       - 0.1198 ± 0.0015
+       - ``omch2 = 0.1198``
+     * - :math:`n_s`
+       - 0.9645 ± 0.0049
+       - ``scalar_spectral_index(1) = 0.9645``
+     * - :math:`H_0`
+       - 67.27 ± 0.66
+       - ``hubble = 70`` (derived)
+     * - :math:`\tau`
+       - 0.079 ± 0.017
+       - ``re_optical_depth = 0.06``
+     * - :math:`\ln(10^{10} A_s)`
+       - 3.094 ± 0.034
+       - ``scalar_amp(1) = 2.1e-9``
 
 - **c2**: Precomputed lensed CMB map of the **c1** model at $N_{side}=512$.
 
