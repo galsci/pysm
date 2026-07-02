@@ -1,6 +1,8 @@
 Unreleased
 ==========
 
+- Document C1 cosmological parameters: add the CAMB ``params.ini`` file used to generate the c1 model's unlensed Cl's, with a full parameter table and comparison to Planck 2015 TT,TE,EE+lowP best-fit values https://github.com/galsci/pysm/issues/262
+
 3.4.5 (2026-05-28)
 ==================
 - Relax SciPy upper bound (remove ``scipy < 1.15`` pin), require ``healpy >= 1.18.1`` which fixes the underlying ``map2alm_lsq`` compatibility issue https://github.com/galsci/pysm/pull/260
