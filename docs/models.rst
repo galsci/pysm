@@ -260,8 +260,8 @@ Sunyaev–Zeldovich emission
 
 - **ksz5**: Lensed Kinetic SZ emission from the `FLAMINGO simulations <https://doi.org/10.1093/mnras/stag625>`_ (using the integrated maps for the fiducial feedback model: L1$\_$m9). Available at $N_{side}=4096$.
 
-- **ksz6**: Lensed Kinetic SZ emission from the `FLAMINGO simulations <https://doi.org/10.1093/mnras/stag625>`_ (using the integrated maps for the strongest feedback \model: fgas-8sigma). Available at $N_{side}=8192$.
-  
+- **ksz6**: Lensed Kinetic SZ emission from the `FLAMINGO simulations <https://doi.org/10.1093/mnras/stag625>`_ (using the integrated maps for the strongest feedback model: fgas-8sigma). Available at $N_{side}=4096$.
+
 Radio galaxies
 ==============
 

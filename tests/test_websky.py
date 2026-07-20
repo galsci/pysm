@@ -11,6 +11,7 @@ except ImportError:
 
 from pysm3 import (
     SPT_CIB_map_scaling,
+    Sky,
     WebSkyCIB,
     SimpleSZ,
     WebSkyRadioGalaxies,
@@ -113,7 +114,7 @@ def test_cib(tmp_path):
 
 @pytest.mark.parametrize("sz_type", ["thermal", "kinetic"])
 def test_sz(tmp_path, monkeypatch, sz_type):
-
+    """Test SimpleSZ class with thermal and kinetic SZ types."""
     os.environ.pop("PYSM_LOCAL_DATA", None)
     monkeypatch.setattr(utils.data, "PREDEFINED_DATA_FOLDERS", [str(tmp_path)])
     nside = 4
@@ -138,6 +139,42 @@ def test_sz(tmp_path, monkeypatch, sz_type):
     value = -4.109055 * u.uK_CMB if sz_type == "thermal" else 1.0 * u.uK_CMB
     np.testing.assert_allclose(np.ones(len(tsz_map[0])) * value, tsz_map[0], rtol=1e-4)
     np.testing.assert_allclose(np.zeros((2, len(tsz_map[0]))) * u.uK_CMB, tsz_map[1:])
+
+
+@pytest.mark.parametrize(
+    "preset_name,filename,template_value",
+    [
+        ("ksz5", "L1_m9_lensed_kSZ_uKCMB.fits", 1.0),
+        ("ksz6", "fgas-8sigma_lensed_kSZ_uKCMB.fits", 2.0),
+    ],
+)
+def test_flamingo_ksz_models(
+    tmp_path, monkeypatch, preset_name, filename, template_value
+):
+    """Test the Flamingo kSZ presets without downloading the full templates."""
+    monkeypatch.delenv("PYSM_LOCAL_DATA", raising=False)
+    monkeypatch.setattr(utils.data, "PREDEFINED_DATA_FOLDERS", [str(tmp_path)])
+    nside = 4
+    shape = hp.nside2npix(nside)
+
+    path = tmp_path / "flamingo" / "ksz"
+    path.mkdir(parents=True)
+    hp.write_map(
+        path / filename,
+        np.full(shape, template_value, dtype=np.float32),
+        overwrite=True,
+    )
+
+    sky = Sky(
+        nside=nside,
+        preset_strings=[preset_name],
+        output_unit=u.uK_CMB,
+    )
+    emission = sky.get_emission(100 * u.GHz)
+
+    assert sky.components[0].max_nside == 4096
+    np.testing.assert_allclose(emission[0].value, template_value)
+    np.testing.assert_allclose(emission[1:].value, 0)
 
 
 # @pytest.mark.parametrize("tensor_to_scalar", [1, 1e-3])
