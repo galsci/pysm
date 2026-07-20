@@ -22,7 +22,8 @@ tests/
 └── test_*.py            # Other component tests
 
 docs/
-├── *.ipynb              # Jupyter notebooks (executed during CI via nbval)
+├── *.ipynb              # Tutorials; selected files are executed by pytest/nbval
+├── preprocess-templates/ # Large, data-producing notebooks; not executed in CI
 ├── conf.py              # Sphinx configuration
 └── *.rst                # RST documentation files
 ```
@@ -40,8 +41,12 @@ uv run pytest -v
 # Run specific test file
 uv run pytest tests/test_dust.py -v
 
-# Lint code
-uv run flake8 src/pysm3 --count --max-line-length=100
+# Lint the Python files changed by your patch
+uv run flake8 PATH/TO/CHANGED_FILE.py --count --max-line-length=100
+
+# Execute one notebook into a separate output file (nbconvert is not in the test extra)
+uv run --with nbconvert jupyter nbconvert --to notebook --execute INPUT.ipynb \
+  --output OUTPUT.ipynb
 
 # Build documentation
 uv run --extra docs sphinx-build -W -b html docs docs/_build/html
@@ -70,8 +75,27 @@ uv run pytest --cov pysm3 --cov-report=xml
 ## Testing Guidelines
 - Test files: `tests/test_<component>.py`
 - Mark slow tests with `@pytest.mark.slow`
-- Notebooks in `docs/` are validated via `--nbval`
+- Pytest executes only the tutorial notebooks listed under `testpaths` in `pyproject.toml` via
+  `nbval`; Sphinx and Read the Docs do not execute notebooks
+- `docs/preprocess-templates/` notebooks require large external datasets and are not CI tests
+- For preset or external-data changes, add a focused unit test with a small local, low-NSIDE
+  fixture. Check shape, units, finite values, and meaningful preset differences; validate native
+  high-resolution products separately on HPC
 - MPI tests: `./run_mpi_tests.sh` (requires `mpi4py`)
+
+## Large Notebook & HPC Validation
+- Run preprocessing and native-resolution notebooks through Slurm on a compute node, including on
+  Popeye; do not run them on a login node
+- Put environments, downloaded inputs, caches, executed notebooks, and logs on a persistent shared
+  filesystem rather than node-local `/tmp`
+- Request memory, wall time, and CPUs based on NSIDE and the number of simultaneously resident
+  HEALPix maps. Set `OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK` (and `NUMBA_NUM_THREADS` when relevant)
+- Parameterize data roots or use public PySM presets/data URLs. Never commit personal absolute paths
+  such as `/home/<user>/...` or `/global/homes/<user>/...`
+- At high resolution, load/process maps sequentially and cache only the Stokes fields needed by the
+  workflow (for example, intensity only) to limit peak memory
+- Preserve the source notebook by writing execution results to a separate output notebook and check
+  every cell completed without errors before reporting success
 
 ## Common Model Tags
 When working with sky models, these tags are commonly used:
@@ -86,9 +110,10 @@ When working with sky models, these tags are commonly used:
 2. Model data files are downloaded from remote servers; tests may require network access
 3. HEALPix maps use RING ordering by default
 4. Frequency units are typically GHz; intensity units are typically uK_RJ or uK_CMB
-5. Run both linter and tests before submitting PRs:
+5. Run Flake8 on changed Python files and the relevant tests before submitting PRs:
    ```bash
-   uv run flake8 src/pysm3 --count --max-line-length=100 && uv run pytest -v
+   uv run flake8 PATH/TO/CHANGED_FILE.py --count --max-line-length=100
+   uv run pytest tests/test_<component>.py -v
    ```
 
 ## Commit & Pull Request Guidelines
@@ -96,3 +121,9 @@ When working with sky models, these tags are commonly used:
 - Reference issues in commit body: `Fixes #123`
 - PRs need: concise summary, test results checklist, links to rendered docs if applicable
 - Always use the GitHub CLI `gh` when interacting with GitHub (PRs, issues, checks, comments)
+- Notebooks are stored with Git LFS. Before notebook work from a fork, run `git fetch origin main`
+  and `git lfs pull origin main` against the canonical `galsci/pysm` remote; do not commit files
+  that changed only between an LFS pointer and hydrated content
+- Rebase PR branches on `origin/main`. After rebasing a published branch, use
+  `git push --force-with-lease` (never an unguarded `--force`) and confirm the PR diff still
+  contains only the intended files
