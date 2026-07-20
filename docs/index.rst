@@ -210,6 +210,7 @@ high-resolution templates shipped with PySM.
   Log-pol-tens formalism notebook <preprocess-templates/synchrotron_template_logpoltens>
   WebSky bright source catalog workflow <preprocess-templates/websky_sources_high_flux_catalog>
   Compare WebSky and Agora SZ templates <preprocess-templates/verify_templates/compare_websky_agora_sz>
+  Compare WebSky, Agora, and FLAMINGO kSZ templates <preprocess-templates/verify_templates/compare_flamingo_ksz>
   Verify dust templates <preprocess-templates/verify_templates/verify_templates_dust>
   Verify synchrotron templates <preprocess-templates/verify_templates/verify_templates_synch>
 
