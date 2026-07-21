@@ -83,8 +83,9 @@ Release
 
        git push --tags
 
-11. Draft the GitHub release notes referencing the matching ``CHANGES.rst``
-    entry and announce the release as needed.
+11. Create and publish the GitHub release with notes referencing the matching
+    ``CHANGES.rst`` entry. Do not leave the release as a draft. Announce the
+    release as needed.
 
 .. |CI Tests| image:: https://github.com/galsci/pysm/actions/workflows/ci_tests.yml/badge.svg
    :target: https://github.com/galsci/pysm/actions/workflows/ci_tests.yml
