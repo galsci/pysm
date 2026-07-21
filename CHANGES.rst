@@ -1,6 +1,9 @@
 Unreleased
 ==========
 
+3.4.6 (2026-07-20)
+==================
+
 - Add FLAMINGO kinetic SZ presets ``ksz5`` and ``ksz6``, with documentation and comparison notebook https://github.com/galsci/pysm/pull/261
 - Document C1 cosmological parameters: add the CAMB ``params.ini`` file used to generate the c1 model's unlensed Cl's, with a full parameter table and comparison to Planck 2015 TT,TE,EE+lowP best-fit values https://github.com/galsci/pysm/issues/262
 
