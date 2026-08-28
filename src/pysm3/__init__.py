@@ -16,6 +16,8 @@ from .utils import (
     check_freq_input,
     set_verbosity,
     apply_smoothing_and_coord_transform,
+    get_differential_beam_window,
+    get_differential_fwhm,
     map2alm,
 )
 

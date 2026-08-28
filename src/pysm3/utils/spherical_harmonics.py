@@ -154,6 +154,99 @@ def apply_smoothing_and_coord_transform(
     return output_maps[0] if len(output_maps) == 1 else tuple(output_maps)
 
 
+def get_differential_fwhm(target_fwhm, pre_applied_beam=None):
+    """Return the additional Gaussian FWHM needed to reach a target resolution
+    starting from a template that already carries some amount of smoothing.
+
+    Parameters
+    ----------
+    target_fwhm : astropy.units.Quantity
+        Target output FWHM (an angle).
+    pre_applied_beam : astropy.units.Quantity, optional
+        FWHM of the beam already applied by the input template: either a scalar
+        (same presmoothing for all components) or an array of shape ``(3,)``
+        (per-component IQU presmoothing). ``None`` or ``0`` means the template
+        carries no smoothing, in which case the full ``target_fwhm`` is needed.
+
+    Returns
+    -------
+    differential_fwhm : astropy.units.Quantity
+        Additional FWHM to apply on top of the template, a scalar or an array of
+        shape ``(3,)`` matching ``pre_applied_beam``. Returns 0 wherever the
+        target is smaller than or equal to the pre-applied beam: a template
+        cannot be de-convolved, so no additional smoothing is applied there.
+
+    Notes
+    -----
+    For Gaussian beams the convolution of two Gaussians is another Gaussian whose
+    widths add in quadrature, so the extra smoothing is
+    ``sqrt(target_fwhm**2 - pre_applied_beam**2)``. PySM records template
+    presmoothing as a Gaussian FWHM (see the ``SMOOTHING_ANGLE`` FITS keyword),
+    so this FWHM-based result is exact for those templates.
+    """
+    target = np.atleast_1d(target_fwhm.to_value(u.radian))
+    if pre_applied_beam is None:
+        pre = np.zeros_like(target)
+    else:
+        pre = np.asarray(pre_applied_beam.to_value(u.radian))
+    target, pre = np.broadcast_arrays(target, pre)
+    differential = np.sqrt(np.maximum(target**2 - pre**2, 0.0))
+    if differential.size == 1:
+        differential = differential[0]
+    return np.asarray(differential) << u.radian
+
+
+def get_differential_beam_window(target_fwhm, pre_applied_beam=None, lmax=None):
+    """Return the per-component net beam window to apply to reach ``target_fwhm``
+    starting from a template that already carries ``pre_applied_beam``.
+
+    This uses the window-division convention (the same as
+    :class:`~pysm3.InterpolatingComponent`): the net window is the ratio of the
+    target window to the pre-applied window
+
+    .. math::
+        B_\\ell = \\frac{g_\\ell(\\mathrm{target})}{g_\\ell(\\mathrm{pre})}
+
+    For Gaussian beams this is equivalent to smoothing with
+    ``sqrt(target**2 - pre**2)`` (see :func:`get_differential_fwhm`), but window
+    division stays exact even for non-Gaussian windows. Wherever the target is
+    smaller than or equal to the pre-applied beam the window is set to unity
+    (a template cannot be de-convolved, so no change is applied there).
+
+    Parameters
+    ----------
+    target_fwhm : astropy.units.Quantity
+        Target output FWHM (an angle).
+    pre_applied_beam : astropy.units.Quantity, optional
+        FWHM already applied by the template, scalar or shape ``(3,)``.
+        ``None`` or ``0`` means no presmoothing (the target window is returned).
+    lmax : int
+        Maximum multipole of the window.
+
+    Returns
+    -------
+    beam_window : np.ndarray
+        Array of shape ``(3, lmax+1)`` usable as the ``beam_window`` argument of
+        :func:`apply_smoothing_and_coord_transform`.
+    """
+    if lmax is None:
+        msg = "lmax must be provided to build a beam window"
+        raise ValueError(msg)
+    target = np.atleast_1d(target_fwhm.to_value(u.radian))
+    if pre_applied_beam is None or np.all(np.asarray(pre_applied_beam) == 0):
+        target_window = hp.gauss_beam(target[0], lmax=lmax)
+        return np.tile(target_window, (3, 1))
+    pre = np.atleast_1d(pre_applied_beam.to_value(u.radian))
+    net = np.ones((3, lmax + 1))
+    for i in range(3):
+        t = target[0] if target.size == 1 else target[i]
+        b = pre[0] if pre.size == 1 else pre[i]
+        if t > b:
+            with np.errstate(divide="ignore", invalid="ignore"):
+                net[i] = hp.gauss_beam(t, lmax=lmax) / hp.gauss_beam(b, lmax=lmax)
+    return net
+
+
 def map2alm(input_map, nside, lmax, map2alm_lsq_maxiter=None):
     """Compute alm from a map using healpy.
 

@@ -6,7 +6,10 @@ Objects:
     Sky
 """
 
+import inspect
+
 import toml
+
 from . import units as u
 from .models import *
 from .models import Model
@@ -18,13 +21,29 @@ def remove_class_from_dict(d):
     return {k: d[k] for k in d if k != "class"}
 
 
-def create_components_from_config(config, nside, map_dist=None):
+def _component_init(class_obj, config_kwargs, nside, map_dist, smoothing_angle):
+    """Instantiate a component class, forwarding ``smoothing_angle`` only to the
+    classes that accept it (template models that support presmoothing)."""
+    component_kwargs = remove_class_from_dict(config_kwargs)
+    if (
+        smoothing_angle is not None
+        and "smoothing_angle" in inspect.signature(class_obj).parameters
+    ):
+        component_kwargs["smoothing_angle"] = smoothing_angle
+    return class_obj(**component_kwargs, nside=nside, map_dist=map_dist)
+
+
+def create_components_from_config(config, nside, map_dist=None, smoothing_angle=None):
     output_components = []
     if "class" in config:
         class_name = config["class"]
         component_class = globals()[class_name]
-        output_component = component_class(
-            **remove_class_from_dict(config), nside=nside, map_dist=map_dist
+        output_component = _component_init(
+            component_class,
+            config,
+            nside,
+            map_dist,
+            smoothing_angle,
         )
         output_components.append(output_component)
         return output_components
@@ -38,21 +57,28 @@ def create_components_from_config(config, nside, map_dist=None):
                 class_name = each_config["class"]
                 component_class = globals()[class_name]
                 partial_components.append(
-                    component_class(
-                        **remove_class_from_dict(each_config),
-                        nside=nside,
-                        map_dist=map_dist,
+                    _component_init(
+                        component_class,
+                        each_config,
+                        nside,
+                        map_dist,
+                        smoothing_angle,
                     )
                 )
             output_component = Sky(
-                component_objects=partial_components, nside=nside, map_dist=map_dist
+                component_objects=partial_components,
+                nside=nside,
+                map_dist=map_dist,
+                smoothing_angle=smoothing_angle,
             )
         else:
             component_class = globals()[class_name]
-            output_component = component_class(
-                **remove_class_from_dict(model_config),
-                nside=nside,
-                map_dist=map_dist,
+            output_component = _component_init(
+                component_class,
+                model_config,
+                nside,
+                map_dist,
+                smoothing_angle,
             )
         output_components.append(output_component)
     return output_components
@@ -121,6 +147,7 @@ class Sky(Model):
         component_config=None,
         component_objects=None,
         output_unit=u.uK_RJ,
+        smoothing_angle=None,
         map_dist=None,
     ):
         """Initialize Sky
@@ -148,6 +175,12 @@ class Sky(Model):
             This is the most flexible way to provide a custom model to PySM
         output_unit : astropy Unit or string
             Astropy unit, e.g. "K_CMB", "MJ/sr"
+        smoothing_angle : astropy.units.Quantity, optional
+            Target output FWHM. When set, template components that support
+            presmoothing (e.g. :class:`~pysm3.PowerLaw`) are built so that each
+            amplitude template is smoothed by only the *differential* between
+            this target and the presmoothing it already carries, rather than by
+            the full target. See the documentation for details.
         map_dist: pysm.MapDistribution
             Distribution object used for parallel computing with MPI
         """
@@ -176,8 +209,12 @@ class Sky(Model):
                 component_config[string] = PRESET_MODELS[string]
         if len(component_config) > 0:
             self.components += create_components_from_config(
-                component_config, nside=nside, map_dist=map_dist
+                component_config,
+                nside=nside,
+                map_dist=map_dist,
+                smoothing_angle=smoothing_angle,
             )
+        self.smoothing_angle = smoothing_angle
         self.output_unit = u.Unit(output_unit)
 
     def add_component(self, component):

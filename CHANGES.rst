@@ -1,6 +1,7 @@
 Unreleased
 ==========
 
+- Add template **presmoothing** and **differential smoothing**: a template now records the Gaussian beam it already carries via the ``SMOOTHING_ANGLE`` FITS header keyword, models expose it as ``pre_applied_beam`` / ``includes_smoothing``, and ``Sky(smoothing_angle=...)`` (and ``PowerLaw``/``CurvedPowerLaw``) smooth each amplitude template by only the differential between the target and its presmoothing instead of by the full target. Adds ``get_differential_fwhm`` and ``get_differential_beam_window`` helpers, full tests, and a documentation page. Requesting a ``smoothing_angle`` is equivalent to the previous behavior for existing presets (which carry no presmoothing).
 - Fix Read the Docs builds failing with ``sphinx_lfs_content`` 1.1.11 by pinning the docs dependency to 1.1.10
 
 3.4.6 (2026-07-20)

@@ -188,6 +188,7 @@ All the tutorials are Jupyter Notebooks and can be accessed `from the repository
   bandpass_sampling
   bandpass_sampling_comparison
   smoothing_coord_rotation
+  presmoothing_and_differential_smoothing
   customize_components
   mpi
 

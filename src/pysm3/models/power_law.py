@@ -6,6 +6,23 @@ from .. import utils
 from .template import Model
 
 
+def _smoothing_to_radians(smoothing):
+    """Convert an optional presmoothing angle to radians, 0.0 if none/zero."""
+    if smoothing is None or np.all(np.asarray(smoothing) == 0):
+        return 0.0
+    return smoothing.to_value(u.radian)
+
+
+def _differential_smooth(map_t, pre_applied_beam, target_fwhm):
+    """Smooth a template map by only the differential between the target beam
+    and the beam it already carries. No-op when the target does not exceed the
+    pre-applied beam (a template cannot be de-convolved)."""
+    differential = utils.get_differential_fwhm(target_fwhm, pre_applied_beam)
+    if differential.value == 0:
+        return map_t
+    return utils.apply_smoothing_and_coord_transform(map_t, fwhm=differential)
+
+
 class PowerLaw(Model):
     """This is a model for a simple power law synchrotron model."""
 
@@ -24,6 +41,7 @@ class PowerLaw(Model):
         unit_I=None,
         unit_Q=None,
         unit_U=None,
+        smoothing_angle=None,
         map_dist=None,
     ):
         """This function initialzes the power law model of synchrotron
@@ -55,6 +73,12 @@ class PowerLaw(Model):
             If True, the model will include polarization.
         available_nside: list of int
             List of available nside for the input maps.
+        smoothing_angle : astropy.units.Quantity, optional
+            Target output FWHM. When set, each amplitude template is smoothed by
+            only the *differential* between this target and the presmoothing it
+            already carries (read from its ``SMOOTHING_ANGLE`` header), instead
+            of being smoothed by the full target. Templates whose native presmoothing
+            already exceeds the target are left unchanged.
         map_dist: pysm.MapDistribution
             Distribution object used for parallel computing with MPI
         """
@@ -69,6 +93,10 @@ class PowerLaw(Model):
         self.I_ref = self.read_map(
             map_I, field=[0, 1, 2] if self.is_IQU else 0, unit=unit_I
         )
+        # Record the presmoothing of each amplitude template. The angle is read
+        # from the FITS header by `read_map`; grab it before splitting the IQU
+        # map below, since indexing drops the header attribute.
+        smoothing_I = getattr(self.I_ref, "smoothing_angle", None)
         # This does unit conversion in place so we do not copy the data
         # we do not keep the original unit because otherwise we would need
         # to make a copy of the array when we run the model
@@ -83,14 +111,49 @@ class PowerLaw(Model):
             self.Q_ref <<= u.uK_RJ
             self.U_ref = self.read_map(map_U, unit=unit_U)
             self.U_ref <<= u.uK_RJ
+            smoothing_Q = getattr(self.Q_ref, "smoothing_angle", None)
+            smoothing_U = getattr(self.U_ref, "smoothing_angle", None)
         elif self.has_polarization:  # unpack IQU map to 3 arrays
+            smoothing_Q = smoothing_U = smoothing_I
             self.Q_ref = self.I_ref[1]
             self.U_ref = self.I_ref[2]
             self.I_ref = self.I_ref[0]
+        else:
+            smoothing_Q = smoothing_U = None
+        self.pre_applied_beam = np.array(
+            [
+                _smoothing_to_radians(smoothing_I),
+                _smoothing_to_radians(smoothing_Q),
+                _smoothing_to_radians(smoothing_U),
+            ]
+        ) << u.radian
         try:  # input is a number
             self.pl_index = u.Quantity(map_pl_index, unit="")
         except TypeError:  # input is a path
             self.pl_index = self.read_map(map_pl_index, unit="")
+        if smoothing_angle is not None:
+            self._apply_differential_smoothing(smoothing_angle)
+
+    def _apply_differential_smoothing(self, smoothing_angle):
+        """Smooth the amplitude templates by only the *differential* between
+        the requested target beam and the presmoothing each template already
+        carries, rather than by the full target beam.
+
+        This is the core of the presmoothing feature: a template that already
+        records e.g. a ``53 arcmin`` beam and is requested at ``1 deg`` is
+        smoothed by ``sqrt(1deg**2 - 53arcmin**2)`` instead of a fresh ``1 deg``
+        (which would double-apply roughly half of the beam).
+        """
+        self.I_ref = _differential_smooth(
+            self.I_ref, self.pre_applied_beam[0], smoothing_angle
+        )
+        if self.has_polarization:
+            self.Q_ref = _differential_smooth(
+                self.Q_ref, self.pre_applied_beam[1], smoothing_angle
+            )
+            self.U_ref = _differential_smooth(
+                self.U_ref, self.pre_applied_beam[2], smoothing_angle
+            )
 
     @u.quantity_input
     def get_emission(self, freqs: u.Quantity[u.GHz], weights=None):
@@ -167,6 +230,7 @@ class CurvedPowerLaw(PowerLaw):
         unit_I=None,
         unit_Q=None,
         unit_U=None,
+        smoothing_angle=None,
         map_dist=None,
     ):
         super().__init__(
@@ -183,6 +247,7 @@ class CurvedPowerLaw(PowerLaw):
             unit_I=unit_I,
             unit_Q=unit_Q,
             unit_U=unit_U,
+            smoothing_angle=smoothing_angle,
             map_dist=map_dist,
         )
         try:  # input is a number
