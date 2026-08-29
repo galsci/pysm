@@ -283,6 +283,11 @@ def read_map(path, nside, unit=None, field=0, map_dist=None):
       the shape and units, and converts to the requested unit if needed.
     - For file-based input, the function uses `healpy.read_map` and handles MPI distribution
       if `map_dist` is provided. The map is automatically upgraded/downgraded to the requested NSIDE.
+    - For file-based input the returned map carries a ``smoothing_angle`` attribute -- the
+      template's built-in beam (FWHM), read from the ``SMOOTHING_ANGLE`` FITS header keyword
+      (``0`` if absent). In-memory inputs carry no presmoothing. See
+      :func:`pysm3.extract_smoothing_angle` and the "Presmoothing and differential smoothing"
+      documentation page.
     - This function is used internally by all PySM models to ensure consistent map loading and validation.
     """
     # If path is an in-memory array or Quantity, handle directly

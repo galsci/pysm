@@ -68,7 +68,7 @@ into a single ``pre_applied_beam`` attribute -- a scalar or shape-``(3,)``
 I / Q / U respectively. The :class:`pysm3.Model` base class initializes it to
 ``None`` and provides a convenience property::
 
-    model.pre_applied_beam     # e.g. <Quantity [56., 53., 53.] arcmin>
+    model.pre_applied_beam     # Quantity: beam already applied to I, Q, U (e.g. [56., 53., 53.] arcmin)
     model.includes_smoothing   # True if any component carries presmoothing
 
 ``includes_smoothing`` is the "consumer" of this feature: any code can ask "does
@@ -83,13 +83,34 @@ The user-facing entry point is a new ``smoothing_angle`` argument accepted by
 
     import astropy.units as u
     import pysm3
-    sky = pysm3.Sky(nside=2048, preset_strings=["s8"],
-                    smoothing_angle=1 * u.deg)
+
+    sky = pysm3.Sky(
+        nside=2048,
+        component_config={
+            "my_synch": {
+                "class": "PowerLaw",
+                "map_I": "my_presmoothed_I.fits",
+                "map_Q": "my_presmoothed_Q.fits",
+                "map_U": "my_presmoothed_U.fits",
+                "freq_ref_I": "23 GHz",
+                "map_pl_index": -3.0,
+            }
+        },
+        smoothing_angle=1 * u.deg,
+    )
     m = sky.get_emission(23 * u.GHz)
 
-At model construction time each amplitude template is smoothed by only the
-*differential* between ``smoothing_angle`` and the presmoothing it already
-carries, and the emission is then computed through the normal spectral law.
+The amplitude templates and their spectral parameters are passed exactly as
+usual; the only extra step is that each amplitude template must carry a
+``SMOOTHING_ANGLE`` header (see above) recording the beam it already has. At
+model construction time each template is smoothed by only the *differential*
+between ``smoothing_angle`` and its presmoothing, and the emission is then
+computed through the normal spectral law.
+
+The first model planned to make use of this is the IP2026 low-frequency
+synchrotron model (``s8``); once its templates are shipped with the
+``SMOOTHING_ANGLE`` header, ``Sky(preset_strings=["s8"], smoothing_angle=1*u.deg)``
+will work out of the box.
 
 Two equivalent conventions
 ==========================
