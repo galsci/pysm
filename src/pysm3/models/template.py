@@ -95,6 +95,26 @@ class Model:
             self.pre_applied_beam != 0
         )
 
+    def apply_differential_smoothing(self, smoothing_angle):
+        """Smooth this model's beam-carrying amplitude template(s) by only the
+        *differential* between ``smoothing_angle`` and the presmoothing each
+        already carries (see :class:`pysm3.get_differential_fwhm`).
+
+        This is the extension point that lets *any* template model participate
+        in the presmoothing feature: a model that reads beam-carrying amplitude
+        maps should override it, call
+        :func:`pysm3.apply_differential_smoothing` on each such map (with the
+        map's own ``pre_applied_beam``), and replace the stored map with the
+        result. Spectral-parameter maps (index, temperature, curvature, ...)
+        must *not* be smoothed. The base implementation is a no-op.
+
+        Parameters
+        ----------
+        smoothing_angle : astropy.units.Quantity
+            Target output FWHM.
+        """
+        return None
+
     def read_map(self, path, unit=None, field=0, nside=None):
         """Wrapper of the PySM read_map function that automatically
         uses nside, pixel_indices and mpi_comm defined in this Model

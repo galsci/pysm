@@ -247,6 +247,39 @@ def get_differential_beam_window(target_fwhm, pre_applied_beam=None, lmax=None):
     return net
 
 
+def apply_differential_smoothing(map_t, pre_applied_beam, target_fwhm):
+    """Smooth a template map by only the *differential* between the target beam
+    and the beam the template already carries.
+
+    This is the reusable building block of the presmoothing feature: it is what
+    any template model calls on each of its beam-carrying amplitude maps when a
+    ``smoothing_angle`` is requested (see :class:`pysm3.Model`).
+    ``pre_applied_beam`` must be a scalar Quantity (the presmoothing of this
+    specific map, e.g. one element of the model's ``pre_applied_beam``); pass it
+    as ``0`` for a map with no recorded presmoothing to get a full target
+    smoothing. Returns ``map_t`` unchanged when the target does not exceed the
+    pre-applied beam (a template cannot be de-convolved).
+
+    Parameters
+    ----------
+    map_t : astropy.units.Quantity
+        The amplitude template map (1-D or per-component) to smooth.
+    pre_applied_beam : astropy.units.Quantity or None
+        FWHM already applied to this template (scalar), or ``None``/``0``.
+    target_fwhm : astropy.units.Quantity
+        Target output FWHM.
+
+    Returns
+    -------
+    astropy.units.Quantity
+        The map smoothed by the differential.
+    """
+    differential = get_differential_fwhm(target_fwhm, pre_applied_beam)
+    if differential.value == 0:
+        return map_t
+    return apply_smoothing_and_coord_transform(map_t, fwhm=differential)
+
+
 def map2alm(input_map, nside, lmax, map2alm_lsq_maxiter=None):
     """Compute alm from a map using healpy.
 

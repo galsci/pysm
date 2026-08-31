@@ -13,16 +13,6 @@ def _smoothing_to_radians(smoothing):
     return smoothing.to_value(u.radian)
 
 
-def _differential_smooth(map_t, pre_applied_beam, target_fwhm):
-    """Smooth a template map by only the differential between the target beam
-    and the beam it already carries. No-op when the target does not exceed the
-    pre-applied beam (a template cannot be de-convolved)."""
-    differential = utils.get_differential_fwhm(target_fwhm, pre_applied_beam)
-    if differential.value == 0:
-        return map_t
-    return utils.apply_smoothing_and_coord_transform(map_t, fwhm=differential)
-
-
 class PowerLaw(Model):
     """This is a model for a simple power law synchrotron model."""
 
@@ -132,9 +122,9 @@ class PowerLaw(Model):
         except TypeError:  # input is a path
             self.pl_index = self.read_map(map_pl_index, unit="")
         if smoothing_angle is not None:
-            self._apply_differential_smoothing(smoothing_angle)
+            self.apply_differential_smoothing(smoothing_angle)
 
-    def _apply_differential_smoothing(self, smoothing_angle):
+    def apply_differential_smoothing(self, smoothing_angle):
         """Smooth the amplitude templates by only the *differential* between
         the requested target beam and the presmoothing each template already
         carries, rather than by the full target beam.
@@ -142,16 +132,18 @@ class PowerLaw(Model):
         This is the core of the presmoothing feature: a template that already
         records e.g. a ``53 arcmin`` beam and is requested at ``1 deg`` is
         smoothed by ``sqrt(1deg**2 - 53arcmin**2)`` instead of a fresh ``1 deg``
-        (which would double-apply roughly half of the beam).
+        (which would double-apply roughly half of the beam). Only the
+        beam-carrying amplitude maps (I / Q / U) are smoothed; the spectral
+        index map is left untouched.
         """
-        self.I_ref = _differential_smooth(
+        self.I_ref = utils.apply_differential_smoothing(
             self.I_ref, self.pre_applied_beam[0], smoothing_angle
         )
         if self.has_polarization:
-            self.Q_ref = _differential_smooth(
+            self.Q_ref = utils.apply_differential_smoothing(
                 self.Q_ref, self.pre_applied_beam[1], smoothing_angle
             )
-            self.U_ref = _differential_smooth(
+            self.U_ref = utils.apply_differential_smoothing(
                 self.U_ref, self.pre_applied_beam[2], smoothing_angle
             )
 

@@ -74,6 +74,46 @@ I / Q / U respectively. The :class:`pysm3.Model` base class initializes it to
 ``includes_smoothing`` is the "consumer" of this feature: any code can ask "does
 this component/sky already include its beam, so I should not re-smooth it?".
 
+Making any template model support ``smoothing_angle``
+=====================================================
+
+The differential-smoothing machinery is generic and available to **all**
+template models, not just the ones shipped already wired (``PowerLaw`` /
+``CurvedPowerLaw``). Two reusable pieces make this a small, model-specific
+addition for any other model:
+
+* :func:`pysm3.apply_differential_smoothing(map, pre_applied_beam, target)`
+  smooths a single beam-carrying amplitude map by the differential between
+  ``target`` and that map's own presmoothing (returning it unchanged when the
+  target does not exceed the presmoothing).
+* :meth:`pysm3.Model.apply_differential_smoothing(smoothing_angle)` is the
+  extension hook on the base class. A model that wants to participate overrides
+  it, calls :func:`pysm3.apply_differential_smoothing` on each of its
+  beam-carrying *amplitude* maps (passing each map's ``pre_applied_beam``) and
+  stores the result. Spectral-parameter maps (index, temperature, curvature,
+  ...) must **not** be smoothed -- which is why this step is per-model rather
+  than fully automatic. The base implementation is a no-op.
+
+For example, a model reading a single amplitude map ``maps`` plus a spectral
+index map would implement::
+
+    class MyModel(pysm3.Model):
+        def __init__(self, ..., smoothing_angle=None, **kwargs):
+            super().__init__(**kwargs)
+            smoothed = getattr(self.read_map(...), "smoothing_angle", None)
+            self.pre_applied_beam = smoothed or 0 * u.rad
+            if smoothing_angle is not None:
+                self.apply_differential_smoothing(smoothing_angle)
+
+        def apply_differential_smoothing(self, smoothing_angle):
+            self.maps = pysm3.apply_differential_smoothing(
+                self.maps, self.pre_applied_beam, smoothing_angle
+            )
+
+Because :class:`pysm3.Sky` forwards ``smoothing_angle`` to any component whose
+constructor accepts it (checked by signature), such a model then works with
+``Sky(..., smoothing_angle=...)`` automatically.
+
 Asking PySM for an output at a target resolution
 ================================================
 

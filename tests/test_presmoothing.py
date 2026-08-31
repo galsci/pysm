@@ -221,6 +221,25 @@ def test_powerlaw_separate_I_QU_presmoothing(tmp_path):
 # --------------------------------------------------------------------------- #
 # End-to-end differential smoothing
 # --------------------------------------------------------------------------- #
+def test_apply_differential_smoothing_utility(tmp_path):
+    """The exported helper smooths by the differential (and never de-smooths)."""
+    raw = _band_limited_field(seed=19)
+    pre = 0.5 * u.deg
+    target = 0.9 * u.deg
+    templ = apply_smoothing_and_coord_transform(raw * u.uK_RJ, fwhm=pre, lmax=LMAX)
+    out = pysm3.apply_differential_smoothing(templ, pre, target)
+    expected = apply_smoothing_and_coord_transform(raw * u.uK_RJ, fwhm=target, lmax=LMAX)
+    np.testing.assert_allclose(out.value, expected.value, atol=1e-5 * expected.value.max())
+    # no de-smoothing when the target is below the presmoothing
+    assert pysm3.apply_differential_smoothing(templ, 0.9 * u.deg, 0.5 * u.deg) is templ
+
+
+def test_model_extension_hook_is_noop():
+    """Base Model.apply_differential_smoothing is a documented no-op hook."""
+    m = pysm3.Model(nside=8)
+    assert m.apply_differential_smoothing(1 * u.deg) is None
+
+
 def test_differential_smoothing_end_to_end(tmp_path):
     raw = _band_limited_field(seed=10)
     pre = 0.5 * u.deg
