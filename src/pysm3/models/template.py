@@ -106,7 +106,12 @@ class Model:
         :func:`pysm3.apply_differential_smoothing` on each such map (with the
         map's own ``pre_applied_beam``), and replace the stored map with the
         result. Spectral-parameter maps (index, temperature, curvature, ...)
-        must *not* be smoothed. The base implementation is a no-op.
+        must *not* be smoothed. The base implementation is a no-op;
+        :class:`pysm3.Sky` logs a warning for components that only have it when
+        ``smoothing_angle`` is requested. An implementation should also record
+        the applied target in ``pre_applied_beam`` (e.g. with ``np.maximum``)
+        so that receiving ``smoothing_angle`` more than once (through the
+        constructor *and* through this hook) stays a no-op.
 
         Parameters
         ----------

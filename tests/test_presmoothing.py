@@ -460,6 +460,86 @@ def test_sky_forwards_smoothing_angle(tmp_path):
     np.testing.assert_allclose(out.value, expected.value, atol=1e-5 * expected.value.max())
 
 
+def test_sky_applies_smoothing_angle_to_component_objects(tmp_path):
+    """Sky applies smoothing_angle to pre-built component_objects through the
+    apply_differential_smoothing hook instead of silently ignoring it."""
+    raw = _band_limited_field(seed=25)
+    pre = 0.5 * u.deg
+    target = 0.9 * u.deg
+    path, _ = _presmoothed_template(tmp_path, "obj.fits", raw, pre)
+    model = pysm3.PowerLaw(
+        path, "23 GHz", -3.0, NSIDE, has_polarization=False, unit_I="uK_RJ"
+    )
+    sky = pysm3.Sky(component_objects=[model], nside=NSIDE, smoothing_angle=target)
+    out = sky.get_emission(23 * u.GHz)[0]
+    expected = apply_smoothing_and_coord_transform(raw * u.uK_RJ, fwhm=target, lmax=LMAX)
+    np.testing.assert_allclose(out.value, expected.value, atol=1e-5 * expected.value.max())
+
+
+def test_sky_warns_on_unsupported_component_object(caplog):
+    """A pre-built component without presmoothing support logs the same
+    warning as config-built ones."""
+    with caplog.at_level(logging.WARNING, logger="pysm3"):
+        pysm3.Sky(
+            component_objects=[pysm3.Model(nside=8)],
+            nside=8,
+            smoothing_angle=1 * u.deg,
+        )
+    assert "Model does not support smoothing_angle" in caplog.text
+
+
+def test_sky_forwards_smoothing_angle_to_nested_sky(tmp_path):
+    """A Sky nested in component_objects forwards smoothing_angle to its own
+    components through the hook."""
+    raw = _band_limited_field(seed=26)
+    pre = 0.5 * u.deg
+    target = 0.9 * u.deg
+    path, _ = _presmoothed_template(tmp_path, "nested.fits", raw, pre)
+    inner = pysm3.Sky(
+        component_config={
+            "mys1": {
+                "class": "PowerLaw",
+                "map_I": str(path),
+                "freq_ref_I": "23 GHz",
+                "map_pl_index": -3.0,
+                "has_polarization": False,
+                "unit_I": "uK_RJ",
+            }
+        },
+        nside=NSIDE,
+    )
+    outer = pysm3.Sky(
+        component_objects=[inner], nside=NSIDE, smoothing_angle=target
+    )
+    out = outer.get_emission(23 * u.GHz)[0]
+    expected = apply_smoothing_and_coord_transform(raw * u.uK_RJ, fwhm=target, lmax=LMAX)
+    np.testing.assert_allclose(out.value, expected.value, atol=1e-5 * expected.value.max())
+
+
+def test_differential_smoothing_is_idempotent(tmp_path):
+    """pre_applied_beam records the applied target, so a second application
+    (e.g. constructor and then the Sky hook) does not double-smooth."""
+    raw = _band_limited_field(seed=27)
+    path, _ = _presmoothed_template(tmp_path, "idem.fits", raw, 0.5 * u.deg)
+    model = pysm3.PowerLaw(
+        path,
+        "23 GHz",
+        -3.0,
+        NSIDE,
+        has_polarization=False,
+        smoothing_angle=0.9 * u.deg,
+        unit_I="uK_RJ",
+    )
+    out_first = model.get_emission(23 * u.GHz)[0].value.copy()
+    np.testing.assert_allclose(
+        model.pre_applied_beam.to_value(u.deg), [0.9, 0.9, 0.9], atol=1e-12
+    )
+    model.apply_differential_smoothing(0.9 * u.deg)  # second application: no-op
+    np.testing.assert_allclose(
+        model.get_emission(23 * u.GHz)[0].value, out_first, rtol=1e-12
+    )
+
+
 def test_sky_warns_on_unsupported_component(tmp_path, caplog):
     """A smoothing_angle requested on a sky that has components without
     presmoothing support logs a warning (their emission is left unsmoothed)."""

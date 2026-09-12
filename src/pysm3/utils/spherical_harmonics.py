@@ -201,12 +201,12 @@ def get_differential_fwhm(target_fwhm, pre_applied_beam=None):
 def get_differential_beam_window(target_fwhm, pre_applied_beam=None, lmax=None):
     """Return the per-component net beam window to apply to reach ``target_fwhm``
     starting from a template that already carries ``pre_applied_beam``.
-
-    This uses the window-division convention (the same as
-    :class:`~pysm3.InterpolatingComponent`): the net window is the ratio of the
+    This uses the window-division convention, like
+    :class:`~pysm3.InterpolatingComponent`: the net window is the ratio of the
     target window to the pre-applied window
 
     .. math::
+
         B_\\ell = \\frac{g_\\ell(\\mathrm{target})}{g_\\ell(\\mathrm{pre})}
 
     For Gaussian beams this is equivalent to smoothing with
@@ -214,6 +214,16 @@ def get_differential_beam_window(target_fwhm, pre_applied_beam=None, lmax=None):
     division stays exact even for non-Gaussian windows. Wherever the target is
     smaller than or equal to the pre-applied beam the window is set to unity
     (a template cannot be de-convolved, so no change is applied there).
+
+    Note the rows are all built from the spin-0 (``pol=False``) Gaussian
+    windows, which is consistent with how the window is applied to each
+    component. :class:`~pysm3.InterpolatingComponent` instead divides the
+    ``pol=True`` windows, whose E/B rows carry an additional
+    ``exp(2*sigma**2)`` spin factor: the two agree exactly for the T row and
+    up to a constant ``exp(2*(sigma_target**2 - sigma_pre**2))`` factor for
+    E/B, negligible (relative ~1e-5) for the arcminute-to-degree
+    differentials this feature targets but reaching ~0.3% for a 5 deg
+    differential.
 
     Parameters
     ----------

@@ -119,7 +119,14 @@ index map would implement::
 
 Because :class:`pysm3.Sky` forwards ``smoothing_angle`` to any component whose
 constructor accepts it (checked by signature), such a model then works with
-``Sky(..., smoothing_angle=...)`` automatically.
+``Sky(..., smoothing_angle=...)`` automatically. Components provided
+already-initialized through ``component_objects`` instead receive
+``smoothing_angle`` through the ``apply_differential_smoothing`` hook:
+:class:`pysm3.Sky` calls it on each of them at construction (and warns for
+components that only have the no-op base implementation), so overriding the
+hook is enough to participate through either path. A model should record the
+applied target in ``pre_applied_beam`` so that receiving ``smoothing_angle``
+twice (constructor *and* hook) stays a no-op.
 
 Asking PySM for an output at a target resolution
 ================================================
@@ -179,8 +186,15 @@ Gaussian beams):
   .. math:: B_\ell = \frac{g_\ell(R)}{g_\ell(b)},
 
   implemented by :func:`pysm3.get_differential_beam_window`. This stays exact
-  even for non-Gaussian / measured windows and is the same convention already
-  used by :class:`pysm3.InterpolatingComponent`.
+  even for non-Gaussian / measured windows and follows the same convention as
+  :class:`pysm3.InterpolatingComponent`, with one nuance: the rows here are
+  built from the spin-0 (``pol=False``) Gaussian windows, while
+  ``InterpolatingComponent`` divides the ``pol=True`` windows whose E/B rows
+  carry an additional ``exp(2*sigma**2)`` spin factor. The two agree exactly
+  for T and up to a constant ``exp(2*(sigma_target**2 - sigma_pre**2))``
+  factor for E/B -- negligible (relative ~1e-5) for the
+  arcminute-to-degree differentials this feature targets, but reaching ~0.3%
+  for a 5 deg differential.
 
 Both helpers return ``0`` / identity when :math:`R \le b` -- a template cannot be
 *de*convolved, so no additional smoothing (and no "de-smoothing") is applied in
@@ -234,4 +248,6 @@ trips, the differential-FWHM and window-division helpers (including the
 ``R <= pre`` identity), per-component presmoothing, end-to-end validation that
 the output lands exactly at the target (and is far closer to a single target
 smoothing than the naive double-smoothing), the resolution-floor no-op, Sky()
-forwarding, and backwards compatibility.
+forwarding (including to already-initialized ``component_objects`` and nested
+Sky objects via the ``apply_differential_smoothing`` hook, and the idempotency
+of repeated applications), and backwards compatibility.

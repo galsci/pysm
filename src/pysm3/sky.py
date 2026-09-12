@@ -40,6 +40,20 @@ def _component_init(class_obj, config_kwargs, nside, map_dist, smoothing_angle):
     return class_obj(**component_kwargs, nside=nside, map_dist=map_dist)
 
 
+def _apply_smoothing_angle_to_component(component, smoothing_angle):
+    """Apply differential smoothing to an already-built component through the
+    :meth:`pysm3.Model.apply_differential_smoothing` hook, warning when the
+    component did not override the hook (no presmoothing support)."""
+    if type(component).apply_differential_smoothing is Model.apply_differential_smoothing:
+        log.warning(
+            "%s does not support smoothing_angle, the requested target "
+            "beam will not be applied to this component",
+            type(component).__name__,
+        )
+    else:
+        component.apply_differential_smoothing(smoothing_angle)
+
+
 def create_components_from_config(config, nside, map_dist=None, smoothing_angle=None):
     output_components = []
     if "class" in config:
@@ -76,7 +90,9 @@ def create_components_from_config(config, nside, map_dist=None, smoothing_angle=
                 component_objects=partial_components,
                 nside=nside,
                 map_dist=map_dist,
-                smoothing_angle=smoothing_angle,
+                # the partial components already consumed smoothing_angle in
+                # _component_init above, do not apply it a second time
+                smoothing_angle=None,
             )
         else:
             component_class = globals()[class_name]
@@ -187,8 +203,11 @@ class Sky(Model):
             presmoothing (e.g. :class:`~pysm3.PowerLaw`) are built so that each
             amplitude template is smoothed by only the *differential* between
             this target and the presmoothing it already carries, rather than by
-            the full target. Components that do not support presmoothing are
-            left unchanged and a warning is logged. See the documentation for
+            the full target. For components provided through
+            ``component_objects`` (already initialized), the
+            :meth:`pysm3.Model.apply_differential_smoothing` hook is applied
+            instead. Components that do not support presmoothing are left
+            unchanged and a warning is logged. See the documentation for
             details.
         map_dist: pysm.MapDistribution
             Distribution object used for parallel computing with MPI
@@ -206,6 +225,13 @@ class Sky(Model):
 
         super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         self.components = component_objects if component_objects is not None else []
+        # components provided already initialized could not receive
+        # smoothing_angle at construction: apply it through the
+        # apply_differential_smoothing hook (a no-op that warns for
+        # components without presmoothing support)
+        if smoothing_angle is not None:
+            for comp in self.components:
+                _apply_smoothing_angle_to_component(comp, smoothing_angle)
         # otherwise instantiate the sky object from list of predefined models,
         # identified by their strings. These are defined in `pysm.presets`.
         if component_config is None:
@@ -228,6 +254,14 @@ class Sky(Model):
 
     def add_component(self, component):
         self.components.append(component)
+
+    def apply_differential_smoothing(self, smoothing_angle):
+        """Forward differential smoothing to all components (see
+        :meth:`pysm3.Model.apply_differential_smoothing`), so that a
+        :class:`Sky` provided via ``component_objects`` participates in the
+        presmoothing feature like any other component."""
+        for comp in self.components:
+            _apply_smoothing_angle_to_component(comp, smoothing_angle)
 
     @property
     def includes_smoothing(self):

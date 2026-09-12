@@ -140,7 +140,9 @@ class PowerLaw(Model):
         smoothed by ``sqrt(1deg**2 - 53arcmin**2)`` instead of a fresh ``1 deg``
         (which would double-apply roughly half of the beam). Only the
         beam-carrying amplitude maps (I / Q / U) are smoothed; the spectral
-        index map is left untouched.
+        index map is left untouched. After the call, ``pre_applied_beam``
+        records the target for the smoothed templates, so applying the method
+        again with the same target is a no-op.
 
         Raises
         ------
@@ -164,6 +166,12 @@ class PowerLaw(Model):
             self.U_ref = utils.apply_differential_smoothing(
                 self.U_ref, self.pre_applied_beam[2], smoothing_angle
             )
+        # the templates now carry the target beam (where it exceeded their
+        # presmoothing; smaller targets cannot de-convolve), record it so a
+        # second application, e.g. via Sky(smoothing_angle=...), is a no-op
+        self.pre_applied_beam = np.maximum(
+            self.pre_applied_beam, smoothing_angle.to(u.radian)
+        )
 
     @u.quantity_input
     def get_emission(self, freqs: u.Quantity[u.GHz], weights=None):
