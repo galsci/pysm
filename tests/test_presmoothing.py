@@ -645,6 +645,72 @@ def test_differential_smoothing_is_idempotent(tmp_path):
     )
 
 
+def test_smoothing_angle_accepts_strings(tmp_path):
+    """smoothing_angle accepts strings like every other angle parameter, so
+    TOML presets can use it (a Quantity cannot be written in TOML)."""
+    raw = _band_limited_field(seed=32)
+    path, _ = _presmoothed_template(tmp_path, "str.fits", raw, 0.5 * u.deg)
+    expected = apply_smoothing_and_coord_transform(
+        raw * u.uK_RJ, fwhm=0.9 * u.deg, lmax=LMAX
+    )
+    # directly on the model
+    model = pysm3.PowerLaw(
+        path,
+        "23 GHz",
+        -3.0,
+        NSIDE,
+        has_polarization=False,
+        smoothing_angle="0.9 deg",
+        unit_I="uK_RJ",
+    )
+    np.testing.assert_allclose(
+        model.get_emission(23 * u.GHz)[0].value,
+        expected.value,
+        atol=1e-5 * expected.value.max(),
+    )
+    # through Sky
+    sky = pysm3.Sky(
+        component_config={
+            "mys1": {
+                "class": "PowerLaw",
+                "map_I": str(path),
+                "freq_ref_I": "23 GHz",
+                "map_pl_index": -3.0,
+                "has_polarization": False,
+                "unit_I": "uK_RJ",
+            }
+        },
+        nside=NSIDE,
+        smoothing_angle="0.9 deg",
+    )
+    assert u.Quantity(sky.smoothing_angle).to_value(u.deg) == pytest.approx(0.9)
+    np.testing.assert_allclose(
+        sky.get_emission(23 * u.GHz)[0].value,
+        expected.value,
+        atol=1e-5 * expected.value.max(),
+    )
+    # as a component-configuration value with no Sky-level override
+    sky_cfg = pysm3.Sky(
+        component_config={
+            "mys1": {
+                "class": "PowerLaw",
+                "map_I": str(path),
+                "freq_ref_I": "23 GHz",
+                "map_pl_index": -3.0,
+                "has_polarization": False,
+                "unit_I": "uK_RJ",
+                "smoothing_angle": "0.9 deg",
+            }
+        },
+        nside=NSIDE,
+    )
+    np.testing.assert_allclose(
+        sky_cfg.get_emission(23 * u.GHz)[0].value,
+        expected.value,
+        atol=1e-5 * expected.value.max(),
+    )
+
+
 def test_sky_warns_on_unsupported_component(tmp_path, caplog):
     """A smoothing_angle requested on a sky that has components without
     presmoothing support logs a warning (their emission is left unsmoothed)."""

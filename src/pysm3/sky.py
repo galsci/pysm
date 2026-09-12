@@ -204,8 +204,9 @@ class Sky(Model):
             This is the most flexible way to provide a custom model to PySM
         output_unit : astropy Unit or string
             Astropy unit, e.g. "K_CMB", "MJ/sr"
-        smoothing_angle : astropy.units.Quantity, optional
-            Target output FWHM. When set, template components that support
+        smoothing_angle : astropy.units.Quantity or string, optional
+            Target output FWHM (e.g. ``1 * u.deg`` or ``"1 deg"``). When set,
+            template components that support
             presmoothing (e.g. :class:`~pysm3.PowerLaw`) are built so that each
             amplitude template is smoothed by only the *differential* between
             this target and the presmoothing it already carries, rather than by
@@ -228,6 +229,10 @@ class Sky(Model):
                 assert (
                     nside == comp.nside
                 ), "Component objects should have same NSIDE of Sky"
+
+        # accept strings (e.g. "1 deg", as in TOML presets) like freq_ref_*
+        if smoothing_angle is not None:
+            smoothing_angle = u.Quantity(smoothing_angle)
 
         super().__init__(nside=nside, max_nside=max_nside, map_dist=map_dist)
         self.components = component_objects if component_objects is not None else []

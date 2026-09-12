@@ -98,7 +98,7 @@ class Model:
     def apply_differential_smoothing(self, smoothing_angle):
         """Smooth this model's beam-carrying amplitude template(s) by only the
         *differential* between ``smoothing_angle`` and the presmoothing each
-        already carries (see :class:`pysm3.get_differential_fwhm`).
+        already carries (see :func:`pysm3.get_differential_fwhm`).
 
         This is the extension point that lets *any* template model participate
         in the presmoothing feature: a model that reads beam-carrying amplitude
@@ -115,8 +115,8 @@ class Model:
 
         Parameters
         ----------
-        smoothing_angle : astropy.units.Quantity
-            Target output FWHM.
+        smoothing_angle : astropy.units.Quantity or string
+            Target output FWHM (e.g. ``1 * u.deg`` or ``"1 deg"``).
         """
         return None
 

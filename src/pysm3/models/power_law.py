@@ -63,8 +63,9 @@ class PowerLaw(Model):
             If True, the model will include polarization.
         available_nside: list of int
             List of available nside for the input maps.
-        smoothing_angle : astropy.units.Quantity, optional
-            Target output FWHM. When set, each amplitude template is smoothed by
+        smoothing_angle : astropy.units.Quantity or string, optional
+            Target output FWHM (e.g. ``1 * u.deg`` or ``"1 deg"``). When set,
+            each amplitude template is smoothed by
             only the *differential* between this target and the presmoothing it
             already carries (read from its ``SMOOTHING_ANGLE`` header), instead
             of being smoothed by the full target. Templates whose native presmoothing
@@ -164,6 +165,8 @@ class PowerLaw(Model):
                 "for MPI-distributed maps (map_dist); build the model "
                 "serially or pre-smooth the templates to the target resolution"
             )
+        # accept strings (e.g. "1 deg", as in TOML presets) like freq_ref_*
+        smoothing_angle = u.Quantity(smoothing_angle)
         if self.has_polarization:
             iqu = u.Quantity(
                 np.stack([self.I_ref.value, self.Q_ref.value, self.U_ref.value]),
