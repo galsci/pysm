@@ -144,6 +144,14 @@ class PowerLaw(Model):
         records the target for the smoothed templates, so applying the method
         again with the same target is a no-op.
 
+        When the model is polarized, Q and U are components of a spin-2
+        field: they are smoothed jointly with I through the TEB transform
+        (the same convention as :func:`pysm3.apply_smoothing_and_coord_transform`
+        on a ``(3, npix)`` map), with a per-component beam window. Smoothing
+        them as independent scalar maps would apply the spin-0 transform to a
+        spin-2 field, mixing E into B. The intensity-only model smooths I as a
+        scalar map, which is exact for a spin-0 field.
+
         Raises
         ------
         NotImplementedError
@@ -156,15 +164,18 @@ class PowerLaw(Model):
                 "for MPI-distributed maps (map_dist); build the model "
                 "serially or pre-smooth the templates to the target resolution"
             )
-        self.I_ref = utils.apply_differential_smoothing(
-            self.I_ref, self.pre_applied_beam[0], smoothing_angle
-        )
         if self.has_polarization:
-            self.Q_ref = utils.apply_differential_smoothing(
-                self.Q_ref, self.pre_applied_beam[1], smoothing_angle
+            iqu = u.Quantity(
+                np.stack([self.I_ref.value, self.Q_ref.value, self.U_ref.value]),
+                self.I_ref.unit,
             )
-            self.U_ref = utils.apply_differential_smoothing(
-                self.U_ref, self.pre_applied_beam[2], smoothing_angle
+            iqu = utils.apply_differential_smoothing(
+                iqu, self.pre_applied_beam, smoothing_angle
+            )
+            self.I_ref, self.Q_ref, self.U_ref = iqu[0], iqu[1], iqu[2]
+        else:
+            self.I_ref = utils.apply_differential_smoothing(
+                self.I_ref, self.pre_applied_beam[0], smoothing_angle
             )
         # the templates now carry the target beam (where it exceeded their
         # presmoothing; smaller targets cannot de-convolve), record it so a

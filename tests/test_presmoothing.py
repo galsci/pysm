@@ -28,7 +28,7 @@ LMAX = int(2.5 * NSIDE)
 LRAW = 20
 
 
-def _band_limited_field(seed=0):
+def _band_limited_field(seed=0, nside=NSIDE):
     """Deterministic band-limited full-sky map with no power above ``LRAW``.
 
     The field has no monopole and no dipole (it starts at ``ell=2``): spin-2
@@ -37,14 +37,14 @@ def _band_limited_field(seed=0):
     smoothing path.
     """
     np.random.seed(seed)
-    lmax_alm = LMAX
+    lmax_alm = int(2.5 * nside)
     alm = np.zeros(hp.Alm.getsize(lmax_alm), dtype=complex)
     for ell in range(2, LRAW + 1):
         for m in range(-ell, ell + 1):
             i = hp.Alm.getidx(lmax_alm, ell, abs(m))
             # scale power down with ell so the map is smooth
             alm[i] = (np.random.randn() + 1j * np.random.randn()) / (ell + 1.0) ** 1.5
-    return hp.alm2map(alm, NSIDE, lmax=lmax_alm)
+    return hp.alm2map(alm, nside, lmax=lmax_alm)
 
 
 def _presmoothed_template(tmp_path, name, raw, fwhm):
@@ -141,6 +141,37 @@ def test_get_differential_beam_window_matches_direct_division():
         (0.7 * u.deg).to_value(u.rad), lmax=50
     )
     np.testing.assert_allclose(bw[0], direct, rtol=1e-12)
+
+
+def test_get_differential_beam_window_no_underflow_nan():
+    """Degree-scale beams at NSIDE-2048-scale lmax underflow both Gaussian
+    windows to zero at high ell: the ratio must be exactly 0 there, not
+    0/0 = NaN (and not the silently-wrong 0 the division gives where only
+    the numerator underflows)."""
+    lmax = 5120
+    bw = get_differential_beam_window(2 * u.deg, 1.5 * u.deg, lmax=lmax)
+    assert np.all(np.isfinite(bw))
+    assert bw[0, -1] == 0.0  # underflowed to exactly zero
+    with np.errstate(divide="ignore", invalid="ignore"):
+        direct = hp.gauss_beam((2 * u.deg).to_value(u.rad), lmax=lmax) / hp.gauss_beam(
+            (1.5 * u.deg).to_value(u.rad), lmax=lmax
+        )
+    # documents the bug this guards against
+    assert np.any(np.isnan(direct))
+    # in the range where the direct division is valid, they agree
+    valid = direct > 1e-30
+    np.testing.assert_allclose(bw[0][valid], direct[valid], rtol=1e-12)
+
+
+def test_apply_differential_smoothing_large_beams_no_nan():
+    """End-to-end: large beams at NSIDE >= 256 must not produce NaN output
+    maps from 0/0 window underflow in the per-component path."""
+    nside = 256
+    raw = _band_limited_field(seed=28, nside=nside)
+    templ = np.stack([raw] * 3) * u.uK_RJ
+    out = pysm3.apply_differential_smoothing(templ, np.ones(3) * u.deg, 5 * u.deg)
+    assert np.all(np.isfinite(out.value))
+    assert out.value.max() > 0
 
 
 # --------------------------------------------------------------------------- #
@@ -381,7 +412,8 @@ def test_differential_smoothing_end_to_end(tmp_path):
 
 
 def test_differential_smoothing_per_component(tmp_path):
-    """Different I vs Q/U presmoothing, each must reach the target exactly."""
+    """Different I vs Q/U presmoothing, each must reach the target, with Q/U
+    smoothed through the joint TEB transform (PySM's IQU convention)."""
     raw_I = _band_limited_field(seed=11)
     raw_Q = _band_limited_field(seed=12)
     raw_U = _band_limited_field(seed=13)
@@ -403,12 +435,66 @@ def test_differential_smoothing_per_component(tmp_path):
     )
     out = model.get_emission(23 * u.GHz)
 
-    exp_I = apply_smoothing_and_coord_transform(raw_I * u.uK_RJ, fwhm=target, lmax=LMAX)
-    exp_Q = apply_smoothing_and_coord_transform(raw_Q * u.uK_RJ, fwhm=target, lmax=LMAX)
-    exp_U = apply_smoothing_and_coord_transform(raw_U * u.uK_RJ, fwhm=target, lmax=LMAX)
-    np.testing.assert_allclose(out[0].value, exp_I.value, atol=1e-5 * exp_I.value.max())
-    np.testing.assert_allclose(out[1].value, exp_Q.value, atol=1e-5 * exp_Q.value.max())
-    np.testing.assert_allclose(out[2].value, exp_U.value, atol=1e-5 * exp_U.value.max())
+    # expected: a single joint (TEB) target smoothing of the raw maps
+    raw_stack = np.stack([raw_I, raw_Q, raw_U]) * u.uK_RJ
+    expected = apply_smoothing_and_coord_transform(raw_stack, fwhm=target, lmax=LMAX)
+    # I is exact
+    np.testing.assert_allclose(
+        out[0].value,
+        expected[0].value,
+        atol=1e-5 * expected[0].value.max(),
+    )
+    # Q/U: the joint transform carries healpix SHT quadrature artifacts
+    # (worst at the polar cap pixels), compare away from the poles with a
+    # tolerance well above them. Smoothing Q/U as scalar maps instead would
+    # exceed this tolerance (see test_differential_smoothing_preserves_pure_e)
+    theta = hp.pix2ang(NSIDE, np.arange(hp.nside2npix(NSIDE)))[0]
+    interior = (theta > 0.2) & (theta < np.pi - 0.2)
+    for i in (1, 2):
+        np.testing.assert_allclose(
+            out[i].value[interior],
+            expected[i].value[interior],
+            atol=2e-3 * expected[i].value.max(),
+        )
+
+
+def test_differential_smoothing_preserves_pure_e(tmp_path):
+    """Polarized differential smoothing uses the joint TEB transform: a pure-E
+    template stays pure-E. Scalar (spin-0) smoothing of Q/U would mix E into
+    B at a level orders of magnitude above the healpix SHT artifacts floor."""
+    # build a pure-E band-limited field (no T, no B)
+    np.random.seed(29)
+    e_alm = np.zeros(hp.Alm.getsize(LMAX), dtype=complex)
+    for ell in range(2, LRAW + 1):
+        for m in range(-ell, ell + 1):
+            i = hp.Alm.getidx(LMAX, ell, abs(m))
+            e_alm[i] = (np.random.randn() + 1j * np.random.randn()) / (ell + 1.0) ** 1.5
+    zeros_alm = np.zeros_like(e_alm)
+    tqu = np.array(
+        hp.alm2map([zeros_alm, e_alm, zeros_alm], NSIDE, lmax=LMAX, pixwin=False)
+    )
+
+    pre = 0.5 * u.deg
+    target = 0.9 * u.deg
+    # presmooth jointly, so the template really is pure-E
+    path, _ = _presmoothed_template(tmp_path, "puree.fits", tqu, pre)
+    model = pysm3.PowerLaw(
+        path,
+        "23 GHz",
+        -3.0,
+        NSIDE,
+        has_polarization=True,
+        freq_ref_P="23 GHz",
+        smoothing_angle=target,
+    )
+    out = model.get_emission(23 * u.GHz).value
+
+    alm_out = hp.map2alm(out, lmax=LMAX)
+    e_level = np.abs(alm_out[1]).max()
+    b_level = np.abs(alm_out[2]).max()
+    # the B/E ratio stays at the SHT-artifacts floor (~1e-5); scalar
+    # smoothing of Q/U mixes E into B at ~1e-3, 2 orders of magnitude higher
+    assert b_level / e_level < 1e-4
 
 
 def test_smoothing_angle_smaller_than_presmoothing_is_noop(tmp_path):

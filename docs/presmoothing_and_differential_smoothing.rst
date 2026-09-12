@@ -99,7 +99,12 @@ addition for any other model:
   beam-carrying *amplitude* maps (passing each map's ``pre_applied_beam``) and
   stores the result. Spectral-parameter maps (index, temperature, curvature,
   ...) must **not** be smoothed -- which is why this step is per-model rather
-  than fully automatic. The base implementation is a no-op.
+  than fully automatic. The base implementation is a no-op. For a polarized
+  model, pass the stacked ``(3, npix)`` I/Q/U map together with the
+  shape-``(3,)`` ``pre_applied_beam``: Q and U are components of a spin-2
+  field and are then smoothed through the joint TEB transform (PySM's IQU
+  convention), while smoothing them as independent scalar maps would apply
+  the spin-0 transform to a spin-2 field and mix E into B.
 
 For example, a model reading a single amplitude map ``maps`` plus a spectral
 index map would implement::
@@ -185,7 +190,11 @@ Gaussian beams):
 
   .. math:: B_\ell = \frac{g_\ell(R)}{g_\ell(b)},
 
-  implemented by :func:`pysm3.get_differential_beam_window`. This stays exact
+  implemented by :func:`pysm3.get_differential_beam_window`. For Gaussian
+  beams the ratio is computed as the Gaussian beam of the differential FWHM
+  (mathematically identical), because dividing the two windows directly
+  underflows to ``0/0 = NaN`` at the high ``lmax`` of NSIDE 2048+ maps with
+  degree-scale beams. This stays meaningful
   even for non-Gaussian / measured windows and follows the same convention as
   :class:`pysm3.InterpolatingComponent`, with one nuance: the rows here are
   built from the spin-0 (``pol=False``) Gaussian windows, while
@@ -247,7 +256,10 @@ The full feature is exercised in ``tests/test_presmoothing.py``: header round
 trips, the differential-FWHM and window-division helpers (including the
 ``R <= pre`` identity), per-component presmoothing, end-to-end validation that
 the output lands exactly at the target (and is far closer to a single target
-smoothing than the naive double-smoothing), the resolution-floor no-op, Sky()
+smoothing than the naive double-smoothing), that polarized models smooth I/Q/U
+through the joint TEB transform (a pure-E template stays pure-E), that large
+beams at high resolution do not underflow the windows to NaN, the
+resolution-floor no-op, Sky()
 forwarding (including to already-initialized ``component_objects`` and nested
 Sky objects via the ``apply_differential_smoothing`` hook, and the idempotency
 of repeated applications), and backwards compatibility.

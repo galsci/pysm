@@ -210,8 +210,13 @@ def get_differential_beam_window(target_fwhm, pre_applied_beam=None, lmax=None):
         B_\\ell = \\frac{g_\\ell(\\mathrm{target})}{g_\\ell(\\mathrm{pre})}
 
     For Gaussian beams this is equivalent to smoothing with
-    ``sqrt(target**2 - pre**2)`` (see :func:`get_differential_fwhm`), but window
-    division stays exact even for non-Gaussian windows. Wherever the target is
+    ``sqrt(target**2 - pre**2)`` (see :func:`get_differential_fwhm`), and it is
+    computed exactly that way, as the Gaussian beam of the differential FWHM:
+    dividing the two windows directly would give ``0/0 = NaN`` where both
+    underflow to zero (degree-scale beams at ``lmax`` of a few thousand). The
+    window-division convention itself also generalizes to non-Gaussian /
+    measured windows, as :class:`~pysm3.InterpolatingComponent` does.
+    Wherever the target is
     smaller than or equal to the pre-applied beam the window is set to unity
     (a template cannot be de-convolved, so no change is applied there).
 
@@ -254,8 +259,11 @@ def get_differential_beam_window(target_fwhm, pre_applied_beam=None, lmax=None):
         t = target[0] if target.size == 1 else target[i]
         b = pre[0] if pre.size == 1 else pre[i]
         if t > b:
-            with np.errstate(divide="ignore", invalid="ignore"):
-                net[i] = hp.gauss_beam(t, lmax=lmax) / hp.gauss_beam(b, lmax=lmax)
+            # gauss_beam(t) / gauss_beam(b) == gauss_beam(sqrt(t**2 - b**2))
+            # for Gaussian beams; computing the ratio as the beam of the
+            # differential FWHM gives exactly 0 (not 0/0 = NaN) where both
+            # windows underflow at high lmax
+            net[i] = hp.gauss_beam(np.sqrt(t**2 - b**2), lmax=lmax)
     return net
 
 
@@ -278,6 +286,11 @@ def apply_differential_smoothing(map_t, pre_applied_beam, target_fwhm):
         The amplitude template map to smooth: 1-D / ``(1, npix)`` with a
         scalar ``pre_applied_beam``, or ``(3, npix)`` with a scalar or
         shape-``(3,)`` ``pre_applied_beam`` (per-component IQU presmoothing).
+        A ``(3, npix)`` map is smoothed through the joint TEB transform (the
+        IQU convention of
+        :func:`apply_smoothing_and_coord_transform`), so that Q / U are
+        treated as components of a spin-2 field rather than as independent
+        scalar maps.
     pre_applied_beam : astropy.units.Quantity or None
         FWHM already applied to this template, a scalar or, for a
         ``(3, npix)`` map, shape ``(3,)``. ``None``/``0`` means no
