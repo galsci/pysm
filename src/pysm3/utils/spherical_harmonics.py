@@ -253,7 +253,10 @@ def get_differential_beam_window(target_fwhm, pre_applied_beam=None, lmax=None):
     if pre_applied_beam is None or np.all(np.asarray(pre_applied_beam) == 0):
         target_window = hp.gauss_beam(target[0], lmax=lmax)
         return np.tile(target_window, (3, 1))
-    pre = np.atleast_1d(pre_applied_beam.to_value(u.radian))
+    # u.Quantity(value, rad) also accepts plain numbers (e.g. 0) and
+    # strings (e.g. "53 arcmin"), converting them to radians, like
+    # get_differential_fwhm does
+    pre = np.atleast_1d(u.Quantity(pre_applied_beam, u.radian).to_value(u.radian))
     net = np.ones((3, lmax + 1))
     for i in range(3):
         t = target[0] if target.size == 1 else target[i]

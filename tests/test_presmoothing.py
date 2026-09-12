@@ -143,6 +143,14 @@ def test_get_differential_beam_window_matches_direct_division():
     np.testing.assert_allclose(bw[0], direct, rtol=1e-12)
 
 
+def test_get_differential_beam_window_plain_zero_pre():
+    """A plain 0 pre_applied_beam (documented input) works like in
+    get_differential_fwhm, instead of raising AttributeError."""
+    bw = get_differential_beam_window(1 * u.deg, 0, lmax=50)
+    expected = hp.gauss_beam((1 * u.deg).to_value(u.rad), lmax=50)
+    np.testing.assert_allclose(bw, np.tile(expected, (3, 1)))
+
+
 def test_get_differential_beam_window_no_underflow_nan():
     """Degree-scale beams at NSIDE-2048-scale lmax underflow both Gaussian
     windows to zero at high ell: the ratio must be exactly 0 there, not
@@ -217,6 +225,17 @@ def test_extract_smoothing_angle_non_angle_value_is_zero(tmp_path):
         str(path), "23 GHz", -3.0, NSIDE, has_polarization=False, unit_I="uK_RJ"
     )
     np.testing.assert_array_equal(model.pre_applied_beam.value, 0.0)
+
+
+def test_extract_smoothing_angle_negative_value_is_zero(tmp_path):
+    """A negative header value is malformed (there are no negative beams) and
+    is treated as no presmoothing with a warning, like other invalid values."""
+    raw = _band_limited_field(seed=30)
+    path = tmp_path / "neg.fits"
+    hp.write_map(path, raw, dtype=np.float64, overwrite=True)
+    add_metadata([path], field=1, smoothing_angle="-53 arcmin")
+    m = read_map(str(path), nside=NSIDE, field=0)
+    assert u.Quantity(m.smoothing_angle).value == 0.0
 
 
 def test_powerlaw_pre_applied_beam(tmp_path):
@@ -657,6 +676,37 @@ def test_sky_warns_on_unsupported_component(tmp_path, caplog):
             nside=NSIDE,
         )
     assert caplog.text == ""
+
+
+def test_sky_warns_when_overriding_component_smoothing_angle(tmp_path, caplog):
+    """A Sky-level smoothing_angle takes precedence over a smoothing_angle
+    key in a component's configuration, with a warning."""
+    raw = _band_limited_field(seed=31)
+    path = tmp_path / "plain.fits"
+    hp.write_map(path, raw, dtype=np.float64, overwrite=True)
+    with caplog.at_level(logging.WARNING, logger="pysm3"):
+        sky = pysm3.Sky(
+            component_config={
+                "mys1": {
+                    "class": "PowerLaw",
+                    "map_I": str(path),
+                    "freq_ref_I": "23 GHz",
+                    "map_pl_index": -3.0,
+                    "has_polarization": False,
+                    "unit_I": "uK_RJ",
+                    "smoothing_angle": "0.5 deg",  # overridden by Sky-level
+                }
+            },
+            nside=NSIDE,
+            smoothing_angle=0.9 * u.deg,
+        )
+    assert "Ignoring the smoothing_angle value" in caplog.text
+    # the Sky-level target is the one applied
+    np.testing.assert_allclose(
+        sky.components[0].pre_applied_beam.to_value(u.deg),
+        [0.9, 0.9, 0.9],
+        atol=1e-12,
+    )
 
 
 def test_sky_without_smoothing_angle_backwards_compatible(tmp_path):

@@ -30,6 +30,12 @@ def _component_init(class_obj, config_kwargs, nside, map_dist, smoothing_angle):
     component_kwargs = remove_class_from_dict(config_kwargs)
     if "smoothing_angle" in inspect.signature(class_obj).parameters:
         if smoothing_angle is not None:
+            if "smoothing_angle" in component_kwargs:
+                log.warning(
+                    "Ignoring the smoothing_angle value in the configuration "
+                    "of %s, using the Sky-level smoothing_angle",
+                    class_obj.__name__,
+                )
             component_kwargs["smoothing_angle"] = smoothing_angle
     elif smoothing_angle is not None:
         log.warning(

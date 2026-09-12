@@ -164,7 +164,9 @@ usual; the only extra step is that each amplitude template must carry a
 ``SMOOTHING_ANGLE`` header (see above) recording the beam it already has. At
 model construction time each template is smoothed by only the *differential*
 between ``smoothing_angle`` and its presmoothing, and the emission is then
-computed through the normal spectral law.
+computed through the normal spectral law. A Sky-level ``smoothing_angle``
+takes precedence over a ``smoothing_angle`` key set in a component's
+configuration (a warning is logged when it overrides one).
 
 The first model planned to make use of this is the IP2026 low-frequency
 synchrotron model (``s8``); once its templates are shipped with the
@@ -206,7 +208,7 @@ Gaussian beams):
   for a 5 deg differential.
 
 Both helpers return ``0`` / identity when :math:`R \le b` -- a template cannot be
-*de*convolved, so no additional smoothing (and no "de-smoothing") is applied in
+``de``-convolved, so no additional smoothing (and no "de-smoothing") is applied in
 that case. The returned per-component window has shape ``(3, lmax+1)`` and can be
 passed directly as the ``beam_window`` argument of
 :func:`pysm3.apply_smoothing_and_coord_transform`.
@@ -235,8 +237,9 @@ Corner cases
 * Different presmoothing for I / Q / U (e.g. ``56 arcmin`` / ``53 arcmin`` /
   ``53 arcmin``): each component is smoothed by its own differential, so all
   three land exactly at :math:`R`.
-* A header value that cannot be parsed as an angle (or a missing keyword) is
-  treated as ``0`` and a warning is logged.
+* A header value that is malformed -- unparseable, not an angle, negative or
+  not finite -- (or a missing keyword) is treated as ``0`` and a warning is
+  logged.
 
 MPI / distributed smoothing
 ===========================
