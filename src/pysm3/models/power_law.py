@@ -78,6 +78,12 @@ class PowerLaw(Model):
             available_nside=available_nside,
             map_dist=map_dist,
         )
+        if smoothing_angle is not None and map_dist is not None:
+            raise NotImplementedError(
+                "Differential smoothing (smoothing_angle) is not implemented "
+                "for MPI-distributed maps (map_dist); build the model "
+                "serially or pre-smooth the templates to the target resolution"
+            )
         # do model setup
         self.is_IQU = has_polarization and map_Q is None
         self.I_ref = self.read_map(
@@ -135,7 +141,19 @@ class PowerLaw(Model):
         (which would double-apply roughly half of the beam). Only the
         beam-carrying amplitude maps (I / Q / U) are smoothed; the spectral
         index map is left untouched.
+
+        Raises
+        ------
+        NotImplementedError
+            If the model was built with ``map_dist`` (MPI-distributed maps):
+            differential smoothing is only implemented on the serial path.
         """
+        if self.map_dist is not None:
+            raise NotImplementedError(
+                "Differential smoothing (smoothing_angle) is not implemented "
+                "for MPI-distributed maps (map_dist); build the model "
+                "serially or pre-smooth the templates to the target resolution"
+            )
         self.I_ref = utils.apply_differential_smoothing(
             self.I_ref, self.pre_applied_beam[0], smoothing_angle
         )

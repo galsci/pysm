@@ -243,7 +243,8 @@ def extract_smoothing_angle(filename, hdu=1):
     -------
     smoothing_angle : astropy.units.Quantity
         The presmoothing as an angle, or ``0 deg`` when the keyword is absent
-        or cannot be parsed (i.e. the template carries no presmoothing).
+        or is not a parseable angle (i.e. the template carries no
+        presmoothing).
     """
     try:
         with fits.open(filename) as hdul:
@@ -251,7 +252,7 @@ def extract_smoothing_angle(filename, hdu=1):
     except (KeyError, IndexError):
         return 0 * u.deg
     try:
-        return u.Quantity(value)
+        smoothing_angle = u.Quantity(value)
     except (ValueError, TypeError):
         log.warning(
             "Could not parse %s=%r in %s, assuming no presmoothing",
@@ -260,6 +261,15 @@ def extract_smoothing_angle(filename, hdu=1):
             str(filename),
         )
         return 0 * u.deg
+    if not smoothing_angle.unit.is_equivalent(u.radian):
+        log.warning(
+            "%s=%r in %s is not an angle, assuming no presmoothing",
+            SMOOTHING_ANGLE_KEY,
+            value,
+            str(filename),
+        )
+        return 0 * u.deg
+    return smoothing_angle
 
 
 def read_map(path, nside, unit=None, field=0, map_dist=None):

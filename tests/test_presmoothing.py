@@ -7,6 +7,7 @@ These tests cover the ``SMOOTHING_ANGLE`` FITS header mechanism, the
 """
 
 import healpy as hp
+import logging
 import numpy as np
 import pytest
 
@@ -28,18 +29,22 @@ LRAW = 20
 
 
 def _band_limited_field(seed=0):
-    """Deterministic band-limited full-sky map with no power above ``LRAW``."""
+    """Deterministic band-limited full-sky map with no power above ``LRAW``.
+
+    The field has no monopole and no dipole (it starts at ``ell=2``): spin-2
+    harmonics have no ``ell < 2`` modes, so any Q/U content at ``ell < 2``
+    could not survive the TQU <-> TEB transforms used by the polarized
+    smoothing path.
+    """
     np.random.seed(seed)
     lmax_alm = LMAX
     alm = np.zeros(hp.Alm.getsize(lmax_alm), dtype=complex)
-    for ell in range(LRAW + 1):
+    for ell in range(2, LRAW + 1):
         for m in range(-ell, ell + 1):
             i = hp.Alm.getidx(lmax_alm, ell, abs(m))
             # scale power down with ell so the map is smooth
             alm[i] = (np.random.randn() + 1j * np.random.randn()) / (ell + 1.0) ** 1.5
-    alm[0] += 0.0  # l=0 term zero
     return hp.alm2map(alm, NSIDE, lmax=lmax_alm)
-
 
 
 def _presmoothed_template(tmp_path, name, raw, fwhm):
@@ -78,6 +83,9 @@ def test_get_differential_fwhm_no_presmoothing():
     diff = get_differential_fwhm(1 * u.deg)
     assert diff.value == pytest.approx((1 * u.deg).to_value(u.rad))
     diff = get_differential_fwhm(1 * u.deg, 0 * u.deg)
+    assert diff.value == pytest.approx((1 * u.deg).to_value(u.rad))
+    # a plain 0 (documented input) works too
+    diff = get_differential_fwhm(1 * u.deg, 0)
     assert diff.value == pytest.approx((1 * u.deg).to_value(u.rad))
 
 
@@ -164,6 +172,22 @@ def test_extract_smoothing_angle_bad_value_is_zero(tmp_path):
     assert u.Quantity(m.smoothing_angle).value == 0.0
 
 
+def test_extract_smoothing_angle_non_angle_value_is_zero(tmp_path):
+    """A parseable but non-angle value (e.g. a plain number) is treated as no
+    presmoothing instead of crashing every model built from the template."""
+    raw = _band_limited_field(seed=20)
+    path = tmp_path / "nonangle.fits"
+    hp.write_map(path, raw, dtype=np.float64, overwrite=True)
+    add_metadata([path], field=1, smoothing_angle=53.0)  # number, not an angle
+    m = read_map(str(path), nside=NSIDE, field=0)
+    assert u.Quantity(m.smoothing_angle).value == 0.0
+    # and a model can still be built from the template
+    model = pysm3.PowerLaw(
+        str(path), "23 GHz", -3.0, NSIDE, has_polarization=False, unit_I="uK_RJ"
+    )
+    np.testing.assert_array_equal(model.pre_applied_beam.value, 0.0)
+
+
 def test_powerlaw_pre_applied_beam(tmp_path):
     raw = _band_limited_field(seed=5)
     path, _ = _presmoothed_template(tmp_path, "i.fits", raw, 56 * u.arcmin)
@@ -232,6 +256,86 @@ def test_apply_differential_smoothing_utility(tmp_path):
     np.testing.assert_allclose(out.value, expected.value, atol=1e-5 * expected.value.max())
     # no de-smoothing when the target is below the presmoothing
     assert pysm3.apply_differential_smoothing(templ, 0.9 * u.deg, 0.5 * u.deg) is templ
+
+
+def test_apply_differential_smoothing_utility_per_component():
+    """The utility also accepts a shape-(3,) pre_applied_beam with a (3, npix)
+    map, taking each component to the target by its own differential."""
+    raw = _band_limited_field(seed=22)
+    pre = np.array([0.5, 0.4, 0.4]) * u.deg
+    target = 0.9 * u.deg
+    templ = np.stack(
+        [
+            apply_smoothing_and_coord_transform(
+                raw * u.uK_RJ, fwhm=pre[i], lmax=LMAX
+            ).value
+            for i in range(3)
+        ]
+    ) * u.uK_RJ
+    out = pysm3.apply_differential_smoothing(templ, pre, target)
+    # identical to applying the explicitly-built per-component net window
+    net_window = get_differential_beam_window(target, pre, lmax=LMAX)
+    ref = apply_smoothing_and_coord_transform(
+        templ, beam_window=net_window, lmax=LMAX
+    )
+    np.testing.assert_allclose(out.value, ref.value, rtol=1e-12, atol=0)
+    # and the temperature component reaches the target exactly. (Q/U cannot
+    # be compared pixel-by-pixel at this tolerance: healpix's polarized
+    # spherical harmonic transforms carry O(1e-3) quadrature artifacts, e.g.
+    # at the polar cap pixels. The window identity above plus the window
+    # checks in the other tests cover them.)
+    expected = apply_smoothing_and_coord_transform(raw * u.uK_RJ, fwhm=target, lmax=LMAX)
+    np.testing.assert_allclose(
+        out[0].value, expected.value, atol=1e-5 * expected.value.max()
+    )
+    # a component whose target is below its presmoothing gets a unity window
+    pre_over = np.array([0.5, 1.2, 0.4]) * u.deg
+    bw = get_differential_beam_window(target, pre_over, lmax=LMAX)
+    np.testing.assert_allclose(bw[1], 1.0)
+
+
+def test_apply_differential_smoothing_utility_shape_mismatch():
+    """A per-component pre_applied_beam with a single-component map errors
+    clearly instead of failing inside healpy."""
+    raw = _band_limited_field(seed=23)
+    with pytest.raises(ValueError, match="3 components"):
+        pysm3.apply_differential_smoothing(
+            raw * u.uK_RJ, np.array([0.5, 0.4, 0.4]) * u.deg, 0.9 * u.deg
+        )
+
+
+def test_powerlaw_differential_smoothing_mpi_not_implemented(tmp_path):
+    """smoothing_angle with MPI-distributed maps raises a clear error at build
+    time instead of failing deep in the serial smoothing of a partial map."""
+    raw = _band_limited_field(seed=21)
+    path = tmp_path / "mpi.fits"
+    hp.write_map(path, raw, dtype=np.float64, overwrite=True)
+    map_dist = pysm3.MapDistribution(
+        pixel_indices=np.arange(hp.nside2npix(NSIDE))
+    )
+    with pytest.raises(NotImplementedError, match="map_dist"):
+        pysm3.PowerLaw(
+            str(path),
+            "23 GHz",
+            -3.0,
+            NSIDE,
+            has_polarization=False,
+            unit_I="uK_RJ",
+            smoothing_angle=1 * u.deg,
+            map_dist=map_dist,
+        )
+    # the same guard applies when calling the method directly
+    model = pysm3.PowerLaw(
+        str(path),
+        "23 GHz",
+        -3.0,
+        NSIDE,
+        has_polarization=False,
+        unit_I="uK_RJ",
+        map_dist=map_dist,
+    )
+    with pytest.raises(NotImplementedError, match="map_dist"):
+        model.apply_differential_smoothing(1 * u.deg)
 
 
 def test_model_extension_hook_is_noop():
@@ -354,6 +458,39 @@ def test_sky_forwards_smoothing_angle(tmp_path):
     out = sky.get_emission(23 * u.GHz)[0]
     expected = apply_smoothing_and_coord_transform(raw * u.uK_RJ, fwhm=target, lmax=LMAX)
     np.testing.assert_allclose(out.value, expected.value, atol=1e-5 * expected.value.max())
+
+
+def test_sky_warns_on_unsupported_component(tmp_path, caplog):
+    """A smoothing_angle requested on a sky that has components without
+    presmoothing support logs a warning (their emission is left unsmoothed)."""
+    raw = _band_limited_field(seed=24)
+    path = tmp_path / "plain.fits"
+    hp.write_map(path, raw, dtype=np.float64, overwrite=True)
+    with caplog.at_level(logging.WARNING, logger="pysm3"):
+        pysm3.Sky(
+            component_config={
+                "base": {"class": "Model"},
+                "mys1": {
+                    "class": "PowerLaw",
+                    "map_I": str(path),
+                    "freq_ref_I": "23 GHz",
+                    "map_pl_index": -3.0,
+                    "has_polarization": False,
+                    "unit_I": "uK_RJ",
+                },
+            },
+            nside=NSIDE,
+            smoothing_angle=1 * u.deg,
+        )
+    assert "Model does not support smoothing_angle" in caplog.text
+    # no warning when no target beam is requested
+    caplog.clear()
+    with caplog.at_level(logging.WARNING, logger="pysm3"):
+        pysm3.Sky(
+            component_config={"base": {"class": "Model"}},
+            nside=NSIDE,
+        )
+    assert caplog.text == ""
 
 
 def test_sky_without_smoothing_angle_backwards_compatible(tmp_path):

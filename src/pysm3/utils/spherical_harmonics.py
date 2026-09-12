@@ -188,7 +188,9 @@ def get_differential_fwhm(target_fwhm, pre_applied_beam=None):
     if pre_applied_beam is None:
         pre = np.zeros_like(target)
     else:
-        pre = np.asarray(pre_applied_beam.to_value(u.radian))
+        # u.Quantity(value, rad) also accepts plain numbers (e.g. 0) and
+        # strings (e.g. "53 arcmin"), converting them to radians
+        pre = np.atleast_1d(u.Quantity(pre_applied_beam, u.radian).to_value(u.radian))
     target, pre = np.broadcast_arrays(target, pre)
     differential = np.sqrt(np.maximum(target**2 - pre**2, 0.0))
     if differential.size == 1:
@@ -254,30 +256,49 @@ def apply_differential_smoothing(map_t, pre_applied_beam, target_fwhm):
     This is the reusable building block of the presmoothing feature: it is what
     any template model calls on each of its beam-carrying amplitude maps when a
     ``smoothing_angle`` is requested (see :class:`pysm3.Model`).
-    ``pre_applied_beam`` must be a scalar Quantity (the presmoothing of this
-    specific map, e.g. one element of the model's ``pre_applied_beam``); pass it
-    as ``0`` for a map with no recorded presmoothing to get a full target
-    smoothing. Returns ``map_t`` unchanged when the target does not exceed the
+    ``pre_applied_beam`` is the presmoothing of this specific map (e.g. one
+    element of the model's ``pre_applied_beam``); pass it as ``0`` or ``None``
+    for a map with no recorded presmoothing to get a full target smoothing.
+    Returns ``map_t`` unchanged when the target does not exceed the
     pre-applied beam (a template cannot be de-convolved).
 
     Parameters
     ----------
     map_t : astropy.units.Quantity
-        The amplitude template map (1-D or per-component) to smooth.
+        The amplitude template map to smooth: 1-D / ``(1, npix)`` with a
+        scalar ``pre_applied_beam``, or ``(3, npix)`` with a scalar or
+        shape-``(3,)`` ``pre_applied_beam`` (per-component IQU presmoothing).
     pre_applied_beam : astropy.units.Quantity or None
-        FWHM already applied to this template (scalar), or ``None``/``0``.
+        FWHM already applied to this template, a scalar or, for a
+        ``(3, npix)`` map, shape ``(3,)``. ``None``/``0`` means no
+        presmoothing.
     target_fwhm : astropy.units.Quantity
         Target output FWHM.
 
     Returns
     -------
     astropy.units.Quantity
-        The map smoothed by the differential.
+        The map smoothed by the differential (per component when
+        ``pre_applied_beam`` has one entry per component).
     """
     differential = get_differential_fwhm(target_fwhm, pre_applied_beam)
-    if differential.value == 0:
+    if np.all(differential.value == 0):
         return map_t
-    return apply_smoothing_and_coord_transform(map_t, fwhm=differential)
+    if differential.isscalar:
+        return apply_smoothing_and_coord_transform(map_t, fwhm=differential)
+    # Per-component presmoothing: apply the net beam window, which is unity
+    # for the components whose target does not exceed their presmoothing
+    map_shape = np.shape(map_t)
+    if len(map_shape) < 2 or map_shape[0] != differential.shape[0]:
+        raise ValueError(
+            "pre_applied_beam with {} components requires a map with {} "
+            "components, got shape {}".format(
+                differential.shape[0], differential.shape[0], map_shape
+            )
+        )
+    lmax = int(2.5 * hp.get_nside(map_t))
+    beam_window = get_differential_beam_window(target_fwhm, pre_applied_beam, lmax=lmax)
+    return apply_smoothing_and_coord_transform(map_t, beam_window=beam_window, lmax=lmax)
 
 
 def map2alm(input_map, nside, lmax, map2alm_lsq_maxiter=None):

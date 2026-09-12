@@ -48,8 +48,15 @@ stored as a Gaussian FWHM in the template's FITS header under the
 
 The value is any string parseable by :mod:`astropy.units` (e.g. ``"1 deg"``,
 ``"53 arcmin"``). A template without the keyword (or with a value that cannot be
-parsed) is treated as *unsmoothed* (presmoothing ``0``), preserving the
-existing behaviour of every current PySM preset.
+parsed as an angle) is treated as *unsmoothed* (presmoothing ``0``) and a
+warning is logged, preserving the existing behaviour of every current PySM
+preset.
+
+Note that ``SMOOTHING_ANGLE`` is longer than the 8-character limit of standard
+FITS keywords, so it is stored using the ``HIERARCH`` convention. Headers
+written this way are read back correctly by :mod:`astropy.io.fits` (which PySM
+uses), but may not be visible to strict CFITSIO-based tools; convert to a
+standard keyword if you need those tools to see the presmoothing.
 
 When ``read_map`` loads such a template it exposes the recorded angle as the
 ``smoothing_angle`` attribute of the returned map, and
@@ -205,17 +212,19 @@ Corner cases
 * Different presmoothing for I / Q / U (e.g. ``56 arcmin`` / ``53 arcmin`` /
   ``53 arcmin``): each component is smoothed by its own differential, so all
   three land exactly at :math:`R`.
-* A header value that cannot be parsed (or a missing keyword) is silently
-  treated as ``0``.
+* A header value that cannot be parsed as an angle (or a missing keyword) is
+  treated as ``0`` and a warning is logged.
 
 MPI / distributed smoothing
 ===========================
 
-The distributed (`libsharp`) smoothing path of
-:func:`pysm3.apply_smoothing_and_coord_transform` supports the scalar ``fwhm``
-path only; the per-component ``beam_window`` path is serial. At present the
-build-time ``smoothing_angle`` differential smoothing is applied on the serial
-path.
+Build-time differential smoothing (``smoothing_angle``) operates on the full
+sky with the serial path, so it is **not available** for MPI-distributed maps:
+requesting a ``smoothing_angle`` on a model built with ``map_dist`` raises
+``NotImplementedError`` at construction time. To run with MPI, pre-smooth the
+templates to the target resolution beforehand (e.g. with
+:func:`pysm3.apply_smoothing_and_coord_transform`) and record the result in
+their ``SMOOTHING_ANGLE`` header.
 
 Tests
 =====

@@ -7,6 +7,7 @@ Objects:
 """
 
 import inspect
+import logging
 
 import toml
 
@@ -14,6 +15,8 @@ from . import units as u
 from .models import *
 from .models import Model
 from .utils import bandpass_unit_conversion
+
+log = logging.getLogger("pysm3")
 
 
 def remove_class_from_dict(d):
@@ -25,11 +28,15 @@ def _component_init(class_obj, config_kwargs, nside, map_dist, smoothing_angle):
     """Instantiate a component class, forwarding ``smoothing_angle`` only to the
     classes that accept it (template models that support presmoothing)."""
     component_kwargs = remove_class_from_dict(config_kwargs)
-    if (
-        smoothing_angle is not None
-        and "smoothing_angle" in inspect.signature(class_obj).parameters
-    ):
-        component_kwargs["smoothing_angle"] = smoothing_angle
+    if "smoothing_angle" in inspect.signature(class_obj).parameters:
+        if smoothing_angle is not None:
+            component_kwargs["smoothing_angle"] = smoothing_angle
+    elif smoothing_angle is not None:
+        log.warning(
+            "%s does not support smoothing_angle, the requested target "
+            "beam will not be applied to this component",
+            class_obj.__name__,
+        )
     return class_obj(**component_kwargs, nside=nside, map_dist=map_dist)
 
 
@@ -180,7 +187,9 @@ class Sky(Model):
             presmoothing (e.g. :class:`~pysm3.PowerLaw`) are built so that each
             amplitude template is smoothed by only the *differential* between
             this target and the presmoothing it already carries, rather than by
-            the full target. See the documentation for details.
+            the full target. Components that do not support presmoothing are
+            left unchanged and a warning is logged. See the documentation for
+            details.
         map_dist: pysm.MapDistribution
             Distribution object used for parallel computing with MPI
         """
