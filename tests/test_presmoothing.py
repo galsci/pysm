@@ -151,6 +151,17 @@ def test_get_differential_beam_window_plain_zero_pre():
     np.testing.assert_allclose(bw, np.tile(expected, (3, 1)))
 
 
+@pytest.mark.parametrize("pre", [None, 0])
+def test_get_differential_beam_window_per_component_zero_pre(pre):
+    """Per-component targets remain per-component without presmoothing."""
+    target = np.array([0.5, 0.5, 0.9]) * u.deg
+    bw = get_differential_beam_window(target, pre, lmax=50)
+    expected = np.stack(
+        [hp.gauss_beam(fwhm.to_value(u.rad), lmax=50) for fwhm in target]
+    )
+    np.testing.assert_allclose(bw, expected, rtol=1e-12)
+
+
 def test_get_differential_beam_window_no_underflow_nan():
     """Degree-scale beams at NSIDE-2048-scale lmax underflow both Gaussian
     windows to zero at high ell: the ratio must be exactly 0 there, not
