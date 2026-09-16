@@ -162,6 +162,22 @@ def test_get_differential_beam_window_per_component_zero_pre(pre):
     np.testing.assert_allclose(bw, expected, rtol=1e-12)
 
 
+@pytest.mark.parametrize(
+    "bad_target",
+    [np.array([0.5, 0.9]) * u.deg, np.array([0.5, 0.5, 0.5, 0.9]) * u.deg],
+)
+def test_get_differential_beam_window_invalid_target_size(bad_target):
+    """A non scalar/(3,) target raises a clear ValueError, not an IndexError."""
+    with pytest.raises(ValueError, match="target_fwhm"):
+        get_differential_beam_window(bad_target, None, lmax=50)
+
+
+def test_get_differential_beam_window_invalid_pre_size():
+    """Invalid pre_applied_beam entry count raises a clear ValueError."""
+    with pytest.raises(ValueError, match="pre_applied_beam"):
+        get_differential_beam_window(1 * u.deg, np.array([0.5, 0.9]) * u.deg, lmax=50)
+
+
 def test_get_differential_beam_window_no_underflow_nan():
     """Degree-scale beams at NSIDE-2048-scale lmax underflow both Gaussian
     windows to zero at high ell: the ratio must be exactly 0 there, not

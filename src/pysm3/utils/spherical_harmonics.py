@@ -233,7 +233,8 @@ def get_differential_beam_window(target_fwhm, pre_applied_beam=None, lmax=None):
     Parameters
     ----------
     target_fwhm : astropy.units.Quantity
-        Target output FWHM (an angle).
+        Target output FWHM, a scalar angle (one FWHM for all I/Q/U rows) or
+        shape ``(3,)`` (a separate target FWHM per component).
     pre_applied_beam : astropy.units.Quantity, optional
         FWHM already applied by the template, scalar or shape ``(3,)``.
         ``None`` or ``0`` means no presmoothing (the target window is returned).
@@ -250,6 +251,11 @@ def get_differential_beam_window(target_fwhm, pre_applied_beam=None, lmax=None):
         msg = "lmax must be provided to build a beam window"
         raise ValueError(msg)
     target = np.atleast_1d(target_fwhm.to_value(u.radian))
+    if target.size not in (1, 3):
+        raise ValueError(
+            "target_fwhm must be a scalar angle or shape (3,) (one FWHM per "
+            "I/Q/U component), got shape {}".format(np.shape(target_fwhm))
+        )
     if pre_applied_beam is None or np.all(np.asarray(pre_applied_beam) == 0):
         return np.stack(
             [
@@ -261,6 +267,11 @@ def get_differential_beam_window(target_fwhm, pre_applied_beam=None, lmax=None):
     # strings (e.g. "53 arcmin"), converting them to radians, like
     # get_differential_fwhm does
     pre = np.atleast_1d(u.Quantity(pre_applied_beam, u.radian).to_value(u.radian))
+    if pre.size not in (1, 3):
+        raise ValueError(
+            "pre_applied_beam must be a scalar or shape (3,) (one FWHM per "
+            "I/Q/U component), got shape {}".format(np.shape(pre_applied_beam))
+        )
     net = np.ones((3, lmax + 1))
     for i in range(3):
         t = target[0] if target.size == 1 else target[i]
