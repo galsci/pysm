@@ -278,9 +278,6 @@ def get_differential_beam_window(target_fwhm, pre_applied_beam=None, lmax=None):
     ``gauss_beam(..., pol=True)`` window division). Because this preserves the
     window-division convention of :class:`~pysm3.InterpolatingComponent`, it
     also generalizes to non-Gaussian / measured windows.
-    Wherever the target is
-    smaller than or equal to the pre-applied beam the window is set to unity
-    (a template cannot be de-convolved, so no change is applied there).
 
     Parameters
     ----------

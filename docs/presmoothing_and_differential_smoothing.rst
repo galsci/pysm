@@ -209,14 +209,13 @@ Gaussian beams):
   underflows to ``0/0 = NaN`` at the high ``lmax`` of NSIDE 2048+ maps with
   degree-scale beams. This stays meaningful
   even for non-Gaussian / measured windows and follows the same convention as
-  :class:`pysm3.InterpolatingComponent`, with one nuance: the rows here are
-  built from the spin-0 (``pol=False``) Gaussian windows, while
-  ``InterpolatingComponent`` divides the ``pol=True`` windows whose E/B rows
-  carry an additional ``exp(2*sigma**2)`` spin factor. The two agree exactly
-  for T and up to a constant ``exp(2*(sigma_target**2 - sigma_pre**2))``
-  factor for E/B -- negligible (relative ~1e-5) for the
-  arcminute-to-degree differentials this feature targets, but reaching ~0.3%
-  for a 5 deg differential.
+  :class:`pysm3.InterpolatingComponent`: the I row is built from the spin-0
+  (``pol=False``) Gaussian and the E/B rows from the spin-2 (``pol=True``)
+  Gaussian, so the rows agree *exactly* with the ``pol=True`` windows that
+  :class:`pysm3.InterpolatingComponent` divides (and with the
+  ``hp.smoothalm(..., pol=True)`` windows of the ``fwhm`` path, whose E/B rows
+  carry the additional ``exp(2*sigma**2)`` spin factor -- that factor cancels
+  in the window ratio).
 
 Both helpers return ``0`` / identity when :math:`R \le b` -- a template cannot be
 ``de``-convolved, so no additional smoothing (and no "de-smoothing") is applied in

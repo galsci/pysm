@@ -742,6 +742,51 @@ def test_sky_forwards_smoothing_angle_to_nested_sky(tmp_path):
     np.testing.assert_allclose(out.value, expected.value, atol=1e-5 * expected.value.max())
 
 
+def test_nested_sky_records_forwarded_smoothing_angle(tmp_path):
+    """A Sky that receives smoothing_angle through the hook records it, so a
+    component appended later via add_component inherits the same target."""
+    raw = _band_limited_field(seed=33)
+    pre = 0.5 * u.deg
+    target = 0.9 * u.deg
+    path, _ = _presmoothed_template(tmp_path, "nest-record.fits", raw, pre)
+    inner = pysm3.Sky(
+        component_config={
+            "mys1": {
+                "class": "PowerLaw",
+                "map_I": str(path),
+                "freq_ref_I": "23 GHz",
+                "map_pl_index": -3.0,
+                "has_polarization": False,
+                "unit_I": "uK_RJ",
+            }
+        },
+        nside=NSIDE,
+    )
+    assert inner.smoothing_angle is None
+    pysm3.Sky(component_objects=[inner], nside=NSIDE, smoothing_angle=target)
+    # the forwarded target is normalized and recorded on the nested Sky
+    assert u.Quantity(inner.smoothing_angle).to_value(u.deg) == pytest.approx(
+        target.to_value(u.deg)
+    )
+    # a component appended after the forwarding inherits the target
+    model = pysm3.PowerLaw(
+        path, "23 GHz", -3.0, NSIDE, has_polarization=False, unit_I="uK_RJ"
+    )
+    inner.add_component(model)
+    np.testing.assert_allclose(
+        model.pre_applied_beam.to_value(u.deg), [0.9, 0.9, 0.9], atol=1e-12
+    )
+    # the appended component also reaches the target (inner.get_emission would
+    # sum it with the already-smoothed first component)
+    out = model.get_emission(23 * u.GHz)[0]
+    expected = apply_smoothing_and_coord_transform(
+        raw * u.uK_RJ, fwhm=target, lmax=LMAX
+    )
+    np.testing.assert_allclose(
+        out.value, expected.value, atol=1e-5 * expected.value.max()
+    )
+
+
 def test_differential_smoothing_is_idempotent(tmp_path):
     """pre_applied_beam records the applied target, so a second application
     (e.g. constructor and then the Sky hook) does not double-smooth."""

@@ -276,9 +276,15 @@ class Sky(Model):
         """Forward differential smoothing to all components (see
         :meth:`pysm3.Model.apply_differential_smoothing`), so that a
         :class:`Sky` provided via ``component_objects`` participates in the
-        presmoothing feature like any other component."""
+        presmoothing feature like any other component.
+
+        The forwarded target is recorded in :attr:`smoothing_angle` (normalized
+        like at construction), so components appended later through
+        :meth:`add_component` inherit it and repeated application matches what
+        :class:`~pysm3.PowerLaw` records in its own ``pre_applied_beam``."""
         for comp in self.components:
             _apply_smoothing_angle_to_component(comp, smoothing_angle)
+        self.smoothing_angle = u.Quantity(smoothing_angle)
 
     @property
     def includes_smoothing(self):
