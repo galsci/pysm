@@ -104,7 +104,12 @@ addition for any other model:
   shape-``(3,)`` ``pre_applied_beam``: Q and U are components of a spin-2
   field and are then smoothed through the joint TEB transform (PySM's IQU
   convention), while smoothing them as independent scalar maps would apply
-  the spin-0 transform to a spin-2 field and mix E into B.
+  the spin-0 transform to a spin-2 field and mix E into B. The Q and U
+  entries of a shape-``(3,)`` ``pre_applied_beam`` (and of a shape-``(3,)``
+  ``target``) must be equal, because the polarization is smoothed with a
+  single isotropic beam whose rows act on the T/E/B transform (T/E/B is not
+  an I/Q/U basis): a ``ValueError`` is raised otherwise, and the same holds
+  for negative or non-finite ``smoothing_angle`` values.
 
 For example, a model reading a single amplitude map ``maps`` plus a spectral
 index map would implement::
@@ -121,6 +126,11 @@ index map would implement::
             self.maps = pysm3.apply_differential_smoothing(
                 self.maps, self.pre_applied_beam, smoothing_angle
             )
+            # record the applied target so a second application (e.g. the
+            # constructor *and* the Sky hook) stays a no-op
+            self.pre_applied_beam = np.maximum(
+                self.pre_applied_beam, smoothing_angle
+            )
 
 Because :class:`pysm3.Sky` forwards ``smoothing_angle`` to any component whose
 constructor accepts it (checked by signature), such a model then works with
@@ -129,9 +139,10 @@ already-initialized through ``component_objects`` instead receive
 ``smoothing_angle`` through the ``apply_differential_smoothing`` hook:
 :class:`pysm3.Sky` calls it on each of them at construction (and warns for
 components that only have the no-op base implementation), so overriding the
-hook is enough to participate through either path. A model should record the
-applied target in ``pre_applied_beam`` so that receiving ``smoothing_angle``
-twice (constructor *and* hook) stays a no-op.
+hook is enough to participate through either path. The example above records
+the applied target in ``pre_applied_beam``, so that receiving
+``smoothing_angle`` twice (constructor *and* hook) stays a no-op; forgetting
+this step would re-smooth on every call.
 
 Asking PySM for an output at a target resolution
 ================================================
