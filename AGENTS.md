@@ -55,6 +55,11 @@ uv run --extra docs sphinx-build -W -b html docs docs/_build/html
 uv run pytest --cov pysm3 --cov-report=xml
 ```
 
+**Important:** the full test suite (including notebook validation) is slow and is
+run by GitHub Actions on every push / pull request. While working on a bug fix
+or a feature, run **only the tests attached to that change** (e.g.
+`uv run pytest tests/test_<component>.py -q`), not the whole suite.
+
 ## Key Dependencies
 - `healpy`: HEALPix sphere pixelization and spherical harmonics
 - `astropy`: Physical units and FITS file handling
