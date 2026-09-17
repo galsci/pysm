@@ -112,6 +112,11 @@ def test_get_differential_fwhm_quadrature_smoking():
         bw = get_differential_beam_window(R, pre, lmax=100)
         gauss_diff = hp.gauss_beam(diff_fwhm.to_value(u.rad), lmax=100)
         np.testing.assert_allclose(bw[0], gauss_diff, rtol=1e-12)
+        # E/B rows use the spin-2 (polarized) Gaussian, consistent with the
+        # hp.smoothalm(..., pol=True) windows of the fwhm path
+        pol_diff = hp.gauss_beam(diff_fwhm.to_value(u.rad), lmax=100, pol=True)
+        np.testing.assert_allclose(bw[1], pol_diff[:, 1], rtol=1e-12)
+        np.testing.assert_allclose(bw[2], pol_diff[:, 1], rtol=1e-12)
 
 
 # --------------------------------------------------------------------------- #
@@ -133,6 +138,15 @@ def test_get_differential_beam_window_per_component():
     assert bw.shape == (3, 51)
     # I row (pre 0.7 deg) must be *less* attenuated than Q/U rows (pre 0.5 deg)
     assert np.all(bw[0, 5:] >= bw[1, 5:])
+    # rows are I/E/B: the I row is the spin-0 Gaussian of its differential,
+    # the identical E/B rows are the spin-2 (polarized) Gaussian of the
+    # common Q/U differential
+    np.testing.assert_allclose(
+        bw[0], hp.gauss_beam(np.deg2rad(np.sqrt(1.0**2 - 0.7**2)), lmax=50), rtol=1e-12
+    )
+    pol = hp.gauss_beam(np.deg2rad(np.sqrt(1.0**2 - 0.5**2)), lmax=50, pol=True)
+    np.testing.assert_allclose(bw[1], pol[:, 1], rtol=1e-12)
+    np.testing.assert_allclose(bw[2], pol[:, 1], rtol=1e-12)
 
 
 def test_get_differential_beam_window_matches_direct_division():
@@ -141,6 +155,13 @@ def test_get_differential_beam_window_matches_direct_division():
         (0.7 * u.deg).to_value(u.rad), lmax=50
     )
     np.testing.assert_allclose(bw[0], direct, rtol=1e-12)
+    # the E/B rows equal the ratio of the polarized Gaussian windows, and the
+    # exp(2*sigma**2) spin factor of the two windows cancels in the ratio
+    pol_direct = hp.gauss_beam(
+        (1 * u.deg).to_value(u.rad), lmax=50, pol=True
+    )[:, 1] / hp.gauss_beam((0.7 * u.deg).to_value(u.rad), lmax=50, pol=True)[:, 1]
+    np.testing.assert_allclose(bw[1], pol_direct, rtol=1e-10)
+    np.testing.assert_allclose(bw[2], pol_direct, rtol=1e-10)
 
 
 def test_get_differential_beam_window_plain_zero_pre():
@@ -148,18 +169,23 @@ def test_get_differential_beam_window_plain_zero_pre():
     get_differential_fwhm, instead of raising AttributeError."""
     bw = get_differential_beam_window(1 * u.deg, 0, lmax=50)
     expected = hp.gauss_beam((1 * u.deg).to_value(u.rad), lmax=50)
-    np.testing.assert_allclose(bw, np.tile(expected, (3, 1)))
+    np.testing.assert_allclose(bw[0], expected, rtol=1e-12)
+    pol = hp.gauss_beam((1 * u.deg).to_value(u.rad), lmax=50, pol=True)
+    np.testing.assert_allclose(bw[1], pol[:, 1], rtol=1e-12)
+    np.testing.assert_allclose(bw[2], pol[:, 1], rtol=1e-12)
 
 
 @pytest.mark.parametrize("pre", [None, 0])
 def test_get_differential_beam_window_per_component_zero_pre(pre):
     """Per-component targets remain per-component without presmoothing."""
-    target = np.array([0.5, 0.5, 0.9]) * u.deg
+    target = np.array([0.5, 0.7, 0.7]) * u.deg
     bw = get_differential_beam_window(target, pre, lmax=50)
-    expected = np.stack(
-        [hp.gauss_beam(fwhm.to_value(u.rad), lmax=50) for fwhm in target]
+    np.testing.assert_allclose(
+        bw[0], hp.gauss_beam(np.deg2rad(0.5), lmax=50), rtol=1e-12
     )
-    np.testing.assert_allclose(bw, expected, rtol=1e-12)
+    pol = hp.gauss_beam(np.deg2rad(0.7), lmax=50, pol=True)
+    np.testing.assert_allclose(bw[1], pol[:, 1], rtol=1e-12)
+    np.testing.assert_allclose(bw[2], pol[:, 1], rtol=1e-12)
 
 
 @pytest.mark.parametrize(
@@ -196,6 +222,47 @@ def test_get_differential_beam_window_no_underflow_nan():
     # in the range where the direct division is valid, they agree
     valid = direct > 1e-30
     np.testing.assert_allclose(bw[0][valid], direct[valid], rtol=1e-12)
+
+
+def test_get_differential_fwhm_rejects_invalid_angles():
+    """Negative, non-finite and non scalar/(3,) angles are rejected instead of
+    being silently squared into a positive smoothing width."""
+    with pytest.raises(ValueError, match="target_fwhm"):
+        get_differential_fwhm(-1 * u.deg, None)
+    with pytest.raises(ValueError, match="target_fwhm"):
+        get_differential_fwhm(np.nan * u.deg, None)
+    with pytest.raises(ValueError, match="target_fwhm"):
+        get_differential_fwhm(np.array([0.5, 0.9]) * u.deg, None)
+    with pytest.raises(ValueError, match="pre_applied_beam"):
+        get_differential_fwhm(1 * u.deg, -0.5 * u.deg)
+    with pytest.raises(ValueError, match="pre_applied_beam"):
+        get_differential_fwhm(1 * u.deg, np.inf * u.deg)
+
+
+def test_get_differential_beam_window_rejects_invalid_angles():
+    """The window entry point validates angles like get_differential_fwhm."""
+    with pytest.raises(ValueError, match="target_fwhm"):
+        get_differential_beam_window(-1 * u.deg, None, lmax=50)
+    with pytest.raises(ValueError, match="target_fwhm"):
+        get_differential_beam_window(np.nan * u.deg, None, lmax=50)
+    with pytest.raises(ValueError, match="pre_applied_beam"):
+        get_differential_beam_window(1 * u.deg, -0.5 * u.deg, lmax=50)
+
+
+def test_rejects_unequal_q_u_presmoothing():
+    """Q and U must share a single isotropic beam: their entries have to be
+    equal, otherwise the rows of the joint TEB transform could not reach the
+    target (and the result would depend on the polarization basis)."""
+    pre = np.array([0.5, 0.4, 0.7]) * u.deg
+    with pytest.raises(ValueError, match="Q and U"):
+        get_differential_fwhm(1 * u.deg, pre)
+    with pytest.raises(ValueError, match="Q and U"):
+        get_differential_beam_window(1 * u.deg, pre, lmax=50)
+    target = np.array([0.5, 0.6, 0.9]) * u.deg
+    with pytest.raises(ValueError, match="Q and U"):
+        get_differential_fwhm(target, None)
+    with pytest.raises(ValueError, match="Q and U"):
+        get_differential_beam_window(target, None, lmax=50)
 
 
 def test_apply_differential_smoothing_large_beams_no_nan():
@@ -366,9 +433,10 @@ def test_apply_differential_smoothing_utility_per_component():
         out[0].value, expected.value, atol=1e-5 * expected.value.max()
     )
     # a component whose target is below its presmoothing gets a unity window
-    pre_over = np.array([0.5, 1.2, 0.4]) * u.deg
+    pre_over = np.array([0.5, 1.2, 1.2]) * u.deg
     bw = get_differential_beam_window(target, pre_over, lmax=LMAX)
     np.testing.assert_allclose(bw[1], 1.0)
+    np.testing.assert_allclose(bw[2], 1.0)
 
 
 def test_apply_differential_smoothing_utility_shape_mismatch():
