@@ -676,6 +676,32 @@ def test_sky_applies_smoothing_angle_to_component_objects(tmp_path):
     np.testing.assert_allclose(out.value, expected.value, atol=1e-5 * expected.value.max())
 
 
+def test_sky_add_component_applies_smoothing_angle(tmp_path):
+    """A component appended after construction still gets the Sky-level
+    smoothing_angle: add_component forwards it through the hook, so emission
+    never mixes components at different resolutions."""
+    raw = _band_limited_field(seed=31)
+    pre = 0.5 * u.deg
+    target = 0.9 * u.deg
+    path, _ = _presmoothed_template(tmp_path, "add.fits", raw, pre)
+    model = pysm3.PowerLaw(
+        path, "23 GHz", -3.0, NSIDE, has_polarization=False, unit_I="uK_RJ"
+    )
+    sky = pysm3.Sky(component_objects=[], nside=NSIDE, smoothing_angle=target)
+    sky.add_component(model)
+    # the target was forwarded through the hook (idempotent re-application)
+    np.testing.assert_allclose(
+        model.pre_applied_beam.to_value(u.deg), [0.9, 0.9, 0.9], atol=1e-12
+    )
+    out = sky.get_emission(23 * u.GHz)[0]
+    expected = apply_smoothing_and_coord_transform(
+        raw * u.uK_RJ, fwhm=target, lmax=LMAX
+    )
+    np.testing.assert_allclose(
+        out.value, expected.value, atol=1e-5 * expected.value.max()
+    )
+
+
 def test_sky_warns_on_unsupported_component_object(caplog):
     """A pre-built component without presmoothing support logs the same
     warning as config-built ones."""

@@ -264,6 +264,12 @@ class Sky(Model):
         self.output_unit = u.Unit(output_unit)
 
     def add_component(self, component):
+        """Append a component, forwarding the Sky-level ``smoothing_angle``
+        through the :meth:`pysm3.Model.apply_differential_smoothing` hook (as
+        done at construction), so components added later cannot silently end
+        up at a different resolution than the rest of the sky."""
+        if getattr(self, "smoothing_angle", None) is not None:
+            _apply_smoothing_angle_to_component(component, self.smoothing_angle)
         self.components.append(component)
 
     def apply_differential_smoothing(self, smoothing_angle):
