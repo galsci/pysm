@@ -1,6 +1,8 @@
 Unreleased
 ==========
 
+- Fix Read the Docs builds failing with ``sphinx_lfs_content`` 1.1.11 by pinning the docs dependency to 1.1.10
+
 3.4.6 (2026-07-20)
 ==================
 
