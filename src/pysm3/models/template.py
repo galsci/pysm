@@ -31,6 +31,11 @@ except ImportError:
 
 log = logging.getLogger("pysm3")
 
+#: FITS header keyword storing the Gaussian beam (FWHM) already applied to a
+#: template by its producers. Parsed as an angle (e.g. ``"53 arcmin"``);
+#: absence means the template carries no presmoothing.
+SMOOTHING_ANGLE_KEY = "SMOOTHING_ANGLE"
+
 
 class Model:
     """This is the template object for PySM objects.
@@ -73,6 +78,47 @@ class Model:
         )
         self.max_nside = 512 if max_nside is None else max_nside
         self.map_dist = map_dist
+        #: Gaussian beam (FWHM) already applied to this model's input templates,
+        #: read from the template FITS headers. A scalar or shape ``(3,)``
+        #: `astropy.units.Quantity`, or ``None``/zero if no presmoothing.
+        self.pre_applied_beam = None
+
+    @property
+    def includes_smoothing(self):
+        """Whether the input template(s) already include a beam (presmoothing).
+
+        When True, requesting an output map at a given resolution with
+        ``smoothing_angle`` only applies the *differential* smoothing rather
+        than the full target beam.
+        """
+        return self.pre_applied_beam is not None and np.any(
+            self.pre_applied_beam != 0
+        )
+
+    def apply_differential_smoothing(self, smoothing_angle):
+        """Smooth this model's beam-carrying amplitude template(s) by only the
+        *differential* between ``smoothing_angle`` and the presmoothing each
+        already carries (see :func:`pysm3.get_differential_fwhm`).
+
+        This is the extension point that lets *any* template model participate
+        in the presmoothing feature: a model that reads beam-carrying amplitude
+        maps should override it, call
+        :func:`pysm3.apply_differential_smoothing` on each such map (with the
+        map's own ``pre_applied_beam``), and replace the stored map with the
+        result. Spectral-parameter maps (index, temperature, curvature, ...)
+        must *not* be smoothed. The base implementation is a no-op;
+        :class:`pysm3.Sky` logs a warning for components that only have it when
+        ``smoothing_angle`` is requested. An implementation should also record
+        the applied target in ``pre_applied_beam`` (e.g. with ``np.maximum``)
+        so that receiving ``smoothing_angle`` more than once (through the
+        constructor *and* through this hook) stays a no-op.
+
+        Parameters
+        ----------
+        smoothing_angle : astropy.units.Quantity or string
+            Target output FWHM (e.g. ``1 * u.deg`` or ``"1 deg"``).
+        """
+        return None
 
     def read_map(self, path, unit=None, field=0, nside=None):
         """Wrapper of the PySM read_map function that automatically
@@ -183,6 +229,64 @@ def extract_hdu_unit(path, hdu=1, field=0):
     return unit
 
 
+def extract_smoothing_angle(filename, hdu=1):
+    """Extract the ``SMOOTHING_ANGLE`` keyword from a FITS header.
+
+    This is the Gaussian beam (FWHM) already applied to the template by its
+    producers (see :func:`pysm3.utils.add_metadata`). The value is stored as a
+    string parseable by :mod:`astropy.units`, e.g. ``"53 arcmin"`` or ``"1 deg"``.
+
+    Parameters
+    ----------
+    filename : str or pathlib.Path
+        Path to the FITS file.
+    hdu : int
+        HDU index containing the map (default 1, matching
+        :func:`healpy.read_map`).
+
+    Returns
+    -------
+    smoothing_angle : astropy.units.Quantity
+        The presmoothing as an angle, or ``0 deg`` when the keyword is absent
+        or is not a valid angle, i.e. unparseable, not an angle, negative or
+        not finite (a template with no valid keyword carries no presmoothing).
+    """
+    try:
+        with fits.open(filename) as hdul:
+            value = hdul[hdu].header[SMOOTHING_ANGLE_KEY]
+    except (KeyError, IndexError):
+        return 0 * u.deg
+    try:
+        smoothing_angle = u.Quantity(value)
+    except (ValueError, TypeError):
+        log.warning(
+            "Could not parse %s=%r in %s, assuming no presmoothing",
+            SMOOTHING_ANGLE_KEY,
+            value,
+            str(filename),
+        )
+        return 0 * u.deg
+    if not smoothing_angle.unit.is_equivalent(u.radian):
+        log.warning(
+            "%s=%r in %s is not an angle, assuming no presmoothing",
+            SMOOTHING_ANGLE_KEY,
+            value,
+            str(filename),
+        )
+        return 0 * u.deg
+    if np.any(~np.isfinite(smoothing_angle.value)) or np.any(
+        smoothing_angle.value < 0
+    ):
+        log.warning(
+            "%s=%r in %s is negative or not finite, assuming no presmoothing",
+            SMOOTHING_ANGLE_KEY,
+            value,
+            str(filename),
+        )
+        return 0 * u.deg
+    return smoothing_angle
+
+
 def read_map(path, nside, unit=None, field=0, map_dist=None):
     """Read a HEALPix map from a file or accept an in-memory array/Quantity, with unit and shape validation.
 
@@ -224,6 +328,11 @@ def read_map(path, nside, unit=None, field=0, map_dist=None):
       the shape and units, and converts to the requested unit if needed.
     - For file-based input, the function uses `healpy.read_map` and handles MPI distribution
       if `map_dist` is provided. The map is automatically upgraded/downgraded to the requested NSIDE.
+    - For file-based input the returned map carries a ``smoothing_angle`` attribute -- the
+      template's built-in beam (FWHM), read from the ``SMOOTHING_ANGLE`` FITS header keyword
+      (``0`` if absent). In-memory inputs carry no presmoothing. See
+      :func:`pysm3.extract_smoothing_angle` and the "Presmoothing and differential smoothing"
+      documentation page.
     - This function is used internally by all PySM models to ensure consistent map loading and validation.
     """
     # If path is an in-memory array or Quantity, handle directly
@@ -248,6 +357,10 @@ def read_map(path, nside, unit=None, field=0, map_dist=None):
     mpi_comm = None if map_dist is None else map_dist.mpi_comm
     pixel_indices = None if map_dist is None else map_dist.pixel_indices
     filename = utils.RemoteData().get(path)
+    # The presmoothing is a property of the template file, recorded in its
+    # header; read it on every rank (each process has the file) so no broadcast
+    # is needed. In-memory inputs return earlier above and carry no presmoothing.
+    smoothing_angle = extract_smoothing_angle(filename)
 
     if (mpi_comm is not None and mpi_comm.rank == 0) or (mpi_comm is None):
         output_map = hp.read_map(filename, field=field, dtype=None)
@@ -328,7 +441,11 @@ def read_map(path, nside, unit=None, field=0, map_dist=None):
         win.Free()
         gc.collect()
 
-    return u.Quantity(output_map, unit, copy=False)
+    output = u.Quantity(output_map, unit, copy=False)
+    # Record the template's presmoothing so models can read it without
+    # re-opening the file (e.g. to apply differential smoothing).
+    output.smoothing_angle = smoothing_angle
+    return output
 
 
 def read_txt(path, mpi_comm=None, **kwargs):

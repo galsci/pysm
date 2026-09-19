@@ -154,6 +154,258 @@ def apply_smoothing_and_coord_transform(
     return output_maps[0] if len(output_maps) == 1 else tuple(output_maps)
 
 
+def _as_beam_radians(value, name):
+    """Parse and validate an FWHM angle into a 1-d array of radians.
+
+    Accepts an angle :class:`~astropy.units.Quantity`, a plain number
+    (interpreted as radians, e.g. ``0``) or a unit string such as
+    ``"53 arcmin"``. The value must be a scalar angle or a shape-``(3,)``
+    per-component angle, and must be finite and non-negative: an unphysical
+    width (negative or NaN) is rejected with ``ValueError`` instead of being
+    silently squared into a positive smoothing.
+    """
+    values = np.atleast_1d(u.Quantity(value, u.radian).to_value(u.radian))
+    if values.ndim != 1 or values.size not in (1, 3):
+        raise ValueError(
+            "{} must be a scalar angle or a shape-(3,) per-component angle, "
+            "got shape {}".format(name, np.shape(value))
+        )
+    if np.any(~np.isfinite(values)) or np.any(values < 0):
+        raise ValueError(
+            "{} must be a finite, non-negative angle, got {}".format(name, value)
+        )
+    return values
+
+
+def _split_intensity_polarization(values):
+    """Split scalar or shape-``(3,)`` [I, Q, U] widths into (I, polarization)."""
+    return values[0], values[0] if values.size == 1 else values[1]
+
+
+def _check_equal_polarization(values, name):
+    """The E/B rows of the joint TEB transform share a single isotropic beam,
+    so per-component [I, Q, U] widths must have equal Q and U entries."""
+    if values.size == 3 and values[1] != values[2]:
+        raise ValueError(
+            "{} Q and U entries must be equal: polarized templates are "
+            "smoothed with a single isotropic beam, got {}".format(name, values)
+        )
+
+
+def get_differential_fwhm(target_fwhm, pre_applied_beam=None):
+    """Return the additional Gaussian FWHM needed to reach a target resolution
+    starting from a template that already carries some amount of smoothing.
+
+    Parameters
+    ----------
+    target_fwhm : astropy.units.Quantity
+        Target output FWHM, a scalar angle or a shape-``(3,)`` angle (one FWHM
+        per I/Q/U component). Must be finite and non-negative.
+    pre_applied_beam : astropy.units.Quantity, optional
+        FWHM of the beam already applied by the input template: either a scalar
+        (same presmoothing for all components) or an array of shape ``(3,)``
+        (per-component IQU presmoothing). ``None`` or ``0`` means the template
+        carries no smoothing, in which case the full ``target_fwhm`` is needed.
+        For shape-``(3,)`` inputs the Q and U entries must be equal, since the
+        polarization is smoothed with a single isotropic beam (see
+        :func:`apply_differential_smoothing`).
+
+    Returns
+    -------
+    differential_fwhm : astropy.units.Quantity
+        Additional FWHM to apply on top of the template, a scalar or an array of
+        shape ``(3,)`` matching ``pre_applied_beam``. Returns 0 wherever the
+        target is smaller than or equal to the pre-applied beam: a template
+        cannot be de-convolved, so no additional smoothing is applied there.
+
+    Raises
+    ------
+    ValueError
+        If a target or pre-applied angle is negative, non-finite, or not a
+        scalar / shape-``(3,)`` value.
+
+    Notes
+    -----
+    For Gaussian beams the convolution of two Gaussians is another Gaussian whose
+    widths add in quadrature, so the extra smoothing is
+    ``sqrt(target_fwhm**2 - pre_applied_beam**2)``. PySM records template
+    presmoothing as a Gaussian FWHM (see the ``SMOOTHING_ANGLE`` FITS keyword),
+    so this FWHM-based result is exact for those templates.
+    """
+    target = _as_beam_radians(target_fwhm, "target_fwhm")
+    _check_equal_polarization(target, "target_fwhm")
+    if pre_applied_beam is None:
+        pre = np.zeros_like(target)
+    else:
+        pre = _as_beam_radians(pre_applied_beam, "pre_applied_beam")
+        _check_equal_polarization(pre, "pre_applied_beam")
+    target, pre = np.broadcast_arrays(target, pre)
+    differential = np.sqrt(np.maximum(target**2 - pre**2, 0.0))
+    if differential.size == 1:
+        differential = differential[0]
+    return np.asarray(differential) << u.radian
+
+
+def get_differential_beam_window(target_fwhm, pre_applied_beam=None, lmax=None):
+    """Return the per-component net beam window to apply to reach ``target_fwhm``
+    starting from a template that already carries ``pre_applied_beam``.
+    This uses the window-division convention, like
+    :class:`~pysm3.InterpolatingComponent`: the net window is the ratio of the
+    target window to the pre-applied window
+
+    .. math::
+
+        B_\\ell = \\frac{g_\\ell(\\mathrm{target})}{g_\\ell(\\mathrm{pre})}
+
+    For Gaussian beams this is equivalent to smoothing with
+    ``sqrt(target**2 - pre**2)`` (see :func:`get_differential_fwhm`), and it is
+    computed exactly that way, as the Gaussian beam of the differential FWHM:
+    dividing the two windows directly would give ``0/0 = NaN`` where both
+    underflow to zero (degree-scale beams at ``lmax`` of a few thousand). The
+    window-division convention itself also generalizes to non-Gaussian /
+    measured windows, as :class:`~pysm3.InterpolatingComponent` does.
+    Wherever the target is
+    smaller than or equal to the pre-applied beam the window is set to unity
+    (a template cannot be de-convolved, so no change is applied there).
+
+    Note the rows are built from the ``pol=False`` Gaussian for the I row and
+    the ``pol=True`` Gaussian for the E/B rows, consistent with how
+    :func:`apply_smoothing_and_coord_transform` applies the window to the
+    joint TEB transform: the E/B rows carry the additional ``exp(2*sigma**2)``
+    spin factor of a polarized Gaussian beam, so they agree exactly with the
+    ``hp.smoothalm(..., pol=True)`` windows used by the ``fwhm`` path of
+    :func:`apply_smoothing_and_coord_transform` (and with the direct
+    ``gauss_beam(..., pol=True)`` window division). Because this preserves the
+    window-division convention of :class:`~pysm3.InterpolatingComponent`, it
+    also generalizes to non-Gaussian / measured windows.
+
+    Parameters
+    ----------
+    target_fwhm : astropy.units.Quantity
+        Target output FWHM, a scalar angle (one FWHM for all I/Q/U rows) or
+        shape ``(3,)`` (a separate target FWHM per component). For shape
+        ``(3,)`` the Q and U entries must be equal, since the polarization is
+        smoothed with a single isotropic beam.
+    pre_applied_beam : astropy.units.Quantity, optional
+        FWHM already applied by the template, scalar or shape ``(3,)``.
+        ``None`` or ``0`` means no presmoothing (the target window is returned).
+        For shape ``(3,)`` the Q and U entries must be equal.
+    lmax : int
+        Maximum multipole of the window.
+
+    Returns
+    -------
+    beam_window : np.ndarray
+        Array of shape ``(3, lmax+1)`` usable as the ``beam_window`` argument of
+        :func:`apply_smoothing_and_coord_transform`, with the I row built from
+        the spin-0 Gaussian and the identical E/B rows from the spin-2
+        (polarized) Gaussian of the differential FWHM.
+
+    Raises
+    ------
+    ValueError
+        If ``target_fwhm`` or ``pre_applied_beam`` is not a scalar /
+        shape-``(3,)`` angle, is negative or non-finite, or has unequal Q and U
+        entries.
+    """
+    if lmax is None:
+        msg = "lmax must be provided to build a beam window"
+        raise ValueError(msg)
+    target = _as_beam_radians(target_fwhm, "target_fwhm")
+    _check_equal_polarization(target, "target_fwhm")
+    if pre_applied_beam is None:
+        pre = None
+    else:
+        pre = _as_beam_radians(pre_applied_beam, "pre_applied_beam")
+        _check_equal_polarization(pre, "pre_applied_beam")
+    t_I, t_P = _split_intensity_polarization(target)
+    if pre is None or np.all(pre == 0):
+        net = np.empty((3, lmax + 1))
+        net[0] = hp.gauss_beam(t_I, lmax=lmax)
+        pol = hp.gauss_beam(t_P, lmax=lmax, pol=True)
+        net[1] = net[2] = pol[:, 1]
+        return net
+    b_I, b_P = _split_intensity_polarization(pre)
+    net = np.ones((3, lmax + 1))
+    if t_I > b_I:
+        # gauss_beam(t) / gauss_beam(b) == gauss_beam(sqrt(t**2 - b**2))
+        # for Gaussian beams; computing the ratio as the beam of the
+        # differential FWHM gives exactly 0 (not 0/0 = NaN) where both
+        # windows underflow at high lmax
+        net[0] = hp.gauss_beam(np.sqrt(t_I**2 - b_I**2), lmax=lmax)
+    if t_P > b_P:
+        pol = hp.gauss_beam(np.sqrt(t_P**2 - b_P**2), lmax=lmax, pol=True)
+        net[1] = net[2] = pol[:, 1]
+    return net
+
+
+def apply_differential_smoothing(map_t, pre_applied_beam, target_fwhm):
+    """Smooth a template map by only the *differential* between the target beam
+    and the beam the template already carries.
+
+    This is the reusable building block of the presmoothing feature: it is what
+    any template model calls on each of its beam-carrying amplitude maps when a
+    ``smoothing_angle`` is requested (see :class:`pysm3.Model`).
+    ``pre_applied_beam`` is the presmoothing of this specific map (e.g. one
+    element of the model's ``pre_applied_beam``); pass it as ``0`` or ``None``
+    for a map with no recorded presmoothing to get a full target smoothing.
+    Returns ``map_t`` unchanged when the target does not exceed the
+    pre-applied beam (a template cannot be de-convolved).
+
+    Parameters
+    ----------
+    map_t : astropy.units.Quantity
+        The amplitude template map to smooth: 1-D / ``(1, npix)`` with a
+        scalar ``pre_applied_beam``, or ``(3, npix)`` with a scalar or
+        shape-``(3,)`` ``pre_applied_beam`` (per-component IQU presmoothing).
+        A ``(3, npix)`` map is smoothed through the joint TEB transform (the
+        IQU convention of
+        :func:`apply_smoothing_and_coord_transform`), so that Q / U are
+        treated as components of a spin-2 field rather than as independent
+        scalar maps.
+    pre_applied_beam : astropy.units.Quantity or None
+        FWHM already applied to this template, a scalar or, for a
+        ``(3, npix)`` map, shape ``(3,)`` (with equal Q and U entries).
+        ``None``/``0`` means no presmoothing.
+    target_fwhm : astropy.units.Quantity
+        Target output FWHM, a scalar angle or a shape-``(3,)`` angle (one FWHM
+        per I/Q/U component, with equal Q and U entries).
+
+    Returns
+    -------
+    astropy.units.Quantity
+        The map smoothed by the differential (per component when
+        ``pre_applied_beam`` has one entry per component).
+
+    Raises
+    ------
+    ValueError
+        If ``pre_applied_beam`` or ``target_fwhm`` is not a scalar /
+        shape-``(3,)`` angle, is negative or non-finite, or has unequal Q and U
+        entries (the polarization must be smoothed with a single isotropic
+        beam: the rows of the joint transform are T/E/B, not I/Q/U, so
+        distinct Q and U beams cannot be reached).
+    """
+    differential = get_differential_fwhm(target_fwhm, pre_applied_beam)
+    if np.all(differential.value == 0):
+        return map_t
+    if differential.isscalar:
+        return apply_smoothing_and_coord_transform(map_t, fwhm=differential)
+    # Per-component presmoothing: apply the net beam window, which is unity
+    # for the components whose target does not exceed their presmoothing
+    map_shape = np.shape(map_t)
+    if len(map_shape) < 2 or map_shape[0] != differential.shape[0]:
+        raise ValueError(
+            "pre_applied_beam with {} components requires a map with {} "
+            "components, got shape {}".format(
+                differential.shape[0], differential.shape[0], map_shape
+            )
+        )
+    lmax = int(2.5 * hp.get_nside(map_t))
+    beam_window = get_differential_beam_window(target_fwhm, pre_applied_beam, lmax=lmax)
+    return apply_smoothing_and_coord_transform(map_t, beam_window=beam_window, lmax=lmax)
+
+
 def map2alm(input_map, nside, lmax, map2alm_lsq_maxiter=None):
     """Compute alm from a map using healpy.
 
