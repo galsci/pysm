@@ -62,7 +62,10 @@ docs = [
     "sphinx-pyproject",
     "sphinx-astropy",
     "sphinx-math-dollar",
-    "sphinx_lfs_content",
+    # Pinned below 1.1.11: upstream bumped git-lfs to v3.8.0 but left the
+    # extraction directory hardcoded to git-lfs-3.7.0, breaking doc builds
+    # on systems without git-lfs, such as Read the Docs.
+    "sphinx_lfs_content == 1.1.10",
 ]
 mpi = [
     "mpi4py",
