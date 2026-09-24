@@ -131,7 +131,7 @@ class PowerLaw(Model):
                 )
                 << u.uK_RJ
             )
-        return self.tag_output(outputs)
+        return outputs
 
 
 @njit(parallel=True)
@@ -236,7 +236,7 @@ class CurvedPowerLaw(PowerLaw):
                 )
                 << u.uK_RJ
             )
-        return self.tag_output(outputs)
+        return outputs
 
 
 @njit(parallel=True)

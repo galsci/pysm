@@ -231,6 +231,74 @@ def make_powerlaw(pre_applied_fwhm=None, nside=32):
     )
 
 
+class ConstantModel(pysm3.Model):
+    def get_emission(self, freqs, weights=None):
+        return np.ones((3, hp.nside2npix(self.nside))) << u.uK_RJ
+
+
+class TupleOutputModel(pysm3.Model):
+    def get_emission(self, freqs, weights=None):
+        return (np.ones((3, hp.nside2npix(self.nside))) << u.uK_RJ, "car")
+
+
+def test_any_model_subclass_auto_tags_output():
+    model = ConstantModel(nside=32, pre_applied_fwhm="56 arcmin")
+    assert model.pre_applied_fwhm == 56 * u.arcmin
+    assert model.includes_smoothing
+    output = model.get_emission(30 * u.GHz)
+    assert output.pre_applied_fwhm == 56 * u.arcmin
+
+
+def test_any_model_subclass_default_no_tag():
+    model = ConstantModel(nside=32)
+    assert model.pre_applied_fwhm is None
+    assert not model.includes_smoothing
+    output = model.get_emission(30 * u.GHz)
+    assert not hasattr(output, "pre_applied_fwhm")
+
+
+def test_tuple_output_tagged_elementwise():
+    output = TupleOutputModel(
+        nside=32, pre_applied_fwhm="1 deg"
+    ).get_emission(30 * u.GHz)
+    assert output[0].pre_applied_fwhm == 1 * u.deg
+    assert output[1] == "car"
+
+
+def test_component_config_pre_applied_fwhm_any_model():
+    np.random.seed(12)
+    config = {
+        "test_mbb": {
+            "class": "ModifiedBlackBody",
+            "map_I": u.Quantity(
+                np.random.rand(3, hp.nside2npix(32)) * 100, u.uK_RJ
+            ),
+            "freq_ref_I": "545 GHz",
+            "freq_ref_P": "545 GHz",
+            "map_mbb_index": 1.54,
+            "map_mbb_temperature": 20.0,
+            "unit_mbb_temperature": "K",
+            "pre_applied_fwhm": "56 arcmin",
+        }
+    }
+    sky = pysm3.Sky(nside=32, component_config=config)
+    assert sky.pre_applied_fwhm == 56 * u.arcmin
+    output = sky.get_emission(100 * u.GHz)
+    assert output.pre_applied_fwhm == 56 * u.arcmin
+    assert "pre_applied_fwhm" in config["test_mbb"]
+
+
+def test_sky_component_objects_any_model():
+    sky = pysm3.Sky(
+        nside=32,
+        component_objects=[
+            ConstantModel(nside=32, pre_applied_fwhm="1 deg"),
+        ],
+    )
+    assert sky.pre_applied_fwhm == 1 * u.deg
+    assert sky.get_emission(30 * u.GHz).pre_applied_fwhm == 1 * u.deg
+
+
 def test_powerlaw_tags_output():
     model = make_powerlaw("56 arcmin")
     assert model.pre_applied_fwhm == 56 * u.arcmin

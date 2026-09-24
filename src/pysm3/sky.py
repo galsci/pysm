@@ -9,13 +9,31 @@ Objects:
 import toml
 from . import units as u
 from .models import *
-from .models import Model
+from .models import Model, parse_pre_applied_fwhm
 from .utils import bandpass_unit_conversion
 
 
 def remove_class_from_dict(d):
     """Return a copy of dictionary without the key "class" """
     return {k: d[k] for k in d if k != "class"}
+
+
+def create_component_from_config(config, nside, map_dist=None):
+    """Create one component from its configuration dictionary
+
+    The ``pre_applied_fwhm`` keyword is handled generically for all
+    components, independently of their constructor signature: it is
+    removed from the configuration, parsed and set as attribute of the
+    created component, where the `Model` base class uses it to tag the
+    output of `get_emission`.
+    """
+    component_class = globals()[config["class"]]
+    kwargs = remove_class_from_dict(config)
+    pre_applied_fwhm = kwargs.pop("pre_applied_fwhm", None)
+    component = component_class(**kwargs, nside=nside, map_dist=map_dist)
+    if pre_applied_fwhm is not None:
+        component.pre_applied_fwhm = parse_pre_applied_fwhm(pre_applied_fwhm)
+    return component
 
 
 def get_common_pre_applied_fwhm(components):
@@ -43,40 +61,33 @@ def get_common_pre_applied_fwhm(components):
 
 
 def create_components_from_config(config, nside, map_dist=None):
+    """Create a list of components from their configuration
+
+    A configuration either describes a single component (with a "class"
+    key), or is a dictionary of named component configurations, which in
+    turn may each be a single component or a nested collection.
+    """
     output_components = []
     if "class" in config:
-        class_name = config["class"]
-        component_class = globals()[class_name]
-        output_component = component_class(
-            **remove_class_from_dict(config), nside=nside, map_dist=map_dist
+        output_components.append(
+            create_component_from_config(config, nside=nside, map_dist=map_dist)
         )
-        output_components.append(output_component)
         return output_components
 
-    for model_name, model_config in config.items():
-        try:
-            class_name = model_config["class"]
-        except KeyError:  # multiple components
-            partial_components = []
-            for each_config in model_config.values():
-                class_name = each_config["class"]
-                component_class = globals()[class_name]
-                partial_components.append(
-                    component_class(
-                        **remove_class_from_dict(each_config),
-                        nside=nside,
-                        map_dist=map_dist,
-                    )
+    for model_config in config.values():
+        if "class" in model_config:
+            output_component = create_component_from_config(
+                model_config, nside=nside, map_dist=map_dist
+            )
+        else:  # multiple components
+            partial_components = [
+                create_component_from_config(
+                    each_config, nside=nside, map_dist=map_dist
                 )
+                for each_config in model_config.values()
+            ]
             output_component = Sky(
                 component_objects=partial_components, nside=nside, map_dist=map_dist
-            )
-        else:
-            component_class = globals()[class_name]
-            output_component = component_class(
-                **remove_class_from_dict(model_config),
-                nside=nside,
-                map_dist=map_dist,
             )
         output_components.append(output_component)
     return output_components
@@ -129,12 +140,19 @@ class Sky(Model):
     Check the :func:`~pysm.apply_smoothing_and_coord_transform` function
     for applying a beam and transform coordinates to the map arrays
     from `get_emission`.
+    All the components of a multi-component Sky must have the same
+    ``pre_applied_fwhm`` (or none at all), see the documentation about
+    the pre-applied beam, otherwise a ``ValueError`` is raised at
+    creation.
     See the tutorials section of the documentation for examples.
 
     Attributes
     ----------
     components: list(pysm.Model object)
         List of `pysm.Model` objects.
+    pre_applied_fwhm: astropy.units.Quantity or None
+        Beam already applied to the templates of all the components,
+        attached to the maps returned by `get_emission`.
     """
 
     def __init__(
@@ -220,11 +238,11 @@ class Sky(Model):
     def get_emission(self, freq, weights=None, **kwargs):
         """This function returns the emission at a frequency, set of
         frequencies, or over a bandpass.
+
+        The output map carries the ``pre_applied_fwhm`` common to all
+        components, if any, attached by the `Model` base class.
         """
         output = self.components[0].get_emission(freq, weights=weights, **kwargs)
         for comp in self.components[1:]:
             output += comp.get_emission(freq, weights=weights, **kwargs)
-        output = output * bandpass_unit_conversion(freq, weights, self.output_unit)
-        if self.pre_applied_fwhm is not None:
-            output.pre_applied_fwhm = self.pre_applied_fwhm
-        return output
+        return output * bandpass_unit_conversion(freq, weights, self.output_unit)

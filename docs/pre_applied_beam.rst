@@ -10,9 +10,10 @@ they are built from a survey map kept at its native resolution (e.g. the
 Haslam 408 MHz map at 56 arcmin for the low-frequency synchrotron model)
 or pre-simulated and smoothed to a fiducial beam (e.g. ``rg3``), can
 declare the beam its templates already carry with the
-``pre_applied_fwhm`` keyword, available on the template models that
-support it (:py:class:`~pysm3.PowerLaw` and
-:py:class:`~pysm3.CurvedPowerLaw`):
+``pre_applied_fwhm`` keyword. It is available on **all** components:
+in preset configurations and ``component_config`` it is handled
+generically for any model class, and components created directly accept
+it in the constructor (or it can be set as attribute after creation):
 
 .. code-block:: toml
 
@@ -24,6 +25,11 @@ support it (:py:class:`~pysm3.PowerLaw` and
     pre_applied_fwhm = "1 deg"
 
 The value is any angular quantity string parseable by ``astropy.units``.
+Internally the :py:class:`~pysm3.Model` base class parses it, exposes it
+in the ``includes_smoothing`` property, and attaches it to the maps
+returned by ``get_emission`` of every component, so no per-model support
+is needed.
+
 The templates should generally be built to a common resolution once and
 forever at data-preparation time, differentially smoothing the input
 maps from their native beam to the target resolution with
