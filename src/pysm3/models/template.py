@@ -10,6 +10,7 @@ Objects:
 
 import functools
 import gc
+import inspect
 import logging
 
 import healpy as hp
@@ -92,7 +93,8 @@ class Model:
             The value is attached to the maps returned by ``get_emission``
             so that :func:`~pysm3.apply_smoothing_and_coord_transform`
             applies only the differential beam when a target ``fwhm`` is
-            requested.
+            requested. Every subclass accepts this keyword in its
+            constructor, even when its own signature does not list it.
         """
         self.nside = nside
         self.available_nside = available_nside
@@ -107,24 +109,45 @@ class Model:
         self.pre_applied_fwhm = parse_pre_applied_fwhm(pre_applied_fwhm)
 
     def __init_subclass__(cls, **kwargs):
-        """Wrap `get_emission` of subclasses to tag the output maps
+        """Wrap `__init__` and `get_emission` of subclasses
 
-        Every component gets the same behavior for free: the maps returned
-        by `get_emission` carry the pre-applied beam declared with
-        `pre_applied_fwhm`, so that
+        Every component gets the same behavior for free: the constructor
+        accepts the `pre_applied_fwhm` keyword and the maps returned by
+        `get_emission` carry the declared beam, so that
         :func:`~pysm3.apply_smoothing_and_coord_transform` can apply only
         the differential beam when a target `fwhm` is requested.
+        Subclasses that already declare `pre_applied_fwhm` in their
+        `__init__` signature handle it themselves and are not wrapped.
         """
         super().__init_subclass__(**kwargs)
         original_get_emission = cls.__dict__.get("get_emission")
-        if original_get_emission is None:
+        if original_get_emission is not None:
+
+            @functools.wraps(original_get_emission)
+            def get_emission(self, *args, **kwargs):
+                return self.tag_output(
+                    original_get_emission(self, *args, **kwargs)
+                )
+
+            cls.get_emission = get_emission
+
+        original_init = cls.__dict__.get("__init__")
+        if original_init is None:
+            return
+        try:
+            parameters = inspect.signature(original_init).parameters
+        except (TypeError, ValueError):
+            return
+        if "pre_applied_fwhm" in parameters:
             return
 
-        @functools.wraps(original_get_emission)
-        def get_emission(self, *args, **kwargs):
-            return self.tag_output(original_get_emission(self, *args, **kwargs))
+        @functools.wraps(original_init)
+        def __init__(self, *args, pre_applied_fwhm=None, **kwargs):
+            original_init(self, *args, **kwargs)
+            if pre_applied_fwhm is not None:
+                self.pre_applied_fwhm = parse_pre_applied_fwhm(pre_applied_fwhm)
 
-        cls.get_emission = get_emission
+        cls.__init__ = __init__
 
     @property
     def includes_smoothing(self):

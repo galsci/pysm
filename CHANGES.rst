@@ -1,7 +1,7 @@
 Unreleased
 ==========
 
-- Add automatic differential smoothing from template-declared pre-applied beams: every component accepts a ``pre_applied_fwhm`` keyword in its configuration (and models that support it also in the constructor), the ``Model`` base class attaches the declared beam to the maps returned by ``get_emission``, and ``apply_smoothing_and_coord_transform`` applies only the differential beam when a target ``fwhm`` is requested. A multi-component ``Sky`` requires all components to share the same ``pre_applied_fwhm`` https://github.com/galsci/pysm/issues/272
+- Add automatic differential smoothing from template-declared pre-applied beams: every component accepts a ``pre_applied_fwhm`` keyword, both in its configuration and as constructor argument (handled generically by the ``Model`` base class), the declared beam is attached to the maps returned by ``get_emission``, and ``apply_smoothing_and_coord_transform`` applies only the differential beam when a target ``fwhm`` is requested. A multi-component ``Sky`` requires all components to share the same ``pre_applied_fwhm`` and derives it from them https://github.com/galsci/pysm/issues/272
 - Add the ``get_differential_fwhm`` helper, the build-time tool for differentially smoothing templates to a common target resolution https://github.com/galsci/pysm/issues/272
 - ``apply_smoothing_and_coord_transform`` with ``map_dist`` and no beam to apply (``fwhm=None``, for example after the pre-applied-beam resolution floor) returns the input map instead of failing inside ``mpi_smoothing`` https://github.com/galsci/pysm/pull/273
 - Fix Read the Docs builds failing with ``sphinx_lfs_content`` 1.1.11 by pinning the docs dependency to 1.1.10

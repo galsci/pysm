@@ -299,6 +299,51 @@ def test_sky_component_objects_any_model():
     assert sky.get_emission(30 * u.GHz).pre_applied_fwhm == 1 * u.deg
 
 
+def make_modified_black_body(pre_applied_fwhm=None):
+    np.random.seed(12)
+    return pysm3.ModifiedBlackBody(
+        map_I=u.Quantity(
+            np.random.rand(3, hp.nside2npix(32)) * 100, u.uK_RJ
+        ),
+        freq_ref_I=545 * u.GHz,
+        freq_ref_P=545 * u.GHz,
+        map_mbb_index=1.54,
+        map_mbb_temperature=20.0,
+        unit_mbb_temperature="K",
+        nside=32,
+        pre_applied_fwhm=pre_applied_fwhm,
+    )
+
+
+def test_direct_construction_any_model():
+    model = make_modified_black_body("56 arcmin")
+    assert model.pre_applied_fwhm == 56 * u.arcmin
+    assert model.includes_smoothing
+    output = model.get_emission(100 * u.GHz)
+    assert output.pre_applied_fwhm == 56 * u.arcmin
+
+
+def test_direct_construction_default_no_tag():
+    model = make_modified_black_body()
+    assert model.pre_applied_fwhm is None
+    output = model.get_emission(100 * u.GHz)
+    assert not hasattr(output, "pre_applied_fwhm")
+
+
+def test_direct_construction_invalid_pre_applied_fwhm():
+    with pytest.raises(UnitConversionError):
+        make_modified_black_body("1 GHz")
+
+
+def test_sky_rejects_pre_applied_fwhm():
+    with pytest.raises(ValueError, match="derives pre_applied_fwhm"):
+        pysm3.Sky(
+            nside=32,
+            component_objects=[make_powerlaw()],
+            pre_applied_fwhm="1 deg",
+        )
+
+
 def test_powerlaw_tags_output():
     model = make_powerlaw("56 arcmin")
     assert model.pre_applied_fwhm == 56 * u.arcmin

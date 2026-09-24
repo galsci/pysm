@@ -13,10 +13,11 @@ declares it with the legacy ``pre_applied_beam`` mechanism), can
 declare the beam its templates already carry with the
 ``pre_applied_fwhm`` keyword. In preset configurations and
 ``component_config`` the keyword is handled generically for **any**
-model class; components created directly accept it in the constructor
-when they support it (the :py:class:`~pysm3.Model` base class,
-:py:class:`~pysm3.PowerLaw` and :py:class:`~pysm3.CurvedPowerLaw` do),
-and for any other component it can be set as attribute after creation:
+model class, and every component derived from
+:py:class:`~pysm3.Model` also accepts it as constructor argument,
+even when its own signature does not list it. A
+:py:class:`~pysm3.Sky` instead derives the beam from its components
+and raises a ``ValueError`` if the keyword is passed to it explicitly:
 
 .. code-block:: toml
 

@@ -164,6 +164,7 @@ class Sky(Model):
         component_objects=None,
         output_unit=u.uK_RJ,
         map_dist=None,
+        pre_applied_fwhm=None,
     ):
         """Initialize Sky
 
@@ -192,7 +193,17 @@ class Sky(Model):
             Astropy unit, e.g. "K_CMB", "MJ/sr"
         map_dist: pysm.MapDistribution
             Distribution object used for parallel computing with MPI
+        pre_applied_fwhm : astropy.units.Quantity or string, optional
+            Not supported, a Sky derives its pre-applied beam from its
+            components, which must all declare the same one, see the
+            documentation about the pre-applied beam. Passing a value
+            raises a ``ValueError``.
         """
+        if pre_applied_fwhm is not None:
+            raise ValueError(
+                "Sky derives pre_applied_fwhm from its components, declare "
+                "it on each component, they must all have the same one"
+            )
 
         if nside is None and not component_objects:  # not None and not []
             raise Exception("Need to specify nside in Sky")
