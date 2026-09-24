@@ -36,6 +36,7 @@ For example free-free:
   :maxdepth: 2
 
   models
+  pre_applied_beam
 
 Best practices for model execution
 ----------------------------------

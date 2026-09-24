@@ -18,6 +18,30 @@ def remove_class_from_dict(d):
     return {k: d[k] for k in d if k != "class"}
 
 
+def get_common_pre_applied_fwhm(components):
+    """Return the common pre_applied_fwhm of a list of components
+
+    Raises a ValueError if some components declare a pre-applied beam and
+    others do not, or if they declare different values: the summed emission
+    would not have a single well-defined beam and any smoothing would be
+    wrong for at least one component.
+    """
+    values = [getattr(comp, "pre_applied_fwhm", None) for comp in components]
+    if any(value is not None for value in values):
+        canonical = [
+            None if value is None else u.Quantity(value).to(u.rad).value
+            for value in values
+        ]
+        if None in canonical or len(set(canonical)) > 1:
+            raise ValueError(
+                "All components of a Sky must have the same pre_applied_fwhm "
+                f"(or none at all), got: {values}. Combine components "
+                "delivered at the same resolution, or create and smooth "
+                "separate Sky objects"
+            )
+    return values[0] if values else None
+
+
 def create_components_from_config(config, nside, map_dist=None):
     output_components = []
     if "class" in config:
@@ -179,8 +203,12 @@ class Sky(Model):
                 component_config, nside=nside, map_dist=map_dist
             )
         self.output_unit = u.Unit(output_unit)
+        self.pre_applied_fwhm = get_common_pre_applied_fwhm(self.components)
 
     def add_component(self, component):
+        self.pre_applied_fwhm = get_common_pre_applied_fwhm(
+            self.components + [component]
+        )
         self.components.append(component)
 
     @property
@@ -196,4 +224,7 @@ class Sky(Model):
         output = self.components[0].get_emission(freq, weights=weights, **kwargs)
         for comp in self.components[1:]:
             output += comp.get_emission(freq, weights=weights, **kwargs)
-        return output * bandpass_unit_conversion(freq, weights, self.output_unit)
+        output = output * bandpass_unit_conversion(freq, weights, self.output_unit)
+        if self.pre_applied_fwhm is not None:
+            output.pre_applied_fwhm = self.pre_applied_fwhm
+        return output

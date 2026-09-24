@@ -32,6 +32,16 @@ except ImportError:
 log = logging.getLogger("pysm3")
 
 
+def _parse_pre_applied_fwhm(pre_applied_fwhm):
+    if pre_applied_fwhm is None:
+        return None
+    pre_applied_fwhm = u.Quantity(pre_applied_fwhm)
+    pre_applied_fwhm.to(u.rad)
+    if pre_applied_fwhm.value < 0 or not np.isfinite(pre_applied_fwhm.value):
+        raise ValueError(f"Invalid pre_applied_fwhm: {pre_applied_fwhm}")
+    return pre_applied_fwhm
+
+
 class Model:
     """This is the template object for PySM objects.
 
@@ -47,7 +57,14 @@ class Model:
     If libsharp is not available, pixels are distributed uniformly across
     processes, see :py:func:`pysm.mpi.distribute_pixels_uniformly`"""
 
-    def __init__(self, nside, max_nside=None, available_nside=None, map_dist=None):
+    def __init__(
+        self,
+        nside,
+        max_nside=None,
+        available_nside=None,
+        map_dist=None,
+        pre_applied_fwhm=None,
+    ):
         """
         Parameters
         ----------
@@ -62,6 +79,14 @@ class Model:
             by default 512 like PySM 2 models
         smoothing_lmax : int
             :math:`\\ell_{max}` for the smoothing step, by default :math:`2*N_{side}`
+        pre_applied_fwhm : astropy.units.Quantity or string, optional
+            FWHM of the Gaussian beam already applied to the templates of
+            this component, any angular unit (e.g. ``"56 arcmin"``).
+            If None (default), the templates are assumed to have no beam.
+            The value is attached to the maps returned by ``get_emission``
+            so that :func:`~pysm3.apply_smoothing_and_coord_transform`
+            applies only the differential beam when a target ``fwhm`` is
+            requested.
         """
         self.nside = nside
         self.available_nside = available_nside
@@ -73,6 +98,17 @@ class Model:
         )
         self.max_nside = 512 if max_nside is None else max_nside
         self.map_dist = map_dist
+        self.pre_applied_fwhm = _parse_pre_applied_fwhm(pre_applied_fwhm)
+
+    @property
+    def includes_smoothing(self):
+        return self.pre_applied_fwhm is not None
+
+    def tag_output(self, output):
+        """Attach the pre-applied beam of this component to an output map"""
+        if self.pre_applied_fwhm is not None:
+            output.pre_applied_fwhm = self.pre_applied_fwhm
+        return output
 
     def read_map(self, path, unit=None, field=0, nside=None):
         """Wrapper of the PySM read_map function that automatically

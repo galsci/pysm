@@ -22,7 +22,11 @@ from .photometry import (
     healpix_aperture_photometry,  # noqa: F401
 )
 from .small_scales import sigmoid  # noqa: F401
-from .spherical_harmonics import apply_smoothing_and_coord_transform, map2alm
+from .spherical_harmonics import (  # noqa: F401
+    apply_smoothing_and_coord_transform,
+    get_differential_fwhm,
+    map2alm,
+)
 
 log = logging.getLogger("pysm3")
 

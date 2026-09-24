@@ -25,6 +25,7 @@ class PowerLaw(Model):
         unit_Q=None,
         unit_U=None,
         map_dist=None,
+        pre_applied_fwhm=None,
     ):
         """This function initialzes the power law model of synchrotron
         emission.
@@ -57,12 +58,18 @@ class PowerLaw(Model):
             List of available nside for the input maps.
         map_dist: pysm.MapDistribution
             Distribution object used for parallel computing with MPI
+        pre_applied_fwhm: Quantity or string, optional
+            FWHM of the beam already applied to the amplitude templates,
+            e.g. "56 arcmin". Attached to the output of `get_emission` so
+            that `apply_smoothing_and_coord_transform` applies only the
+            differential beam.
         """
         super().__init__(
             nside,
             max_nside=max_nside,
             available_nside=available_nside,
             map_dist=map_dist,
+            pre_applied_fwhm=pre_applied_fwhm,
         )
         # do model setup
         self.is_IQU = has_polarization and map_Q is None
@@ -124,7 +131,7 @@ class PowerLaw(Model):
                 )
                 << u.uK_RJ
             )
-        return outputs
+        return self.tag_output(outputs)
 
 
 @njit(parallel=True)
@@ -168,6 +175,7 @@ class CurvedPowerLaw(PowerLaw):
         unit_Q=None,
         unit_U=None,
         map_dist=None,
+        pre_applied_fwhm=None,
     ):
         super().__init__(
             map_I=map_I,
@@ -184,6 +192,7 @@ class CurvedPowerLaw(PowerLaw):
             unit_Q=unit_Q,
             unit_U=unit_U,
             map_dist=map_dist,
+            pre_applied_fwhm=pre_applied_fwhm,
         )
         try:  # input is a number
             self.spectral_curvature = u.Quantity(spectral_curvature, unit="")
@@ -227,7 +236,7 @@ class CurvedPowerLaw(PowerLaw):
                 )
                 << u.uK_RJ
             )
-        return outputs
+        return self.tag_output(outputs)
 
 
 @njit(parallel=True)
