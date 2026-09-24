@@ -224,6 +224,12 @@ class Sky(Model):
         self.pre_applied_fwhm = get_common_pre_applied_fwhm(self.components)
 
     def add_component(self, component):
+        """Add a component to the Sky
+
+        All the components must have the same ``pre_applied_fwhm`` (or
+        none at all), otherwise a ``ValueError`` is raised and the
+        component is not added.
+        """
         self.pre_applied_fwhm = get_common_pre_applied_fwhm(
             self.components + [component]
         )

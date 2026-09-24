@@ -119,6 +119,13 @@ def apply_smoothing_and_coord_transform(
         for example if has point sources or sharp features.
         If ell_max is <= 1.5 nside, this setting is ignored
         and `map2alm` with pixel weights is used.
+    map_dist : pysm.MapDistribution, optional
+        Distribution object for parallel computing with MPI. When it is
+        not None, the smoothing is executed with `libsharp` on the
+        distributed map: no rotation (other than identity), no bandpass
+        CAR output and no change of output NSIDE are supported, and the
+        returned map is not tagged with its beam. With no beam to apply,
+        the input map is returned unchanged.
 
     Returns
     -------

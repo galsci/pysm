@@ -8,12 +8,15 @@ requested beam is applied in full.
 A component whose templates are **not** beam-free, for example because
 they are built from a survey map kept at its native resolution (e.g. the
 Haslam 408 MHz map at 56 arcmin for the low-frequency synchrotron model)
-or pre-simulated and smoothed to a fiducial beam (e.g. ``rg3``), can
+or pre-simulated and smoothed to a fiducial beam (e.g. ``rg3``, which
+declares it with the legacy ``pre_applied_beam`` mechanism), can
 declare the beam its templates already carry with the
-``pre_applied_fwhm`` keyword. It is available on **all** components:
-in preset configurations and ``component_config`` it is handled
-generically for any model class, and components created directly accept
-it in the constructor (or it can be set as attribute after creation):
+``pre_applied_fwhm`` keyword. In preset configurations and
+``component_config`` the keyword is handled generically for **any**
+model class; components created directly accept it in the constructor
+when they support it (the :py:class:`~pysm3.Model` base class,
+:py:class:`~pysm3.PowerLaw` and :py:class:`~pysm3.CurvedPowerLaw` do),
+and for any other component it can be set as attribute after creation:
 
 .. code-block:: toml
 
@@ -27,8 +30,8 @@ it in the constructor (or it can be set as attribute after creation):
 The value is any angular quantity string parseable by ``astropy.units``.
 Internally the :py:class:`~pysm3.Model` base class parses it, exposes it
 in the ``includes_smoothing`` property, and attaches it to the maps
-returned by ``get_emission`` of every component, so no per-model support
-is needed.
+returned by ``get_emission`` of every component derived from it, so no
+per-model support is needed.
 
 The templates should generally be built to a common resolution once and
 forever at data-preparation time, differentially smoothing the input
@@ -40,7 +43,8 @@ maps from their native beam to the target resolution with
     import astropy.units as u
     import pysm3
 
-    diff = pysm3.get_differential_fwhm(1 * u.deg, 56 * u.arcmin)  # ~21.5 arcmin
+    diff = pysm3.get_differential_fwhm(1 * u.deg, 56 * u.arcmin)
+    # differential beam, ~21.5 arcmin (returned in radians)
     template_1deg = pysm3.apply_smoothing_and_coord_transform(
         template_56arcmin, fwhm=diff
     )
@@ -62,9 +66,10 @@ double-applying part of the beam the map already has:
     # applies only sqrt(2**2 - 1**2) deg
 
 A target ``fwhm`` not larger than the pre-applied beam results in no
-smoothing, with a warning, since a map cannot be deconvolved. The
-smoothed output is tagged with the beam it carries, so repeated
-smoothing calls stay differential. For maps that were processed after
+smoothing, with a warning, since a map cannot be deconvolved. In serial
+execution, the smoothed output is tagged with the beam it carries, so
+repeated smoothing calls stay differential; in the distributed case the
+smoothed map is not tagged. For maps that were processed after
 ``get_emission`` (arithmetic, slicing and unit conversions all drop the
 attached beam), pass the pre-applied beam explicitly:
 
