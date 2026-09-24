@@ -95,7 +95,10 @@ class InterpolatingComponent(Model):
 
     @property
     def includes_smoothing(self):
-        return self.pre_applied_beam is not None
+        return (
+            self.pre_applied_beam is not None
+            or self.pre_applied_fwhm is not None
+        )
 
     def get_filenames(self, path):
         # Override this to implement name convention

@@ -9,9 +9,10 @@ except ImportError:
 
 from .. import units as u
 from .. import utils
+from .template import Model
 
 
-class CMBDipole:
+class CMBDipole(Model):
     """
     Simulate the CMB dipole anisotropy as a full-sky HEALPix map.
 
@@ -30,6 +31,9 @@ class CMBDipole:
         Galactic longitude of the dipole direction, in degrees (deg).
     dip_lat : float
         Galactic latitude of the dipole direction, in degrees (deg).
+    pre_applied_fwhm : astropy.units.Quantity or string, optional
+        FWHM of the Gaussian beam already applied to the templates,
+        see the :py:class:`~pysm3.Model` base class.
 
     Returns
     -------
@@ -62,7 +66,7 @@ class CMBDipole:
         map_dist=None,
         quadrupole_correction: bool = False,
     ):
-        self.nside = nside
+        super().__init__(nside=nside, map_dist=map_dist)
         self.amp = u.Quantity(amp) if not isinstance(amp, u.Quantity) else amp
         self.T_cmb = u.Quantity(T_cmb) if not isinstance(T_cmb, u.Quantity) else T_cmb
         self.dip_lat = (
@@ -71,7 +75,6 @@ class CMBDipole:
         self.dip_lon = (
             u.Quantity(dip_lon) if not isinstance(dip_lon, u.Quantity) else dip_lon
         ).to_value(u.deg)
-        self.map_dist = map_dist
         self.quadrupole_correction = quadrupole_correction
 
     @u.quantity_input

@@ -344,6 +344,42 @@ def test_sky_rejects_pre_applied_fwhm():
         )
 
 
+def test_cmb_dipole_supports_pre_applied_fwhm():
+    dipole = pysm3.CMBDipole(
+        nside=32,
+        amp="3366.6 uK_CMB",
+        T_cmb="2.725 K_CMB",
+        dip_lon="263.986 deg",
+        dip_lat="48.247 deg",
+        pre_applied_fwhm="1 deg",
+    )
+    assert dipole.pre_applied_fwhm == 1 * u.deg
+    assert dipole.includes_smoothing
+    output = dipole.get_emission(70 * u.GHz)
+    assert output.pre_applied_fwhm == 1 * u.deg
+
+
+def test_interpolating_component_pre_applied_fwhm(tmp_path):
+    nside = 32
+    np.random.seed(12)
+    for freq in [20.0, 30.0]:
+        hp.write_map(
+            str(tmp_path / f"{freq:05.1f}.fits"),
+            np.random.rand(3, hp.nside2npix(nside)) * 100,
+            overwrite=True,
+        )
+    interp = pysm3.InterpolatingComponent(
+        path=str(tmp_path),
+        input_units="uK_RJ",
+        nside=nside,
+        freqs=[20.0, 30.0],
+        pre_applied_fwhm="56 arcmin",
+    )
+    assert interp.includes_smoothing
+    output = interp.get_emission(25 * u.GHz)
+    assert output.pre_applied_fwhm == 56 * u.arcmin
+
+
 def test_powerlaw_tags_output():
     model = make_powerlaw("56 arcmin")
     assert model.pre_applied_fwhm == 56 * u.arcmin
