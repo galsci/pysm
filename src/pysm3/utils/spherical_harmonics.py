@@ -71,8 +71,9 @@ def apply_smoothing_and_coord_transform(
     requested resolution is not over-smoothed by double-applying part of the
     beam the map already has. A ``fwhm`` not larger than the pre-applied beam
     results in no smoothing (a map cannot be deconvolved), with a warning.
-    The returned HEALPix map is tagged with the beam it carries after
-    smoothing.
+    In serial execution, the returned HEALPix map is tagged with the beam it
+    carries after smoothing, so that repeated smoothing stays differential;
+    in the distributed case the smoothed map is not tagged.
 
     Parameters
     ----------
@@ -229,7 +230,11 @@ def apply_smoothing_and_coord_transform(
         assert (rot is None) or (
             rot.coordin == rot.coordout
         ), "No rotation supported in distributed smoothing"
-        output_maps.append(mpi.mpi_smoothing(input_map, fwhm, map_dist))
+        if fwhm is None:
+            log.info("No smoothing to apply, returning the input map")
+            output_maps.append(input_map)
+        else:
+            output_maps.append(mpi.mpi_smoothing(input_map, fwhm, map_dist))
         assert not return_car, "No CAR output supported in Libsharp smoothing"
 
     if (

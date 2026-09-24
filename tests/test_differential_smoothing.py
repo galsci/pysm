@@ -166,6 +166,26 @@ def test_tag_preserved_without_smoothing(input_map):
     assert output.pre_applied_fwhm == PRE_FWHM
 
 
+def test_chained_smoothing_stays_differential(input_map):
+    tagged = input_map.copy()
+    tagged.pre_applied_fwhm = PRE_FWHM
+    first = apply_smoothing_and_coord_transform(
+        tagged, fwhm=TARGET_FWHM, lmax=LMAX
+    )
+    assert first.pre_applied_fwhm == TARGET_FWHM
+    second = apply_smoothing_and_coord_transform(
+        first, fwhm=LARGER_FWHM, lmax=LMAX
+    )
+    assert second.pre_applied_fwhm == LARGER_FWHM
+    assert_quantity_allclose(
+        second,
+        smooth_reference(
+            input_map, get_differential_fwhm(LARGER_FWHM, PRE_FWHM)
+        ),
+        rtol=1e-5,
+    )
+
+
 def test_beam_window_ignores_pre_applied_beam(input_map, caplog):
     beam_window = hp.gauss_beam(
         LARGER_FWHM.to_value(u.radian), lmax=LMAX, pol=True

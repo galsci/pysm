@@ -56,10 +56,11 @@ double-applying part of the beam the map already has:
     # applies only sqrt(2**2 - 1**2) deg
 
 A target ``fwhm`` not larger than the pre-applied beam results in no
-smoothing, with a warning, since a map cannot be deconvolved. For maps
-that were processed after ``get_emission`` (arithmetic, slicing and unit
-conversions all drop the attached beam), pass the pre-applied beam
-explicitly:
+smoothing, with a warning, since a map cannot be deconvolved. The
+smoothed output is tagged with the beam it carries, so repeated
+smoothing calls stay differential. For maps that were processed after
+``get_emission`` (arithmetic, slicing and unit conversions all drop the
+attached beam), pass the pre-applied beam explicitly:
 
 .. code-block:: python
 
