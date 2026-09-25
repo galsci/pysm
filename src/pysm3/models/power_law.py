@@ -57,6 +57,10 @@ class PowerLaw(Model):
             List of available nside for the input maps.
         map_dist: pysm.MapDistribution
             Distribution object used for parallel computing with MPI
+        pre_applied_fwhm: Quantity or string, optional
+            FWHM of the beam already applied to the amplitude templates,
+            e.g. "56 arcmin". Accepted even if not listed in the
+            signature, see the :py:class:`~pysm3.Model` base class.
         """
         super().__init__(
             nside,

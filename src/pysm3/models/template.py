@@ -8,7 +8,9 @@ Objects:
     Model
 """
 
+import functools
 import gc
+import inspect
 import logging
 
 import healpy as hp
@@ -32,6 +34,21 @@ except ImportError:
 log = logging.getLogger("pysm3")
 
 
+def parse_pre_applied_fwhm(pre_applied_fwhm):
+    """Parse and validate the pre-applied beam of a component
+
+    Accepts None, an angular Quantity or a string parseable by astropy
+    (e.g. "56 arcmin"), returns None or a validated Quantity.
+    """
+    if pre_applied_fwhm is None:
+        return None
+    pre_applied_fwhm = u.Quantity(pre_applied_fwhm)
+    pre_applied_fwhm.to(u.rad)
+    if pre_applied_fwhm.value < 0 or not np.isfinite(pre_applied_fwhm.value):
+        raise ValueError(f"Invalid pre_applied_fwhm: {pre_applied_fwhm}")
+    return pre_applied_fwhm
+
+
 class Model:
     """This is the template object for PySM objects.
 
@@ -47,7 +64,14 @@ class Model:
     If libsharp is not available, pixels are distributed uniformly across
     processes, see :py:func:`pysm.mpi.distribute_pixels_uniformly`"""
 
-    def __init__(self, nside, max_nside=None, available_nside=None, map_dist=None):
+    def __init__(
+        self,
+        nside,
+        max_nside=None,
+        available_nside=None,
+        map_dist=None,
+        pre_applied_fwhm=None,
+    ):
         """
         Parameters
         ----------
@@ -62,6 +86,15 @@ class Model:
             by default 512 like PySM 2 models
         smoothing_lmax : int
             :math:`\\ell_{max}` for the smoothing step, by default :math:`2*N_{side}`
+        pre_applied_fwhm : astropy.units.Quantity or string, optional
+            FWHM of the Gaussian beam already applied to the templates of
+            this component, any angular unit (e.g. ``"56 arcmin"``).
+            If None (default), the templates are assumed to have no beam.
+            The value is attached to the maps returned by ``get_emission``
+            so that :func:`~pysm3.apply_smoothing_and_coord_transform`
+            applies only the differential beam when a target ``fwhm`` is
+            requested. Every subclass accepts this keyword in its
+            constructor, even when its own signature does not list it.
         """
         self.nside = nside
         self.available_nside = available_nside
@@ -73,6 +106,62 @@ class Model:
         )
         self.max_nside = 512 if max_nside is None else max_nside
         self.map_dist = map_dist
+        self.pre_applied_fwhm = parse_pre_applied_fwhm(pre_applied_fwhm)
+
+    def __init_subclass__(cls, **kwargs):
+        """Wrap `__init__` and `get_emission` of subclasses
+
+        Every component gets the same behavior for free: the constructor
+        accepts the `pre_applied_fwhm` keyword and the maps returned by
+        `get_emission` carry the declared beam, so that
+        :func:`~pysm3.apply_smoothing_and_coord_transform` can apply only
+        the differential beam when a target `fwhm` is requested.
+        Subclasses that already declare `pre_applied_fwhm` in their
+        `__init__` signature handle it themselves and are not wrapped.
+        """
+        super().__init_subclass__(**kwargs)
+        original_get_emission = cls.__dict__.get("get_emission")
+        if original_get_emission is not None:
+
+            @functools.wraps(original_get_emission)
+            def get_emission(self, *args, **kwargs):
+                return self.tag_output(
+                    original_get_emission(self, *args, **kwargs)
+                )
+
+            cls.get_emission = get_emission
+
+        original_init = cls.__dict__.get("__init__")
+        if original_init is None:
+            return
+        try:
+            parameters = inspect.signature(original_init).parameters
+        except (TypeError, ValueError):
+            return
+        if "pre_applied_fwhm" in parameters:
+            return
+
+        @functools.wraps(original_init)
+        def __init__(self, *args, pre_applied_fwhm=None, **kwargs):
+            original_init(self, *args, **kwargs)
+            if pre_applied_fwhm is not None:
+                self.pre_applied_fwhm = parse_pre_applied_fwhm(pre_applied_fwhm)
+
+        cls.__init__ = __init__
+
+    @property
+    def includes_smoothing(self):
+        return self.pre_applied_fwhm is not None
+
+    def tag_output(self, output):
+        """Attach the pre-applied beam of this component to its output maps"""
+        if self.pre_applied_fwhm is None:
+            return output
+        if isinstance(output, tuple):
+            return tuple(self.tag_output(each) for each in output)
+        if isinstance(output, u.Quantity):
+            output.pre_applied_fwhm = self.pre_applied_fwhm
+        return output
 
     def read_map(self, path, unit=None, field=0, nside=None):
         """Wrapper of the PySM read_map function that automatically
@@ -131,7 +220,7 @@ class Model:
         freqs = utils.check_freq_input(freqs)
         weights = utils.normalize_weights(freqs, weights)
         outputs = np.zeros((3, hp.nside2npix(self.nside)), dtype=np.float32)
-        return outputs << u.uK_RJ
+        return self.tag_output(outputs << u.uK_RJ)
 
 
 def apply_normalization(freqs, weights):

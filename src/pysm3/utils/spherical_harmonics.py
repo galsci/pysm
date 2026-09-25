@@ -14,6 +14,34 @@ from .. import mpi, utils
 log = logging.getLogger("pysm3")
 
 
+def get_differential_fwhm(fwhm, pre_applied_fwhm):
+    """FWHM of the Gaussian beam that brings a map to a target resolution
+
+    Gaussian beams combine in quadrature, so the extra beam needed to bring
+    a map that already carries a beam of ``pre_applied_fwhm`` up to ``fwhm``
+    has FWHM ``sqrt(max(fwhm**2 - pre_applied_fwhm**2, 0))``.
+    A target that is not larger than the pre-applied beam returns ``0``,
+    a map cannot be deconvolved.
+
+    Parameters
+    ----------
+    fwhm, pre_applied_fwhm : astropy.units.Quantity or string
+        Target resolution and beam already applied to the map, any angular
+        unit (e.g. ``1 * u.deg`` or ``"56 arcmin"``)
+
+    Returns
+    -------
+    differential_fwhm : astropy.units.Quantity
+        FWHM to apply on top of the pre-applied beam, in radians
+    """
+    fwhm = u.Quantity(fwhm).to(u.rad)
+    pre_applied_fwhm = u.Quantity(pre_applied_fwhm).to(u.rad)
+    return (
+        np.sqrt(np.maximum(fwhm.value**2 - pre_applied_fwhm.value**2, 0.0))
+        * u.rad
+    )
+
+
 def apply_smoothing_and_coord_transform(
     input_map,
     fwhm=None,
@@ -27,6 +55,7 @@ def apply_smoothing_and_coord_transform(
     input_alm=False,
     map2alm_lsq_maxiter=None,
     map_dist=None,
+    pre_applied_fwhm=None,
 ):
     r"""Apply smoothing and coordinate rotation to an input map
 
@@ -34,16 +63,35 @@ def apply_smoothing_and_coord_transform(
     is None, otherwise applies distributed smoothing with `libsharp`.
     In the distributed case, no rotation is supported.
 
+    If the input map carries a pre-applied beam (the ``pre_applied_fwhm``
+    attribute, set by the models of components whose templates are not
+    beam-free), or one is provided with the ``pre_applied_fwhm`` argument,
+    and a target ``fwhm`` is requested, only the *differential* beam
+    ``sqrt(max(fwhm**2 - pre_applied_fwhm**2, 0))`` is applied, so that the
+    requested resolution is not over-smoothed by double-applying part of the
+    beam the map already has. A ``fwhm`` not larger than the pre-applied beam
+    results in no smoothing (a map cannot be deconvolved), with a warning.
+    In serial execution, the returned HEALPix map is tagged with the beam it
+    carries after smoothing, so that repeated smoothing stays differential;
+    in the distributed case the smoothed map is not tagged.
+
     Parameters
     ----------
     input_map : ndarray
         Input map, of shape `(3, npix)`
         This is assumed to have no beam at this point, as the
         simulated small scale template on which the simulations are based
-        have no beam.
+        have no beam, unless a pre-applied beam is declared with
+        ``pre_applied_fwhm`` or attached to the map as attribute.
     fwhm : astropy.units.Quantity
         Full width at half-maximum, defining the
         Gaussian kernels to be applied.
+    pre_applied_fwhm : astropy.units.Quantity or string, optional
+        FWHM of the Gaussian beam already applied to the input map, any
+        angular unit (e.g. ``"56 arcmin"``). If None (default), it is
+        detected from the ``pre_applied_fwhm`` attribute of the input map,
+        if present. An explicit value, including 0, takes precedence over
+        the attribute.
     beam_window: array, optional
         Custom beam window function (:math:`B_\ell`)
     rot: hp.Rotator
@@ -71,12 +119,53 @@ def apply_smoothing_and_coord_transform(
         for example if has point sources or sharp features.
         If ell_max is <= 1.5 nside, this setting is ignored
         and `map2alm` with pixel weights is used.
+    map_dist : pysm.MapDistribution, optional
+        Distribution object for parallel computing with MPI. When it is
+        not None, the smoothing is executed with `libsharp` on the
+        distributed map: no rotation (other than identity), no bandpass
+        CAR output and no change of output NSIDE are supported, and the
+        returned map is not tagged with its beam. With no beam to apply,
+        the input map is returned unchanged.
 
     Returns
     -------
     smoothed_map : np.ndarray or tuple of np.ndarray
         Array containing the smoothed sky or tuple of HEALPix and CAR maps
     """
+
+    requested_fwhm = fwhm
+    if pre_applied_fwhm is None:
+        pre_applied_fwhm = getattr(input_map, "pre_applied_fwhm", None)
+    if pre_applied_fwhm is not None:
+        pre_applied_fwhm = u.Quantity(pre_applied_fwhm).to(u.rad)
+        if pre_applied_fwhm.value < 0 or not np.isfinite(pre_applied_fwhm.value):
+            raise ValueError(f"Invalid pre_applied_fwhm: {pre_applied_fwhm}")
+    output_pre_applied_fwhm = pre_applied_fwhm
+    if beam_window is not None and pre_applied_fwhm is not None:
+        log.warning(
+            "The pre-applied beam %s is ignored when a custom beam_window "
+            "is provided, the full window is applied",
+            str(pre_applied_fwhm),
+        )
+    elif requested_fwhm is not None and pre_applied_fwhm is not None:
+        if u.Quantity(requested_fwhm).to(u.rad) <= pre_applied_fwhm:
+            log.warning(
+                "Requested fwhm %s is not larger than the pre-applied beam "
+                "%s, no smoothing applied, a map cannot be deconvolved",
+                str(requested_fwhm),
+                str(pre_applied_fwhm),
+            )
+            fwhm = None
+        else:
+            fwhm = get_differential_fwhm(requested_fwhm, pre_applied_fwhm)
+            log.info(
+                "Applying the differential fwhm %s between the requested "
+                "resolution %s and the pre-applied beam %s",
+                str(fwhm),
+                str(requested_fwhm),
+                str(pre_applied_fwhm),
+            )
+            output_pre_applied_fwhm = u.Quantity(requested_fwhm).to(u.rad)
 
     if not input_alm:
         nside = hp.get_nside(input_map)
@@ -148,8 +237,21 @@ def apply_smoothing_and_coord_transform(
         assert (rot is None) or (
             rot.coordin == rot.coordout
         ), "No rotation supported in distributed smoothing"
-        output_maps.append(mpi.mpi_smoothing(input_map, fwhm, map_dist))
+        if fwhm is None:
+            log.info("No smoothing to apply, returning the input map")
+            output_maps.append(input_map)
+        else:
+            output_maps.append(mpi.mpi_smoothing(input_map, fwhm, map_dist))
         assert not return_car, "No CAR output supported in Libsharp smoothing"
+
+    if (
+        output_pre_applied_fwhm is not None
+        and map_dist is None
+        and return_healpix
+        and len(output_maps) > 0
+        and isinstance(output_maps[0], u.Quantity)
+    ):
+        output_maps[0].pre_applied_fwhm = output_pre_applied_fwhm
 
     return output_maps[0] if len(output_maps) == 1 else tuple(output_maps)
 
