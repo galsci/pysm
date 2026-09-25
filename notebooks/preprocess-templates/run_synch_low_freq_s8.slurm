@@ -27,8 +27,8 @@ PAPERMILL="/global/common/software/cmb/zonca/conda/pycmb/bin/papermill"
 NB="synchrotron_low_freq_s8.ipynb"
 
 # Publish the templates to the PySM data release folder, served at
-# https://portal.nersc.gov/project/cmb/pysm-data/lowfreq/
-OUTPUT_FOLDER=/global/cfs/cdirs/cmb/www/pysm-data/lowfreq
+# https://portal.nersc.gov/project/cmb/pysm-data/synch_lowfreq/
+OUTPUT_FOLDER=/global/cfs/cdirs/cmb/www/pysm-data/synch_lowfreq
 DOWNLOAD_FOLDER=$PWD/data
 
 mkdir -p "$OUTPUT_FOLDER" "$DOWNLOAD_FOLDER"
