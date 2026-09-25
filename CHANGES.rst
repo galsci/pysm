@@ -6,6 +6,7 @@ Unreleased
 - ``CMBDipole`` is now a subclass of ``Model``, so it supports ``pre_applied_fwhm`` like every other component, and ``InterpolatingComponent.includes_smoothing`` also accounts for a declared ``pre_applied_fwhm``, not only for the legacy ``pre_applied_beam`` https://github.com/galsci/pysm/pull/273
 - ``apply_smoothing_and_coord_transform`` with ``map_dist`` and no beam to apply (``fwhm=None``, for example after the pre-applied-beam resolution floor) returns the input map instead of failing inside ``mpi_smoothing`` https://github.com/galsci/pysm/pull/273
 - Fix Read the Docs builds failing with ``sphinx_lfs_content`` 1.1.11 by pinning the docs dependency to 1.1.10
+- Add the preprocessing notebook for the planned low-frequency synchrotron model ``s8``: 1 degree amplitude templates (Haslam 408 MHz and WMAP 23 GHz Q/U, differentially smoothed) and the Irfan & Puglisi 2026 spectral index and curvature maps https://github.com/galsci/pysm/issues/274
 
 3.4.6 (2026-07-20)
 ==================
