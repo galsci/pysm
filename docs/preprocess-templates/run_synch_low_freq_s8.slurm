@@ -18,6 +18,9 @@ export PYTHONUNBUFFERED=1
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 export HDF5_USE_FILE_LOCKING=FALSE
 
+# The published templates must be readable by the portal.nersc.gov web server
+umask 022
+
 # Papermill from the CMB collaboration conda environment
 PAPERMILL="/global/common/software/cmb/zonca/conda/pycmb/bin/papermill"
 
