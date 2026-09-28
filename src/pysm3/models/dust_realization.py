@@ -27,6 +27,9 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         synalm_lmax=None,
         has_polarization=True,
         map_dist=None,
+        lamb=None,
+        Lplus=None,
+        Hplus=None,
     ):
         """Modified Black Body model with stochastic small scales
 
@@ -120,6 +123,14 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         self.small_scale_cl_mbb_temperature = self.read_cl(
             small_scale_cl_mbb_temperature
         ).to(u.K**2)
+
+        if lamb is None or Lplus is None or Hplus is None:
+            print('generating monofractal field')
+            small_scale = self.draw_realization(synalm_lmax, seeds)
+        else:
+            print('generating multifractal field')
+            small_scale = self.draw_mff_realization(lamb, Lplus, Hplus, synalm_lmax, seeds)
+        self.f_real = small_scale.copy()
         self.nside = int(nside)
         (
             self.I_ref,
@@ -127,29 +138,119 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             self.U_ref,
             self.mbb_index,
             self.mbb_temperature,
-        ) = self.draw_realization(synalm_lmax, seeds)
+        ) = self.modulate_small_scales(small_scale, synalm_lmax, seeds)
 
-    def draw_realization(self, synalm_lmax=None, seeds=None):
+    def draw_model_realization(self, H1, L1, nside, seed=0):
+        """Realize noise from a model power spectrum"""
+        np.random.seed(seed)
+        lmax = 3*nside - 1
+        alm_size = hp.Alm.getsize(lmax)
+        ell = np.arange(lmax)
+        # Random phases
+        phases = np.random.uniform(0., 2.*np.pi, alm_size)
+        phases = np.cos(phases) + 1j * np.sin(phases)
+        # Model power spectrum
+        fl = (ell**2 + L1**2)**(-H1)
+        flm = hp.almxfl(phases, fl)
+        flm[np.isnan(flm)|np.isinf(flm)] = 0. + 1j * 0.
+        f_real = hp.alm2map(flm, nside=nside, lmax=lmax)
+        # De-mean and standardize
+        f_real = f_real - np.nanmean(f_real)
+        curr_var = np.nanmean(np.abs(f_real)**2)
+        f_real = f_real / np.sqrt(curr_var)
+        return f_real.copy()
 
+    def draw_corr_gauss_realization(self, Cl, nside, seed=0, normalize=False):
+        """Realize noise from given power spectra Cl"""
+        np.random.seed(seed)
+        lmax = 3*nside - 1
+        # Synthesize alms
+        flms = hp.synalm(Cl, lmax=lmax, new=True)
+        N_fields = np.shape(flms)[0]
+        for i in range(N_fields):
+            flms[i][np.isnan(flms[i])|np.isinf(flms[i])] = 0. + 1j * 0.
+        f_reals = hp.alm2map(flms, nside=nside, lmax=lmax)
+        # De-mean and standardize
+        if normalize:
+            for i in range(N_fields):
+                f_reals[i] = f_reals[i] - np.nanmean(f_reals[i])
+                curr_var = np.nanmean(np.abs(f_reals[i])**2)
+                f_reals[i] = f_reals[i] / np.sqrt(curr_var)
+        return f_reals.copy()
+
+    def draw_mff_realization(self, lamb, L_plus=100., H_plus=0., synalm_lmax=None, seeds=None):
+        """Realize multifractal field"""
         if seeds is None:
-            seeds = (None, None, None)
-
+            seeds = (None, None)
         if synalm_lmax is None:
             synalm_lmax = int(min(16384, 2.5 * self.nside))
+        output_lmax = int(min(synalm_lmax, 2.5 * self.nside))
+        np.random.seed(seeds[0])
+        Cl = list(self.small_scale_cl.value)
+        ## Generate correlated white noise
+        phi_w = self.draw_corr_gauss_realization(Cl/Cl[0], self.nside, seeds[0], normalize=False)
+        if len(np.shape(phi_w)) > 1:
+            N_fields = np.shape(phi_w)[0]
+        else:
+            N_fields = 1
+        ## Generate correlated Gaussian noise
+        omegas = []
+        for i in range(N_fields):
+            omegas.append(self.draw_model_realization(H_plus, L_plus, self.nside, seeds[1]))
+        ## Generate volatility (log-normal) field
+        sigmas = [(np.exp(np.sqrt(lamb) * omegas[i])).copy() for i in range(N_fields)]
+        ## Symmetrize the field
+        dhs = [(sigmas[i] * phi_w[i]).copy() for i in range(N_fields)]
+        dh_alms = hp.map2alm(dhs, lmax=output_lmax)
+        # Use fractional integration from small scale Cl
+        filter_ell = [np.sqrt(Cl) for Cl in self.small_scale_cl]
+        f_alm = [hp.almxfl(dh_alms[i], filter_ell[i]) for i in range(N_fields)]
+        # Ensure no bad values generated
+        for _alm in f_alm:
+            _alm[np.isnan(_alm)|np.isinf(_alm)] = 0. + 1j * 0.
+        # Map to output lmax
+        f_alm = [hp.almxfl(f_alm[i], np.ones(output_lmax+1)) for i in range(N_fields)]
+        f_real = hp.alm2map(f_alm, nside=self.nside, lmax=output_lmax)
+        for i in range(N_fields):
+            f_real[i] = f_real[i] - np.nanmean(f_real[i])
+            curr_var = np.nanmean(np.abs(f_real[i])**2)
+            ell = np.float64(np.arange(len(Cl[i])))
+            var2 = np.nansum((2.*ell+1.)*Cl[i])/(4.*np.pi)
+            f_real[i] = np.sqrt(var2) * f_real[i] / np.sqrt(curr_var)
 
+        return np.float64(f_real)
+
+    def draw_realization(self, synalm_lmax=None, seeds=None):
+        if seeds is None:
+            seeds = (None, None)
+        if synalm_lmax is None:
+            synalm_lmax = int(min(16384, 2.5 * self.nside))
+        output_lmax = int(min(synalm_lmax, 2.5 * self.nside))
         np.random.seed(seeds[0])
 
+        ## Synthesize Cl
+        # tt, ee, bb, te
+        # -> t, e, b
         alm_small_scale = hp.synalm(
             list(self.small_scale_cl.value),
             lmax=synalm_lmax,
             new=True,
         )
-
         alm_small_scale = [
-            hp.almxfl(each, np.ones(int(min(synalm_lmax, 2.5 * self.nside))))
-            for each in alm_small_scale
+            hp.almxfl(each, np.ones(output_lmax + 1)) for each in alm_small_scale
         ]
+        # t, e, b
+        # -> i, q, u
         map_small_scale = hp.alm2map(alm_small_scale, nside=self.nside)
+        return map_small_scale
+
+    def modulate_small_scales(self, map_small_scale, synalm_lmax=None, seeds=None):
+        if seeds is None:
+            seeds = (None, None, None)
+        if synalm_lmax is None:
+            synalm_lmax = int(min(16384, 2.5 * self.nside))
+        output_lmax = int(min(synalm_lmax, 2.5*self.nside))
+        np.random.seed(seeds[0])
 
         # need later for beta, Td
         modulate_map_I = hp.alm2map(self.modulate_alm[0].value, self.nside)
