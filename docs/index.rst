@@ -209,6 +209,7 @@ high-resolution templates shipped with PySM.
   Synchrotron beta small-scale modelling <preprocess-templates/synchrotron_beta>
   Synchrotron curvature modelling <preprocess-templates/synchrotron_curvature>
   Log-pol-tens formalism notebook <preprocess-templates/synchrotron_template_logpoltens>
+  Low-frequency synchrotron s8 template preprocessing <preprocess-templates/synchrotron_low_freq_s8>
   WebSky bright source catalog workflow <preprocess-templates/websky_sources_high_flux_catalog>
   Compare WebSky and Agora SZ templates <preprocess-templates/verify_templates/compare_websky_agora_sz>
   Compare WebSky, Agora, and FLAMINGO kSZ templates <preprocess-templates/verify_templates/compare_flamingo_ksz>
