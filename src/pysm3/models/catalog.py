@@ -124,6 +124,11 @@ class PointSourceCatalog(Model):
     any order. (source_index, pol_order). Unit needs to be Jy
     each field should have an attribute units which is checked when loading
     a model. No conversion is performed.
+    Optionally the catalog can include a `psi` field with the per-source
+    polarization angle in radians, in that case Q and U are computed as
+    P cos(2 psi) and P sin(2 psi). When `psi` is not available, polarization
+    angles are drawn randomly from a fixed seed, so Q and U only match the
+    input catalog statistically.
     See the documentation and the unit tests for examples on how to create a
     catalog file with `xarray`.
 
@@ -157,6 +162,11 @@ class PointSourceCatalog(Model):
             assert f["phi"].attrs["units"].decode("UTF-8") == "rad"
             assert f["logpolycoefflux"].attrs["units"].decode("UTF-8") == "Jy"
             assert f["logpolycoefpolflux"].attrs["units"].decode("UTF-8") == "Jy"
+            if "psi" in f:
+                assert f["psi"].attrs["units"].decode("UTF-8") == "rad"
+                self.pol_angles = np.array(f["psi"][self.catalog_slice])
+            else:
+                self.pol_angles = None
 
         assert map_dist is None, "Distributed execution not supported"
 
@@ -341,12 +351,15 @@ class PointSourceCatalog(Model):
         log.info(
             "Fluxes for Q/U computed for %.2f million sources", len(fluxes_P) / 1e6
         )
-        # set seed so that the polarization angle is always the same for each run
-        # could expose to the interface if useful
-        np.random.seed(56567)
-        psirand = np.random.uniform(
-            low=-np.pi / 2.0, high=np.pi / 2.0, size=len(fluxes_P)
-        )
+        if self.pol_angles is not None:
+            psirand = self.pol_angles
+        else:
+            # set seed so that the polarization angle is always the same for each run
+            # could expose to the interface if useful
+            np.random.seed(56567)
+            psirand = np.random.uniform(
+                low=-np.pi / 2.0, high=np.pi / 2.0, size=len(fluxes_P)
+            )
         if convolve_beam:
             pols = [(1, np.cos)]
             pols.append((2, np.sin))
