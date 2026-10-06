@@ -33,11 +33,19 @@ model reproduces the catalog fluxes to machine precision at the nodes:
   220 GHz
 
 The per-source polarization angle ``psi`` (radians) is stored in the output
-as well: the current ``PointSourceCatalog`` implementation draws random
-polarization angles, so the stored angles allow a future extension to
-reproduce the exact Agora Q/U. The conversion was validated against the
-official Agora SPT-3G band maps, see
+as well and is used by ``PointSourceCatalog`` to decompose the polarized
+flux into exact Q and U. The conversion was validated against the official
+Agora SPT-3G band maps, see
 ``docs/preprocess-templates/verify_templates/compare_websky_agora_radio.ipynb``.
+
+The input catalogs are in Equatorial coordinates. Use ``--output-frame
+galactic`` (the default) to rotate positions and polarization angles to
+Galactic coordinates, which is the frame of all PySM presets: the WebSky
+catalogs distributed with PySM are already Galactic, the Agora catalogs are
+not. The polarization angle is frame-dependent and is rotated together with
+the positions; the rotation is validated on a random sample of sources
+against ``astropy.coordinates.SkyCoord.position_angle`` of the North
+Galactic Pole and by rotating back to the original frame.
 
 Known issue (September 2025 data release): in the lensed catalog
 ``Q220 == U220`` for all sources, so the polarized flux of the lensed
@@ -49,7 +57,7 @@ Example:
         --input agora_radiocat_unl_universemachine_trinity_95_150_220ghz_...fits \\
         --output agora_radio_unl_pysm.h5
 
-Requires: numpy, astropy, h5py.
+Requires: numpy, astropy, h5py, healpy.
 """
 
 from __future__ import annotations
@@ -62,6 +70,8 @@ from pathlib import Path
 
 import h5py
 import numpy as np
+from astropy.coordinates import SkyCoord
+import astropy.units as aunits
 from astropy.io import fits
 
 INTENSITY_FREQS_GHZ = [5.0, 95.0, 150.0, 220.0]
@@ -111,7 +121,118 @@ def evaluate_poly(coeffs, freq_ghz):
     return np.maximum(out, 0)
 
 
-def convert(input_filename, output_filename, lensed, cutoff_mjy, ref_freq_ghz):
+def equatorial_to_galactic(theta, phi, psi):
+    """Rotate Equatorial positions and polarization angles to Galactic.
+
+    Uses the astropy frame transformations, the reference implementation of
+    the IAU Galactic frame (the healpy Rotator hardcodes the Euler angles
+    with reduced precision). The polarization angle is frame-dependent and
+    transforms as ``psi_gal = psi_eq - gamma``, where ``gamma`` is the IAU
+    position angle of the North Galactic Pole as seen from the source in
+    Equatorial coordinates: a physical direction at angle psi from the
+    Equatorial North is at angle psi - gamma from the Galactic North,
+    which sits gamma counterclockwise from the Equatorial North.
+    """
+    sources = SkyCoord(
+        ra=phi * 180 / np.pi * aunits.deg,
+        dec=(90 - theta * 180 / np.pi) * aunits.deg,
+        frame="icrs",
+    )
+    galactic = sources.galactic
+    theta_out = np.radians(90 - galactic.b.to_value(aunits.deg))
+    phi_out = np.radians(galactic.l.to_value(aunits.deg))
+    ngp = SkyCoord(
+        l=0 * aunits.deg, b=90 * aunits.deg, frame="galactic"
+    ).icrs
+    gamma = sources.position_angle(ngp).to_value(aunits.rad)
+    return theta_out, phi_out, psi - gamma
+
+
+def galactic_to_equatorial(theta, phi, psi):
+    """Rotate Galactic positions and polarization angles to Equatorial."""
+    sources = SkyCoord(
+        l=phi * 180 / np.pi * aunits.deg,
+        b=(90 - theta * 180 / np.pi) * aunits.deg,
+        frame="galactic",
+    )
+    equatorial = sources.icrs
+    theta_out = np.radians(90 - equatorial.dec.to_value(aunits.deg))
+    phi_out = np.radians(equatorial.ra.to_value(aunits.deg))
+    ncp = SkyCoord(
+        ra=0 * aunits.deg, dec=90 * aunits.deg, frame="icrs"
+    ).galactic
+    gamma = sources.position_angle(ncp).to_value(aunits.rad)
+    return theta_out, phi_out, psi - gamma
+
+
+def angle_difference(a, b):
+    """Wrapped difference between two angles in radians."""
+    return (a - b + np.pi) % (2 * np.pi) - np.pi
+
+
+def validate_rotation(theta, phi, psi, theta_out, phi_out, psi_out, n_samples):
+    """Validate the Equatorial to Galactic rotation on random sources.
+
+    First checks the transformation formula itself: a physical direction
+    offset from each source at its catalog polarization angle must have the
+    predicted position angle when measured in the Galactic frame. Then
+    checks that rotating back to Equatorial restores the input positions
+    and angles, and that the rotated positions agree with the healpy
+    Rotator, which PySM uses to handle frames elsewhere.
+    """
+    import healpy as hp
+
+    rng = np.random.default_rng(20261006)
+    sub = np.sort(
+        rng.choice(len(theta), min(n_samples, len(theta)), replace=False)
+    )
+
+    sources = SkyCoord(
+        ra=phi[sub] * 180 / np.pi * aunits.deg,
+        dec=(90 - theta[sub] * 180 / np.pi) * aunits.deg,
+        frame="icrs",
+    )
+    offsets = sources.directional_offset_by(
+        psi[sub] * aunits.rad, 1e-3 * aunits.deg
+    )
+    measured_psi_gal = (
+        sources.galactic.position_angle(offsets.galactic).to_value(aunits.rad)
+    )
+    formula_err = np.abs(
+        angle_difference(measured_psi_gal, psi_out[sub])
+    ).max()
+    print(
+        f"polarization angle transformation vs directional offsets on "
+        f"{len(sub)} sources: max difference {formula_err:.2e} rad"
+    )
+
+    theta_back, phi_back, psi_back = galactic_to_equatorial(
+        theta_out[sub], phi_out[sub], psi_out[sub]
+    )
+    max_pos_err = max(
+        np.abs(angle_difference(theta_back, theta[sub])).max(),
+        np.abs(angle_difference(phi_back, phi[sub])).max(),
+    )
+    max_psi_err = np.abs(angle_difference(psi_back, psi[sub])).max()
+    print(
+        f"rotation round trip: max position error {max_pos_err:.2e} rad, "
+        f"max pol angle error {max_psi_err:.2e} rad"
+    )
+
+    theta_hp, phi_hp = hp.Rotator(coord=["C", "G"])(theta[sub], phi[sub])
+    max_healpy_err = max(
+        np.abs(angle_difference(theta_hp, theta_out[sub])).max(),
+        np.abs(angle_difference(phi_hp, phi_out[sub])).max(),
+    )
+    print(
+        f"rotated positions vs healpy Rotator: "
+        f"max difference {max_healpy_err:.2e} rad"
+    )
+    if formula_err > 1e-6 or max_pos_err > 1e-9 or max_psi_err > 1e-9:
+        raise RuntimeError("frame rotation validation failed")
+
+
+def convert(input_filename, output_filename, lensed, output_frame, cutoff_mjy, ref_freq_ghz):
     """Convert an Agora radio catalog to the PointSourceCatalog HDF5 format."""
     if lensed:
         ra_col, dec_col = "RAL", "DECL"
@@ -158,6 +279,13 @@ def convert(input_filename, output_filename, lensed, cutoff_mjy, ref_freq_ghz):
     dec = data[dec_col].astype(np.float64)[keep]
     theta = np.radians(90 - dec)
     phi = np.radians(ra)
+    psi = data["psi"].astype(np.float64)[keep]
+    theta_in, phi_in, psi_in = theta, phi, psi
+
+    if output_frame == "galactic":
+        print("Rotating positions and polarization angles to Galactic")
+        theta, phi, psi = equatorial_to_galactic(theta, phi, psi)
+        validate_rotation(theta_in, phi_in, psi_in, theta, phi, psi, 1000)
 
     coeff_i = poly_coeffs_through_points(
         INTENSITY_FREQS_GHZ, flux_i[:, keep]
@@ -165,7 +293,6 @@ def convert(input_filename, output_filename, lensed, cutoff_mjy, ref_freq_ghz):
     coeff_p = poly_coeffs_through_points(
         POLARIZED_FREQS_GHZ, flux_p[:, keep]
     )
-    psi = data["psi"].astype(np.float64)[keep]
 
     command = " ".join([Path(sys.argv[0]).name] + sys.argv[1:])
     try:
@@ -180,8 +307,8 @@ def convert(input_filename, output_filename, lensed, cutoff_mjy, ref_freq_ghz):
         "Flux model: polynomial in ln(nu_GHz) giving the flux density in Jy "
         "directly, intensity anchored at 5/95/150/220 GHz, polarized flux "
         "at 95/150/220 GHz. The dataset psi holds the per-source "
-        "polarization angle in radians, not used by the current "
-        "PointSourceCatalog implementation, kept for a future extension."
+        "polarization angle in radians, used by PointSourceCatalog to "
+        "compute the exact Q and U."
     )
 
     with h5py.File(output_filename, "w") as f:
@@ -199,7 +326,7 @@ def convert(input_filename, output_filename, lensed, cutoff_mjy, ref_freq_ghz):
         f.attrs["flux_cutoff_mJy"] = cutoff_mjy
         f.attrs["polynomial_degree"] = len(INTENSITY_FREQS_GHZ) - 1
         f.attrs["sorted_by"] = np.bytes_("input catalog order")
-        f.attrs["ref_frame"] = np.bytes_("Equatorial")
+        f.attrs["ref_frame"] = np.bytes_(output_frame.capitalize())
         f.attrs["lensed"] = lensed
         f.attrs["generated_utc"] = np.bytes_(
             datetime.now(timezone.utc).isoformat()
@@ -268,6 +395,13 @@ def main(argv=None):
         "keep all sources when 0 (default)",
     )
     parser.add_argument(
+        "--output-frame",
+        choices=["galactic", "equatorial"],
+        default="galactic",
+        help="Coordinate frame of the output catalog, the input Agora "
+        "catalogs are Equatorial, PySM presets are Galactic",
+    )
+    parser.add_argument(
         "--ref-freq",
         type=float,
         default=REFERENCE_FREQ_GHZ,
@@ -284,6 +418,7 @@ def main(argv=None):
         args.input,
         args.output,
         args.lensed == "true",
+        args.output_frame,
         args.cutoff_mjy,
         args.ref_freq,
     )
