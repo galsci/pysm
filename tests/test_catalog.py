@@ -284,3 +284,80 @@ def test_catalog_slicing_get_fluxes(test_catalog):
     # The first source has a constant term (coeff 3.7 for power 0)
     # After bandpass integration, it should be 3.7
     assert_allclose(flux[0], 3.7 * u.Jy)
+
+
+@pytest.fixture(scope="session")
+def test_catalog_pol_angles(tmp_path_factory):
+    num_sources = 2
+    indices = np.arange(num_sources)
+    num_powers = 2
+
+    dims = ("power", "index")
+    catalog = xr.Dataset(
+        {
+            "logpolycoefflux": (dims, np.zeros((num_powers, num_sources))),
+            "logpolycoefpolflux": (dims, np.zeros((num_powers, num_sources))),
+        },
+        coords={
+            "index": indices,
+            "power": np.arange(num_powers)[::-1],
+            "theta": ("index", np.array([np.pi / 4, np.pi / 2])),
+            "phi": ("index", np.zeros(num_sources)),
+            "psi": ("index", np.array([0.3, 1.2])),
+        },
+    )
+    for field in ["theta", "phi", "psi"]:
+        catalog[field].attrs["units"] = "rad"
+    for field in ["logpolycoefflux", "logpolycoefpolflux"]:
+        catalog[field].attrs["units"] = "Jy"
+    catalog["logpolycoefflux"].loc[{"power": 0, "index": 0}] = 3.7
+    catalog["logpolycoefpolflux"].loc[{"power": 0, "index": 1}] = 5
+    fn = tmp_path_factory.mktemp("data") / "test_catalog_pol_angles.h5"
+    catalog.to_netcdf(str(fn), format="NETCDF4")
+    return str(fn)
+
+
+def test_catalog_class_explicit_pol_angles(test_catalog_pol_angles):
+    nside = 8
+    catalog = PointSourceCatalog(test_catalog_pol_angles, nside=nside)
+    assert catalog.pol_angles is not None
+    freqs = np.exp(np.array([3, 4])) * u.GHz
+    weights = np.array([1, 1], dtype=np.float64)
+    weights /= trapezoid(weights, x=freqs.to_value(u.GHz))
+
+    flux_p = catalog.get_fluxes(freqs, weights=weights, coeff="logpolycoefpolflux")
+    output_map = catalog.get_emission(freqs, weights=weights, fwhm=None)
+
+    with h5py.File(test_catalog_pol_angles) as f:
+        pix = hp.ang2pix(nside, f["theta"], f["phi"])
+        psi = np.array(f["psi"])
+
+    scaling_factor = utils.bandpass_unit_conversion(
+        freqs, weights, output_unit=u.uK_RJ, input_unit=u.Jy / u.sr
+    ) / (hp.nside2pixarea(nside) * u.sr)
+    assert_allclose(
+        output_map[1, pix] / scaling_factor, flux_p * np.cos(2 * psi)
+    )
+    assert_allclose(
+        output_map[2, pix] / scaling_factor, flux_p * np.sin(2 * psi)
+    )
+
+
+def test_catalog_class_pol_angles_with_slice(test_catalog_pol_angles):
+    nside = 8
+    catalog = PointSourceCatalog(
+        test_catalog_pol_angles, nside=nside, catalog_slice=slice(1, 2)
+    )
+    assert catalog.pol_angles.shape == (1,)
+    freqs = np.exp(np.array([3])) * u.GHz
+    output_map = catalog.get_emission(freqs, fwhm=None)
+    flux_p = catalog.get_fluxes(freqs, coeff="logpolycoefpolflux")
+    with h5py.File(test_catalog_pol_angles) as f:
+        pix = hp.ang2pix(nside, f["theta"][1:2], f["phi"][1:2])
+    scaling_factor = utils.bandpass_unit_conversion(
+        freqs, output_unit=u.uK_RJ, input_unit=u.Jy / u.sr
+    ) / (hp.nside2pixarea(nside) * u.sr)
+    assert_allclose(
+        output_map[1, pix] / scaling_factor,
+        flux_p * np.cos(2 * 1.2) * u.dimensionless_unscaled,
+    )
