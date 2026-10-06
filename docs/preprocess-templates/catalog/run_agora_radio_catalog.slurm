@@ -27,14 +27,16 @@ export PYTHONUNBUFFERED=1
 AGORA_RADIO_DATA=${AGORA_RADIO_DATA:-$HOME/agora_radio_data}
 PYTHON=${PYTHON:-$HOME/venvs/agora_radio/bin/python}
 
-srun "$PYTHON" agora_radio_sources_catalog.py \
+"$PYTHON" agora_radio_sources_catalog.py \
     --input "$AGORA_RADIO_DATA/catalogs/agora_radiocat_unl_universemachine_trinity_95_150_220ghz_randflux_datta2018_truncgauss.0.fits" \
-    --output "$AGORA_RADIO_DATA/converted/agora_radio_unl_pysm.h5" \
-    --lensed false
+    --output "$AGORA_RADIO_DATA/converted/agora_radio_catalog_unl_2026.10.06.h5" \
+    --lensed false \
+    --output-frame galactic
 
-srun "$PYTHON" agora_radio_sources_catalog.py \
+"$PYTHON" agora_radio_sources_catalog.py \
     --input "$AGORA_RADIO_DATA/catalogs/agora_radiocat_len_universemachine_trinity_95_150_220ghz_randflux_datta2018_truncgauss.0.fits" \
-    --output "$AGORA_RADIO_DATA/converted/agora_radio_len_pysm.h5" \
-    --lensed true
+    --output "$AGORA_RADIO_DATA/converted/agora_radio_catalog_len_2026.10.06.h5" \
+    --lensed true \
+    --output-frame galactic
 
 echo "Finished: $(date -Is)"
