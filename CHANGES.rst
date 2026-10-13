@@ -8,6 +8,7 @@ Unreleased
 - Fix Read the Docs builds failing with ``sphinx_lfs_content`` 1.1.11 by pinning the docs dependency to 1.1.10
 - Add the preprocessing notebook for the planned low-frequency synchrotron model ``s8``: 1 degree amplitude templates (Haslam 408 MHz and WMAP 23 GHz Q/U, differentially smoothed) and the Irfan & Puglisi 2026 spectral index and curvature maps https://github.com/galsci/pysm/issues/274
 - Add the validation notebook for the planned low-frequency synchrotron model ``s8``: comparison with ``s1`` and ``s5`` at 2-100 GHz with all the validation checks of G. Puglisi's Irfan & Puglisi 2026 companion notebook (TT/EE/BB power spectra as delivered and beam-matched at 1 degree, EE/BB ratio, SED, polarization fraction histograms), plus sanity checks at the reference frequencies and of the declared pre-applied beam https://github.com/galsci/pysm/issues/274
+- Document the frequency validity range of ``s8``: the Irfan & Puglisi 2026 spectral index and curvature maps are fit over 45 MHz-2300 MHz and the intensity is anchored at the 408 MHz survey frequency, so ``s8`` is a low-frequency (radio regime) model; extrapolated to CMB frequencies it overestimates the intensity by large factors (a factor ~10 and more above 40 GHz, with a matching suppression of the polarization fraction, G. Puglisi's review of PR #275), so the existing ``s1``-``s7`` models remain the recommendation for CMB-frequency simulations https://github.com/galsci/pysm/issues/274
 
 3.4.6 (2026-07-20)
 ==================
