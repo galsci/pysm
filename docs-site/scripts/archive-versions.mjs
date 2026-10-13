@@ -1,6 +1,7 @@
 import { readdirSync, cpSync, writeFileSync, rmSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { archivedSidebar } from './sidebar.mjs';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(scriptDir, '..');
@@ -12,37 +13,7 @@ const excludedGlob = 'notebooks/**';
 const DOC_EXTENSIONS = new Set(['.md', '.mdx']);
 const SKIP_DIRS = new Set(['notebooks', ...versions]);
 
-const sidebar = [
-  {
-    label: 'Start here',
-    items: [
-      { label: 'Introduction', slug: 'index' },
-      { label: 'Installation', slug: 'guides/installation' },
-      { label: 'Usage', slug: 'guides/usage' },
-      { label: 'Models', slug: 'models' },
-    ],
-  },
-  {
-    label: 'Guides',
-    items: [
-      { label: 'Best practices', slug: 'guides/best_practices' },
-      { label: 'Pre-applied beam', slug: 'pre_applied_beam' },
-      { label: 'CO line emission', slug: 'co_lines' },
-      { label: 'WebSky models', slug: 'websky' },
-    ],
-  },
-  {
-    label: 'Notebooks',
-    items: [{ autogenerate: { directory: 'notebooks' } }],
-  },
-  {
-    label: 'Contributing',
-    items: [
-      { label: 'Contribution guide', slug: 'contributing' },
-      { label: 'Methods paper contributions', slug: 'pysm_methods_author_contributions' },
-    ],
-  },
-];
+const sidebar = archivedSidebar({ label: 'pysm3 API', link: 'api/pysm3/' });
 
 function excludedSlugs(dir) {
   const out = [];

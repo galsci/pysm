@@ -1,5 +1,5 @@
-import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
-import { resolve, dirname, basename } from 'node:path';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
+import { resolve, dirname, basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -26,8 +26,11 @@ function renderCellRendered(cell, state) {
         const mime = Object.keys(data).find((k) => ![ 'text/plain', 'text/html', 'text/markdown' ].includes(k));
         if (mime && mime.startsWith('image/')) {
           const b64 = Array.isArray(data[mime]) ? data[mime].join('') : data[mime];
-          const mimeType = mime === 'image/svg+xml' ? 'image/svg+xml' : mime;
-          parts.push(`<img src="data:${mimeType};base64,${b64}" alt="Output" />`);
+          const ext = mime === 'image/jpeg' ? 'jpg' : mime === 'image/svg+xml' ? 'svg' : 'png';
+          state.imageIndex += 1;
+          const filename = `img-${state.imageIndex}.${ext}`;
+          writeFileSync(join(state.assetsDir, filename), Buffer.from(b64, 'base64'));
+          parts.push(`![Output](assets/${state.slug}/${filename})`);
         }
         if (data['text/html']) {
           const html = Array.isArray(data['text/html']) ? data['text/html'].join('') : data['text/html'];
@@ -45,6 +48,7 @@ function renderCellRendered(cell, state) {
       source = source.replace(/^#\s+[^\n]+\n?/, '');
       state.titleStripped = true;
     }
+    source = source.replace(/\]\(([^)]*?)\.ipynb\)/g, ']($1/)');
     parts.push(source);
   }
   return parts.join('\n\n');
@@ -69,7 +73,11 @@ for (const notebook of notebooks.sort()) {
   const nb = JSON.parse(readFileSync(resolve(docsSourceDir, notebook), 'utf8'));
   const title = titleFor(notebook);
   const slug = basename(notebook, '.ipynb').replace(/^_/, '');
-  const body = nb.cells.map((cell) => renderCellRendered(cell, { titleStripped: false })).filter(Boolean).join('\n\n');
+  const assetsDir = join(outDir, 'assets', slug);
+  rmSync(assetsDir, { recursive: true, force: true });
+  mkdirSync(assetsDir, { recursive: true });
+  const state = { titleStripped: false, assetsDir, slug, imageIndex: 0 };
+  const body = nb.cells.map((cell) => renderCellRendered(cell, state)).filter(Boolean).join('\n\n');
   const frontmatter = [
     '---',
     `title: "${title.replaceAll('"', '\\"')}"`,

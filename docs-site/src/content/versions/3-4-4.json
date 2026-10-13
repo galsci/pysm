@@ -53,6 +53,15 @@
       ]
     },
     {
+      "label": "API reference",
+      "items": [
+        {
+          "label": "pysm3 API",
+          "link": "api/pysm3/"
+        }
+      ]
+    },
+    {
       "label": "Contributing",
       "items": [
         {

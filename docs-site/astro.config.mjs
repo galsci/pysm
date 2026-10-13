@@ -3,12 +3,16 @@ import { defineConfig } from 'astro/config';
 import { unified } from '@astrojs/markdown-remark';
 import starlight from '@astrojs/starlight';
 import starlightVersions from 'starlight-versions';
+import starlightLinksValidator from 'starlight-links-validator';
 import starlightPydocs, { pydocsSidebarGroup } from 'starlight-pydocs';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import { currentSidebar } from './scripts/sidebar.mjs';
 
 const site = process.env.DOCS_SITE ?? 'https://galsci.github.io/pysm';
 const base = process.env.DOCS_BASE ?? '/pysm/';
+
+const sourceLink = (ref) => ({ host: 'github', repo: 'galsci/pysm', ref, root: 'src' });
 
 export default defineConfig({
 	site,
@@ -24,6 +28,14 @@ export default defineConfig({
 			title: 'PySM',
 			description: 'Python Sky Model: full-sky simulations of Galactic foreground emissions',
 			customCss: ['katex/dist/katex.min.css'],
+			logo: {
+				src: './src/assets/logo.svg',
+				alt: 'PySM',
+				replacesTitle: false,
+			},
+			editLink: {
+				baseUrl: 'https://github.com/galsci/pysm/tree/main/docs-site/',
+			},
 			social: [
 				{
 					icon: 'github',
@@ -33,8 +45,32 @@ export default defineConfig({
 			],
 			plugins: [
 				starlightPydocs({
-					packages: [{ name: 'pysm3', search: ['../src'] }],
+					packages: [
+						{ name: 'pysm3', search: ['../src'], sourceLink: sourceLink('main') },
+						{
+							name: 'pysm3',
+							base: '3-4-6/api/pysm3',
+							label: 'pysm3 3.4.6',
+							source: { file: './dumps/pysm3-3.4.6.json' },
+							sourceLink: sourceLink('3.4.6'),
+						},
+						{
+							name: 'pysm3',
+							base: '3-4-5/api/pysm3',
+							label: 'pysm3 3.4.5',
+							source: { file: './dumps/pysm3-3.4.5.json' },
+							sourceLink: sourceLink('3.4.5'),
+						},
+						{
+							name: 'pysm3',
+							base: '3-4-4/api/pysm3',
+							label: 'pysm3 3.4.4',
+							source: { file: './dumps/pysm3-3.4.4.json' },
+							sourceLink: sourceLink('3.4.4'),
+						},
+					],
 				}),
+				starlightLinksValidator({ errorOnRelativeLinks: false }),
 				starlightVersions({
 					versions: [
 						{ slug: '3-4-6', label: '3.4.6' },
@@ -45,41 +81,7 @@ export default defineConfig({
 					exclude: ['notebooks/**'],
 				}),
 			],
-			sidebar: [
-				{
-					label: 'Start here',
-					items: [
-						{ label: 'Introduction', slug: 'index' },
-						{ label: 'Installation', slug: 'guides/installation' },
-						{ label: 'Usage', slug: 'guides/usage' },
-						{ label: 'Models', slug: 'models' },
-					],
-				},
-				{
-					label: 'Guides',
-					items: [
-						{ label: 'Best practices', slug: 'guides/best_practices' },
-						{ label: 'Pre-applied beam', slug: 'pre_applied_beam' },
-						{ label: 'CO line emission', slug: 'co_lines' },
-						{ label: 'WebSky models', slug: 'websky' },
-					],
-				},
-				{
-					label: 'Notebooks',
-					items: [{ autogenerate: { directory: 'notebooks' } }],
-				},
-				{
-					label: 'API reference',
-					items: [pydocsSidebarGroup],
-				},
-				{
-					label: 'Contributing',
-					items: [
-						{ label: 'Contribution guide', slug: 'contributing' },
-						{ label: 'Methods paper contributions', slug: 'pysm_methods_author_contributions' },
-					],
-				},
-			],
+			sidebar: currentSidebar({ label: 'API reference', items: [pydocsSidebarGroup] }),
 		}),
 	],
 });
