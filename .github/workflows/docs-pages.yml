@@ -67,8 +67,12 @@ jobs:
         run: |
           mkdir -p site/preview
           for pr in ${{ steps.prs.outputs.numbers }}; do
-            echo "=== Building preview for PR #$pr ==="
             git fetch origin pull/$pr/head:pr-$pr
+            if ! git cat-file -e pr-$pr:docs-site/package.json 2>/dev/null; then
+              echo "=== PR #$pr has no docs-site, skipping ==="
+              continue
+            fi
+            echo "=== Building preview for PR #$pr ==="
             git checkout pr-$pr
             git lfs pull
             (cd docs-site && npm ci && \
