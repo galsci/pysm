@@ -1,0 +1,29 @@
+---
+title: PySM
+description: Python Sky Model - full-sky simulations of Galactic foreground
+  emissions in intensity and polarization.
+slug: 3.4.6
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+PySM (Python Sky Model) generates full-sky simulations of Galactic foreground emissions
+in intensity and polarization for Cosmic Microwave Background (CMB) experiments.
+It uses HEALPix pixelization via `healpy` and supports MPI parallelization.
+
+The official Python package is `pysm3`, documented in full at
+[Read the Docs](https://pysm3.readthedocs.io/).
+
+<CardGrid>
+  <Card title="Installation" icon="seti:python">
+    Install `pysm3` and generate your first map.
+  </Card>
+
+  <Card title="Tutorials" icon="document">
+    Jupyter notebooks for every component: dust, synchrotron, CMB, AME, free-free and more.
+  </Card>
+
+  <Card title="Models" icon="puzzle">
+    Presets `d0`-`d12`, `s0`-`s7`, `c1`-`c4`, `a1`-`a2` and `f1` for the main foregrounds.
+  </Card>
+</CardGrid>

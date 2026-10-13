@@ -1,0 +1,105 @@
+name: Deploy Starlight docs to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs-site/**'
+      - '.github/workflows/docs-pages.yml'
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    paths:
+      - 'docs-site/**'
+      - '.github/workflows/docs-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  pull-requests: write
+
+concurrency:
+  group: docs-pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout base branch
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build production site
+        working-directory: docs-site
+        run: |
+          npm ci
+          DOCS_SITE="https://galsci.github.io/pysm" DOCS_BASE="/pysm/" npm run build
+          mkdir -p ../site
+          cp -r dist/* ../site/
+
+      - name: Get open pull requests
+        id: prs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prs=$(gh api repos/${{ github.repository }}/pulls --jq '.[].number' | tr '\n' ' ')
+          echo "numbers=$prs" >> "$GITHUB_OUTPUT"
+          echo "Open PRs: ${prs:-none}"
+
+      - name: Build pull request previews
+        if: steps.prs.outputs.numbers != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p site/preview
+          for pr in ${{ steps.prs.outputs.numbers }}; do
+            echo "=== Building preview for PR #$pr ==="
+            git fetch origin pull/$pr/head:pr-$pr
+            git checkout pr-$pr
+            git lfs pull
+            (cd docs-site && npm ci && \
+              DOCS_SITE="https://galsci.github.io/pysm" DOCS_BASE="/pysm/preview/pr-$pr" npm run build)
+            mkdir -p "site/preview/pr-$pr"
+            cp -r docs-site/dist/* "site/preview/pr-$pr/"
+          done
+          git checkout ${{ github.event.repository.default_branch }}
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  comment-preview-url:
+    needs: build-and-deploy
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Post sticky preview comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: starlight-docs-preview
+          message: |
+            Starlight documentation preview for this PR:
+
+            https://galsci.github.io/pysm/preview/pr-${{ github.event.pull_request.number }}/
