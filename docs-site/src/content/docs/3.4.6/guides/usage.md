@@ -4,8 +4,6 @@ description: Generate a simple sky map with PySM.
 slug: 3.4.6/guides/usage
 ---
 
-# Usage
-
 Generate a full-sky map of the confirmed Galactic templates:
 
 ```python

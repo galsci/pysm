@@ -4,8 +4,6 @@ description: How to install the pysm3 package.
 slug: 3.4.4/guides/installation
 ---
 
-# Installation
-
 Install `pysm3` with pip or conda:
 
 ```bash

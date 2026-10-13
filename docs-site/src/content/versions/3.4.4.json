@@ -14,6 +14,10 @@
         {
           "label": "Usage",
           "slug": "guides/usage"
+        },
+        {
+          "label": "Models",
+          "slug": "models"
         }
       ]
     },

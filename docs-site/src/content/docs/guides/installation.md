@@ -3,8 +3,6 @@ title: Installation
 description: How to install the pysm3 package.
 ---
 
-# Installation
-
 Install `pysm3` with pip or conda:
 
 ```bash

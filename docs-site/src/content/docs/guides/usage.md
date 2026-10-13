@@ -3,8 +3,6 @@ title: Usage
 description: Generate a simple sky map with PySM.
 ---
 
-# Usage
-
 Generate a full-sky map of the confirmed Galactic templates:
 
 ```python

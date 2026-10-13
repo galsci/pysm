@@ -8,7 +8,7 @@ const outDir = resolve(scriptDir, '../src/content/docs/notebooks');
 
 const notebooks = readdirSync(docsSourceDir).filter((f) => f.endsWith('.ipynb'));
 
-function renderCellRendered(cell) {
+function renderCellRendered(cell, state) {
   const parts = [];
   const outputs = cell.outputs ?? [];
   if (cell.cell_type === 'code') {
@@ -40,7 +40,11 @@ function renderCellRendered(cell) {
       }
     }
   } else if (cell.cell_type === 'markdown') {
-    const source = Array.isArray(cell.source) ? cell.source.join('') : cell.source;
+    let source = Array.isArray(cell.source) ? cell.source.join('') : cell.source;
+    if (!state.titleStripped) {
+      source = source.replace(/^#\s+[^\n]+\n?/, '');
+      state.titleStripped = true;
+    }
     parts.push(source);
   }
   return parts.join('\n\n');
@@ -65,7 +69,7 @@ for (const notebook of notebooks.sort()) {
   const nb = JSON.parse(readFileSync(resolve(docsSourceDir, notebook), 'utf8'));
   const title = titleFor(notebook);
   const slug = basename(notebook, '.ipynb').replace(/^_/, '');
-  const body = nb.cells.map(renderCellRendered).filter(Boolean).join('\n\n');
+  const body = nb.cells.map((cell) => renderCellRendered(cell, { titleStripped: false })).filter(Boolean).join('\n\n');
   const frontmatter = [
     '---',
     `title: "${title.replaceAll('"', '\\"')}"`,

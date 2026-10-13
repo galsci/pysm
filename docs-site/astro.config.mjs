@@ -49,6 +49,7 @@ export default defineConfig({
             { label: "Introduction", slug: "index" },
             { label: "Installation", slug: "guides/installation" },
             { label: "Usage", slug: "guides/usage" },
+            { label: "Models", slug: "models" },
           ],
         },
         {
