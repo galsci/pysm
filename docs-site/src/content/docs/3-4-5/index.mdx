@@ -1,0 +1,317 @@
+---
+title: PySM
+description: PySM 3 generates full-sky simulations of Galactic foregrounds in intensity and polarization relevant for CMB experiments.
+hero:
+  tagline: Full-sky simulations of Galactic foregrounds for CMB experiments
+  actions:
+    - text: Get started
+      link: guides/installation/
+      icon: right-arrow
+    - text: Browse models
+      link: models/
+      icon: external
+    - text: API reference
+      link: api/pysm3/
+      icon: external
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+PySM 3 generates full-sky simulations of Galactic foregrounds in intensity and
+polarization relevant for CMB experiments. The components simulated are: thermal
+dust, synchrotron, AME, free-free, and CMB at a given HEALPix $N_{side}$, with an
+option to integrate over a bandpass and to smooth with a given beam.
+
+There is scope for a few options for the model for each component, attempting to
+be consistent with current data.
+
+Currently much of the available data is limited in resolution at degree-scale. We
+therefore make efforts to provide reasonable small-scale simulations to extend the
+data to higher multipoles. The details of the procedures developed can be found in
+the accompanying paper.
+
+This code is based on the large-scale Galactic part of the
+[Planck Sky Model](http://www.apc.univ-paris7.fr/~delabrou/PSM/psm.html)
+([Delabrouille 2012](https://arxiv.org/abs/1207.3675)) code and uses some of its
+inputs.
+
+<CardGrid>
+	<Card title="Installation" icon="seti:python">
+		Install `pysm3` with pip or conda and read about development installs and NERSC.
+	</Card>
+	<Card title="Models" icon="puzzle">
+		A summary of every preset: dust `d0`-`d12`, synchrotron `s0`-`s7`, CMB `c1`-`c4`, AME `a1`-`a2`, free-free `f1` and more.
+	</Card>
+	<Card title="Tutorials" icon="document">
+		Jupyter notebooks for every component: from the first map to bandpass integration and MPI.
+	</Card>
+	<Card title="API reference" icon="seti:python">
+		The full `pysm3` Python API reference generated from the source code.
+	</Card>
+</CardGrid>
+
+## Acknowledgement
+
+If you are using this code please cite:
+
+- [The Python Sky Model: software for simulating the Galactic microwave sky (Thorne et al, 2017)](https://arxiv.org/abs/1608.02841)
+- [The Python Sky Model 3 software (Zonca et al, 2021)](https://arxiv.org/abs/2108.01444)
+- [Full-sky Models of Galactic Microwave Emission and Polarization at Subarcminute Scales for the Python Sky Model (The PanEx GS Group, ApJ 991, 23, 2025)](https://iopscience.iop.org/article/10.3847/1538-4357/adf212) [Author contributions statement](pysm_methods_author_contributions/).
+
+See the Bibtex format file [CITATION](https://github.com/galsci/pysm/blob/main/CITATION).
+
+## Models
+
+Each model is identified with a letter and a number, the letter indicates the kind
+of emission and the number the type of model, generally in order of complexity
+starting at 1. For example for dust we start with `d1` based on Planck Commander
+results, `d4` has 2 dust populations and `d6` implements a model of dust frequency
+decorrelation.
+
+For example free-free:
+
+- **f1**: We model the free-free emission using the analytic model assumed in the
+  Commander fit to the Planck 2015 data (Draine 2011 Physics of the Interstellar
+  and Intergalactic Medium) to produce a degree-scale map of free-free emission at
+  30 GHz. We add small scales to this using a procedure outlined in the
+  accompanying paper. This map is then scaled in frequency by applying a spatially
+  constant power law index of -2.14.
+
+- See the PySM 2 paper [Thorne et al](https://arxiv.org/abs/1608.02841)
+- See the complete documentation about [Models](models/)
+- See [Pre-applied beam and differential smoothing](pre_applied_beam/)
+
+## Best practices for model execution
+
+PySM 3, in order to have the same behaviour of PySM 2, uses `hp.ud_grade` to change
+the resolution of the map if the HEALPix $N_{side}$ of the input templates is
+different from the requested output resolution, specified in the emission class
+(`pysm3.Model`) or in the `pysm3.Sky` class.
+
+`hp.ud_grade` generally creates artifacts in the spectra and should be avoided
+unless the specific application can tolerate that.
+
+Therefore we recommend to execute all PySM 2 derived models (e.g. `d0` to `d8`) at
+their native $N_{side}$ of 512, and then use the `output_nside` parameter of
+`pysm3.apply_smoothing_and_coord_transform` to transform to the target resolution,
+whether higher or lower, in Spherical Harmonics domain.
+
+PySM 3 native models (e.g. `d9` to `d11` and `s4` to `s6`) instead have precomputed
+templates (generated in Spherical Harmonics domain) from $N_{side}$ 2048 to 8192.
+Therefore we recommend to execute them at 2048 if the target $N_{side}$ is 1024 or
+lower and at $2 \times N_{side}$ if the target is 2048 or higher, except 8192 which
+is the highest possible resolution.
+
+There are some exceptions, so always check in the documentation or the `max_nside`
+parameter of the models, for example the `d12` model, even if native to PySM 3,
+uses externally provided maps which are only available at $N_{side}$=2048.
+
+## Dependencies
+
+PySM is written in pure Python, multi-threading and Just-In-Time compilation are
+provided by `numba`. The required packages are:
+
+- `healpy`
+- `numba`
+- `toml`
+- `astropy`
+
+See `pyproject.toml` in the repository for the exact dependency list.
+
+How many threads are used by `numba` can be controlled by setting:
+
+```bash
+export OMP_NUM_THREADS=2
+export NUMBA_NUM_THREADS=2
+```
+
+For debugging purposes, you can also completely disable the `numba` JIT
+compilation and have the code just use plain Python, which is slower, but easier to
+debug:
+
+```bash
+export NUMBA_DISABLE_JIT=1
+```
+
+## Run PySM with MPI support
+
+PySM 3 is capable of running across multiple nodes using a MPI communicator.
+
+See the details in the [MPI section of the tutorial](notebooks/mpi/).
+
+In order to run in parallel with MPI, it also needs a functioning MPI environment
+and:
+
+- `mpi4py`
+
+MPI-Distributed smoothing (optional) requires `libsharp`, it is easiest to install
+the conda package:
+
+```bash
+conda install -c conda-forge libsharp=*=*openmpi*
+```
+
+It also has a `mpich` version:
+
+```bash
+conda install -c conda-forge libsharp=*=*mpich*
+```
+
+## Installation
+
+The easiest way to install the last release is to use `conda`:
+
+```bash
+conda install -c conda-forge pysm3
+```
+
+or `pip`:
+
+```bash
+pip install pysm3
+```
+
+See the [changelog on GitHub](https://github.com/galsci/pysm/blob/main/CHANGES.rst)
+for details about what is included in each release. For more options see the
+[Installation guide](guides/installation/).
+
+### Install at NERSC
+
+Optionally replace with a newer anaconda environment:
+
+```bash
+module load python/3.7-anaconda-2019.10
+conda create -c conda-forge -n pysm3 pysm3 python=3.7 ipython
+conda activate pysm3
+module unload python
+```
+
+### Development install
+
+The development version is available in the `main` branch of the
+[GitHub repository](https://github.com/galsci/pysm), you can clone and install it
+with:
+
+```bash
+pip install .
+```
+
+Create a development installation with:
+
+```bash
+pip install -e .
+```
+
+Install the requirements for testing with:
+
+```bash
+pip install -e .[test]
+```
+
+Execute the unit tests with:
+
+```bash
+pytest
+```
+
+### Configure verbosity
+
+PySM uses the `logging` module to configure its verbosity, by default it will only
+print warnings and errors.
+
+A log of useful information, for example intermediate results and timing can be
+accessed enabling the `INFO` level of logging. We provide a simplified function to
+configure this:
+
+```python
+pysm3.set_verbosity()
+```
+
+By default this sets verbosity to `INFO`, otherwise you can specify a level:
+
+```python
+pysm3.set_verbosity(logging.DEBUG)
+```
+
+To configure logging you can access the `pysm3` logger with:
+
+```python
+import logging
+log = logging.getLogger("pysm3")
+```
+
+configure the logging level:
+
+```python
+log.setLevel(logging.DEBUG)
+```
+
+redirect the logs to the console:
+
+```python
+handler = logging.StreamHandler()
+log.addHandler(handler)
+```
+
+or customize their format:
+
+```python
+log_format = "%(name)s - %(levelname)s - %(message)s"
+formatter = logging.Formatter(log_format)
+handler.setFormatter(formatter)
+```
+
+For more details see the
+[Python documentation](https://docs.python.org/3/library/logging.html).
+
+## Tutorials
+
+All the tutorials are Jupyter Notebooks and can be found in the
+[Notebooks](notebooks/) section of this site:
+
+- [Basic use](notebooks/basic_use/)
+- [Model data](notebooks/model_data/)
+- [Bandpass integration](notebooks/bandpass_integration/)
+- [Bandpass sampling](notebooks/bandpass_sampling/)
+- [Bandpass sampling comparison](notebooks/bandpass_sampling_comparison/)
+- [Smoothing and coordinate rotation](notebooks/smoothing_coord_rotation/)
+- [Customize PySM models](notebooks/customize_components/)
+- [MPI support](notebooks/mpi/)
+
+## Template preprocessing notebooks
+
+The notebooks documenting the data-processing workflow used to build the
+high-resolution templates shipped with PySM are available in the
+[preprocess-templates directory](https://github.com/galsci/pysm/tree/main/docs/preprocess-templates)
+of the repository; they require the large input datasets and are not part of the
+online documentation:
+
+- Commander dust preprocessing
+- WMAP synchrotron preprocessing
+- Small-scale dust generation overview
+- Generate dust small-scale artifacts
+- Generate PySM3 dust templates
+- Synchrotron beta small-scale modelling
+- Synchrotron curvature modelling
+- Log-pol-tens formalism notebook
+- WebSky bright source catalog workflow
+- Compare WebSky and Agora SZ templates
+- Compare WebSky, Agora, and FLAMINGO kSZ templates
+- Verify dust templates
+- Verify synchrotron templates
+- Catalog generation notebooks (WebSky background catalog with Dask, assemble catalog, compare catalogs)
+- Template utility notebooks (GNILC dust spectral index and temperature maps, synchrotron amplitude/curvature/spectral index maps)
+
+## Contributing
+
+See the [Contribution guide](contributing/).
+
+## Supplementary material
+
+- [WebSky models](websky/)
+- [Methods paper contributions](pysm_methods_author_contributions/)
+
+## Reference / API
+
+The complete API reference of the `pysm3` package is available in the
+[API reference](api/pysm3/) section.
