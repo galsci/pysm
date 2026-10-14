@@ -27,7 +27,7 @@ export default defineConfig({
 		starlight({
 			title: 'PySM',
 			description: 'Python Sky Model: full-sky simulations of Galactic foreground emissions',
-			customCss: ['katex/dist/katex.min.css'],
+			customCss: ['katex/dist/katex.min.css', './src/styles/custom.css'],
 			logo: {
 				src: './src/assets/logo.svg',
 				alt: 'PySM',
