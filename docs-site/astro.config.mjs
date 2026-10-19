@@ -28,8 +28,9 @@ export default defineConfig({
 			title: 'PySM',
 			description: 'Python Sky Model: full-sky simulations of Galactic foreground emissions',
 			customCss: ['katex/dist/katex.min.css', './src/styles/custom.css'],
+			favicon: '/favicon.jpg',
 			logo: {
-				src: './src/assets/logo.svg',
+				src: './src/assets/logo.jpg',
 				alt: 'PySM',
 				replacesTitle: false,
 			},
