@@ -22,3 +22,13 @@
 	--sl-card-border: var(--sl-color-accent);
 	--sl-card-bg: var(--sl-color-accent-low);
 }
+
+a.card-link {
+	display: block;
+	text-decoration: none;
+	color: inherit;
+}
+
+a.card-link:hover .card {
+	border-color: var(--sl-color-accent-high);
+}
