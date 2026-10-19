@@ -1,0 +1,10 @@
+---
+import Default from '@astrojs/starlight/components/Footer.astro';
+---
+
+<Default {...Astro.props} />
+
+{/* Mount point for the Read the Docs addons flyout (built-in version picker).
+    Read the Docs only injects the flyout where the theme declares this element;
+    Sphinx themes ship it, Starlight does not. */}
+<readthedocs-flyout></readthedocs-flyout>

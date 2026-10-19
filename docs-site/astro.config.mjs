@@ -84,6 +84,9 @@ export default defineConfig({
 			editLink: {
 				baseUrl: 'https://github.com/galsci/pysm/tree/main/docs-site/',
 			},
+			components: {
+				Footer: './src/components/Footer.astro',
+			},
 			social: [
 				{
 					icon: 'github',
