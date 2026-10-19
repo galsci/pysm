@@ -12,7 +12,8 @@ build:
       # Git LFS is not installed on Read the Docs build environments;
       # download the client and pull the notebook content (docs/*.ipynb).
       - wget -q https://github.com/git-lfs/git-lfs/releases/download/v3.6.1/git-lfs-linux-amd64-v3.6.1.tar.gz
-      - tar xzf git-lfs-linux-amd64-v3.6.1.tar.gz git-lfs
+      - tar xzf git-lfs-linux-amd64-v3.6.1.tar.gz
+      - mv git-lfs-3.6.1/git-lfs ./git-lfs
       - git config filter.lfs.process "`pwd`/git-lfs filter-process"
       - git config filter.lfs.smudge "`pwd`/git-lfs smudge -- %f"
       - git config filter.lfs.clean "`pwd`/git-lfs clean -- %f"
