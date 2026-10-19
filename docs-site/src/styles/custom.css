@@ -2,12 +2,14 @@
 	--sl-color-accent-low: #dbeaf8;
 	--sl-color-accent: #2687d3;
 	--sl-color-accent-high: #1a66a3;
+	--sl-color-text-accent: var(--sl-color-accent-high);
 }
 
 :root[data-theme='dark'] {
 	--sl-color-accent-low: #10314f;
 	--sl-color-accent: #2687d3;
 	--sl-color-accent-high: #7ab8ea;
+	--sl-color-text-accent: var(--sl-color-accent-high);
 }
 
 .sl-hero {
