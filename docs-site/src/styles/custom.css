@@ -32,3 +32,19 @@ a.card-link {
 a.card-link:hover .card {
 	border-color: var(--sl-color-accent-high);
 }
+
+.hero > img {
+	border-radius: 1.5rem;
+	width: min(100%, 12rem);
+	height: auto;
+	border: 1px solid var(--sl-color-gray-5);
+	box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15);
+}
+
+.sl-markdown-content img {
+	border-radius: 0.5rem;
+}
+
+::selection {
+	background-color: var(--sl-color-accent-low);
+}

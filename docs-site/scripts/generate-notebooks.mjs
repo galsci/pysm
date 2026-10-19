@@ -67,6 +67,27 @@ function titleFor(notebook) {
   return basename(notebook, '.ipynb').replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function descriptionFor(notebook) {
+  const nb = JSON.parse(readFileSync(resolve(docsSourceDir, notebook), 'utf8'));
+  for (const cell of nb.cells) {
+    if (cell.cell_type !== 'markdown') continue;
+    const source = Array.isArray(cell.source) ? cell.source.join('') : cell.source;
+    for (const line of source.split('\n')) {
+      if (/^\s*#/.test(line)) continue;
+      const text = line
+        .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+        .replace(/`([^`]*)`/g, '$1')
+        .replace(/[*_~]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (text.length >= 12) {
+        return text.length > 180 ? `${text.slice(0, 177).trimEnd()}...` : text;
+      }
+    }
+  }
+  return `PySM tutorial: ${basename(notebook, '.ipynb').replaceAll('_', ' ')}`;
+}
+
 mkdirSync(outDir, { recursive: true });
 
 for (const notebook of [...notebooks].sort()) {
@@ -81,7 +102,7 @@ for (const notebook of [...notebooks].sort()) {
   const frontmatter = [
     '---',
     `title: "${title.replaceAll('"', '\\"')}"`,
-    `description: "PySM tutorial rendered from ${basename(notebook)}"`,
+    `description: "${descriptionFor(notebook).replaceAll('"', '\\"')}"`,
     '---',
     '',
   ].join('\n');
@@ -98,7 +119,8 @@ const indexLines = [
   '',
   ...[...notebooks].sort().map((notebook) => {
     const slug = basename(notebook, '.ipynb').replace(/^_/, '');
-    return `- [${titleFor(notebook)}](${slug}/)`;
+    const title = titleFor(notebook);
+    return `- [${title}](${slug}/): ${descriptionFor(notebook)}`;
   }),
   '',
 ].join('\n');

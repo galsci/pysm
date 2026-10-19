@@ -34,6 +34,20 @@ export default defineConfig({
 				alt: 'PySM',
 				replacesTitle: false,
 			},
+			head: [
+				{
+					tag: 'meta',
+					attrs: { property: 'og:image', content: 'https://avatars.githubusercontent.com/u/81497054?s=512&v=4' },
+				},
+				{
+					tag: 'meta',
+					attrs: { name: 'twitter:card', content: 'summary_large_image' },
+				},
+				{
+					tag: 'meta',
+					attrs: { name: 'twitter:image', content: 'https://avatars.githubusercontent.com/u/81497054?s=512&v=4' },
+				},
+			],
 			editLink: {
 				baseUrl: 'https://github.com/galsci/pysm/tree/main/docs-site/',
 			},
