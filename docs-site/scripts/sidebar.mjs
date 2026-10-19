@@ -31,13 +31,3 @@ export function currentSidebar(apiGroup) {
     { label: 'Contributing', items: contributingItems },
   ];
 }
-
-export function archivedSidebar(apiItem) {
-  return [
-    { label: 'Start here', items: startHereItems },
-    { label: 'Guides', items: guidesItems },
-    notebooksGroup,
-    { label: 'API reference', items: [apiItem] },
-    { label: 'Contributing', items: contributingItems },
-  ];
-}
