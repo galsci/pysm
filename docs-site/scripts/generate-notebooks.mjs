@@ -69,7 +69,7 @@ function titleFor(notebook) {
 
 mkdirSync(outDir, { recursive: true });
 
-for (const notebook of notebooks.sort()) {
+for (const notebook of [...notebooks].sort()) {
   const nb = JSON.parse(readFileSync(resolve(docsSourceDir, notebook), 'utf8'));
   const title = titleFor(notebook);
   const slug = basename(notebook, '.ipynb').replace(/^_/, '');
@@ -87,5 +87,21 @@ for (const notebook of notebooks.sort()) {
   ].join('\n');
   writeFileSync(resolve(outDir, `${slug}.md`), frontmatter + body + '\n');
 }
+
+const indexLines = [
+  '---',
+  'title: "Tutorials"',
+  'description: "PySM Jupyter notebook tutorials, rendered in full on this site"',
+  '---',
+  '',
+  'Practical tutorials for every component, from the first simulated map to bandpass integration and MPI:',
+  '',
+  ...[...notebooks].sort().map((notebook) => {
+    const slug = basename(notebook, '.ipynb').replace(/^_/, '');
+    return `- [${titleFor(notebook)}](${slug}/)`;
+  }),
+  '',
+].join('\n');
+writeFileSync(resolve(outDir, 'index.md'), indexLines);
 
 console.log(`Generated ${notebooks.length} notebook pages in ${outDir}`);
