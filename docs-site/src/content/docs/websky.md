@@ -13,13 +13,13 @@ Both CIB and Radio galaxies have been provided as input maps at discrete frequen
 
 ## Cosmic Infrared Background
 
-The Planck (2013) CIB halo model is used, along with a halo occupation distribution. More details can be found [here](https://github.com/simonsobs/websky_model).
+The Planck (2013) CIB halo model is used, along with a halo occupation distribution. More details can be found in the [SO Websky model repository](https://github.com/simonsobs/websky_model).
 
-The current version of the maps are of intensity in units of $MJy/Sr$ with filename convention `cib_nu[FREQ].fits` e.g. `cib_nu0027.fits` is the map of CIB intensity at 27 GHz and will be used by `pysm3.InterpolatingComponent` at that frequency, and can be found on NERSC at `/global/project/projectdirs/cmb/www/pysm-data/websky/0.4` or at <https://portal.nersc.gov/project/cmb/pysm-data/websky/0.4/>.
+The current version of the maps are of intensity in units of $MJy/Sr$ with filename convention `cib_nu[FREQ].fits` e.g. `cib_nu0027.fits` is the map of CIB intensity at 27 GHz and will be used by `pysm3.InterpolatingComponent` at that frequency, and can be found on NERSC at `/global/project/projectdirs/cmb/www/pysm-data/websky/0.4` or at the [NERSC portal](https://portal.nersc.gov/project/cmb/pysm-data/websky/0.4/).
 
 ## Radio Galaxies
 
-Emission from Radio Galaxies simulated by WebSky 0.4, the original maps are available at <https://portal.nersc.gov/project/sobs/users/Radio_WebSky/matched_maps/> in CAR and HEALPix format. For more information about abundance matching see the relevant paper at <https://arxiv.org/abs/2110.15357>.
+Emission from Radio Galaxies simulated by WebSky 0.4, the original maps are available at the [Radio WebSky matched maps](https://portal.nersc.gov/project/sobs/users/Radio_WebSky/matched_maps/) in CAR and HEALPix format. For more information about abundance matching see the [relevant paper](https://arxiv.org/abs/2110.15357).
 
 ## Thermal SZ Effect
 
@@ -54,7 +54,7 @@ $$
 \end{aligned}
 $$
 
-The theoretical power spectra for the unlensed and lensed CMB are available here <https://github.com/ajvanengelen/webskylensing/tree/master/data>. Each is a numpy array of shape `(3, 3, N_l)`, giving the theory power spectrum $C_l$'s in the order ((TT, TE, TB), (ET, EE, EB), (BT, BE, BB)) in units of uK_CMB^2. They are obtained from the `get_cmb_powerspecta.websky_cmb_spectra` routine in that repository, which serves as a wrapper to CAMB.
+The theoretical power spectra for the unlensed and lensed CMB are available [in the webskylensing repository](https://github.com/ajvanengelen/webskylensing/tree/master/data). Each is a numpy array of shape `(3, 3, N_l)`, giving the theory power spectrum $C_l$'s in the order ((TT, TE, TB), (ET, EE, EB), (BT, BE, BB)) in units of uK_CMB^2. They are obtained from the `get_cmb_powerspecta.websky_cmb_spectra` routine in that repository, which serves as a wrapper to CAMB.
 
 ### CMB Tensor not yet implemented in PySM 3
 
