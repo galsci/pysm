@@ -1,0 +1,26 @@
+{
+  "name": "docs-site",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "generate:notebooks": "node ./scripts/generate-notebooks.mjs",
+    "generate:versions": "node ./scripts/generate-versions.mjs",
+    "dev": "npm run generate:notebooks && npm run generate:versions && astro dev",
+    "start": "npm run generate:notebooks && npm run generate:versions && astro dev",
+    "build": "npm run generate:notebooks && npm run generate:versions && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "^7.3.2",
+    "@astrojs/starlight": "^0.42.6",
+    "astro": "^7.2.10",
+    "katex": "^0.19.0",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "sharp": "^0.35.3",
+    "starlight-links-validator": "^0.27.0",
+    "starlight-pydocs": "^0.3.0",
+    "starlight-versions": "^0.10.1"
+  }
+}
