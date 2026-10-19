@@ -1,15 +1,24 @@
 :root {
-	--sl-color-accent-low: #f7e3da;
-	--sl-color-accent: #e66e4e;
-	--sl-color-accent-high: #b34a28;
+	--sl-color-accent-low: #dbeaf8;
+	--sl-color-accent: #2687d3;
+	--sl-color-accent-high: #1a66a3;
 }
 
 :root[data-theme='dark'] {
-	--sl-color-accent-low: #5c2413;
-	--sl-color-accent: #e66e4e;
-	--sl-color-accent-high: #f2a187;
+	--sl-color-accent-low: #10314f;
+	--sl-color-accent: #2687d3;
+	--sl-color-accent-high: #7ab8ea;
 }
 
 .sl-hero {
 	padding-bottom: 0.5rem;
+}
+
+.card,
+.card:nth-child(4n + 1),
+.card:nth-child(4n + 3),
+.card:nth-child(4n + 4),
+.card:nth-child(4n + 5) {
+	--sl-card-border: var(--sl-color-accent);
+	--sl-card-bg: var(--sl-color-accent-low);
 }
