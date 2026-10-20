@@ -120,8 +120,9 @@ class PointSourceCatalog(Model):
     theta: colatitude in radians
     phi: longitude in radians
     logpolycoefflux and logpolycoefpolflux: polynomial coefficients in natural
-    logaritm (`np.log`) of the frequency, typically 4th order, but accepts
-    any order. (source_index, pol_order). Unit needs to be Jy
+    logarithm (`np.log`) of the frequency, typically 4th order, but accepts
+    any order, with shape (power, source_index), highest degree first.
+    Unit needs to be Jy
     each field should have an attribute units which is checked when loading
     a model. No conversion is performed.
     Optionally the catalog can include a `psi` field with the per-source
@@ -164,6 +165,8 @@ class PointSourceCatalog(Model):
             assert f["logpolycoefpolflux"].attrs["units"].decode("UTF-8") == "Jy"
             if "psi" in f:
                 assert f["psi"].attrs["units"].decode("UTF-8") == "rad"
+                # cached at init: needed at every get_emission call, unlike
+                # theta/phi/coefficients which are re-read from file each time
                 self.pol_angles = np.array(f["psi"][self.catalog_slice])
             else:
                 self.pol_angles = None
@@ -233,7 +236,7 @@ class PointSourceCatalog(Model):
             If True return a HEALPix map
 
         Returns
-        ------ue-
+        -------
         output_map: np.array
             Output HEALPix or CAR map or tuple with HEALPix and CAR maps"""
 
@@ -305,25 +308,6 @@ class PointSourceCatalog(Model):
                 fwhm.to_value(u.rad),
             )  # to peak amplitude and to output units
             log.info("Executing sim_objects for I")
-            # import pickle
-
-            # with open(
-            #     "sim_objects_inputs.pkl",
-            #     "wb",
-            # ) as f:
-            #     pickle.dump(
-            #         {
-            #             "shape": shape,
-            #             "wcs": wcs,
-            #             "poss": pointing,
-            #             "amps": amps,
-            #             "profile": (r, p),
-            #         },
-            #         f,
-            #     )
-            # import sys
-
-            # sys.exit(0)
             output_map[0] = pointsrcs.sim_objects(
                 shape=shape,
                 wcs=wcs,
