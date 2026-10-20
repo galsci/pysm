@@ -35,6 +35,15 @@ a.card-link:hover .card {
 	border-color: var(--sl-color-accent-high);
 }
 
+/* The Read the Docs flyout (version picker) is fixed in its shadow DOM; give
+   the host its own stacking context above Starlight's table-of-contents
+   sidebar, which otherwise paints over the bottom-right corner and swallows
+   clicks on the flyout. */
+readthedocs-flyout {
+	position: relative;
+	z-index: 3000;
+}
+
 .hero > img {
 	border-radius: 1.5rem;
 	width: min(100%, 12rem);
