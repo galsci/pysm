@@ -111,14 +111,22 @@ def read_columns(filename, columns):
         return {c: np.asarray(hdul[1].data[c]) for c in columns}
 
 
-def evaluate_poly(coeffs, freq_ghz):
-    """Evaluate the flux-density polynomial at one frequency for all sources."""
+def evaluate_poly(coeffs, freq_ghz, clip=True):
+    """Evaluate the flux-density polynomial at one frequency for all sources.
+
+    With ``clip=True`` (the default) negative values, which the polynomial
+    can take between the fit nodes, are clipped to zero, matching what
+    ``PointSourceCatalog`` renders. Pass ``clip=False`` to inspect the raw
+    polynomial, for example at the fit nodes where it must be non-negative.
+    """
     x = np.log(freq_ghz)
     n = coeffs.shape[0]
     out = np.zeros(coeffs.shape[1])
     for i_coeff in range(n):
         out += coeffs[i_coeff] * x ** (n - 1 - i_coeff)
-    return np.maximum(out, 0)
+    if clip:
+        out = np.maximum(out, 0)
+    return out
 
 
 def equatorial_to_galactic(theta, phi, psi):
@@ -340,9 +348,12 @@ def convert(input_filename, output_filename, lensed, output_frame, cutoff_mjy, r
 def validate(output_filename, n_samples, seed):
     """Check that the stored coefficients reproduce the catalog fluxes.
 
-    The polynomial is exact at the fit nodes by construction; this verifies
-    the round trip through the HDF5 file (storage dtype, coefficient
-    ordering) on a random subsample.
+    The polynomial is exact at the fit nodes by construction, so the raw
+    (unclipped) polynomial evaluated at the nodes must be non-negative and
+    equal the catalog fluxes: a coefficient ordering or storage error breaks
+    the interpolation and typically drives some node negative. This
+    verifies the round trip through the HDF5 file (storage dtype,
+    coefficient ordering) on a random subsample.
     """
     rng = np.random.default_rng(seed)
     with h5py.File(output_filename) as f:
@@ -352,19 +363,27 @@ def validate(output_filename, n_samples, seed):
         )
         coeff_i = np.array(f["logpolycoefflux"][:, sub])
         coeff_p = np.array(f["logpolycoefpolflux"][:, sub])
+    tolerance_jy = 1e-6
     for coeffs, freqs, label in [
         (coeff_i, INTENSITY_FREQS_GHZ, "I"),
         (coeff_p, POLARIZED_FREQS_GHZ, "P"),
     ]:
-        worst = 0
-        for freq in freqs:
-            recovered = evaluate_poly(coeffs, freq)
-            worst = max(worst, float(np.min(recovered)))
-        print(
-            f"{label}: max recovered flux at the nodes {worst:.3e} Jy "
-            f"({len(sub):,} sources sampled, all finite: "
-            f"{np.isfinite(coeff_i).all()})"
+        if not np.isfinite(coeffs).all():
+            raise RuntimeError(f"{label}: non-finite stored coefficients")
+        worst = min(
+            float(np.min(evaluate_poly(coeffs, freq, clip=False)))
+            for freq in freqs
         )
+        print(
+            f"{label}: minimum raw flux at the nodes {worst:.3e} Jy "
+            f"({len(sub):,} sources sampled, all coefficients finite)"
+        )
+        if worst < -tolerance_jy:
+            raise RuntimeError(
+                f"{label}: raw flux at a fit node is negative "
+                f"({worst:.3e} Jy), the stored coefficients do not "
+                "reproduce the input catalog"
+            )
 
 
 def main(argv=None):
