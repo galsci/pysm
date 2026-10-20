@@ -1,6 +1,8 @@
 Unreleased
 ==========
 
+- Add the Agora radio source catalog preset ``rg4`` (Omori 2024): the full unlensed 56-million-source catalog with fluxes at 5/95/150/220 GHz and exact per-source polarization angles, converted to the ``PointSourceCatalog`` format and rotated to Galactic coordinates. The conversion reproduces the official Agora SPT-3G maps with correlation 1 in I, Q and U https://github.com/galsci/pysm/pull/276
+- ``PointSourceCatalog`` uses the optional per-source polarization angle ``psi`` from the catalog when available, computing deterministic exact Q and U; catalogs without ``psi``, like the WebSky one, keep the fixed-seed random angles https://github.com/galsci/pysm/pull/276
 - Add automatic differential smoothing from template-declared pre-applied beams: every component accepts a ``pre_applied_fwhm`` keyword, both in its configuration and as constructor argument (handled generically by the ``Model`` base class), the declared beam is attached to the maps returned by ``get_emission``, and ``apply_smoothing_and_coord_transform`` applies only the differential beam when a target ``fwhm`` is requested. A multi-component ``Sky`` requires all components to share the same ``pre_applied_fwhm`` and derives it from them https://github.com/galsci/pysm/issues/272
 - Add the ``get_differential_fwhm`` helper, the build-time tool for differentially smoothing templates to a common target resolution https://github.com/galsci/pysm/issues/272
 - ``CMBDipole`` is now a subclass of ``Model``, so it supports ``pre_applied_fwhm`` like every other component, and ``InterpolatingComponent.includes_smoothing`` also accounts for a declared ``pre_applied_fwhm``, not only for the legacy ``pre_applied_beam`` https://github.com/galsci/pysm/pull/273
