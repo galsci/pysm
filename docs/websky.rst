@@ -15,7 +15,7 @@ As a temporary fix in order to support frequencies below 18.7 GHz, we have copie
 Cosmic Infrared Background
 --------------------------
 
-The Planck (2013) CIB halo model is used, along with a halo occupation distribution. More details can be found `here <https://github.com/simonsobs/websky_model>`_. 
+The Planck (2013) CIB halo model is used, along with a halo occupation distribution. More details can be found in the `SO Websky model repository <https://github.com/simonsobs/websky_model>`_. 
 
 The current version of the maps are of intensity in units of :math:`MJy/Sr` with filename convention ``cib_nu[FREQ].fits`` e.g. ``cib_nu0027.fits`` is the map of CIB intensity at 27 GHz and will be used by :py:class:`~pysm3.InterpolatingComponent` at that frequency, and can be found on NERSC at `/global/project/projectdirs/cmb/www/pysm-data/websky/0.4` or at https://portal.nersc.gov/project/cmb/pysm-data/websky/0.4/.
 

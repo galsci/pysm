@@ -27,7 +27,7 @@ jobs:
           cache: npm
           cache-dependency-path: docs-site/package-lock.json
       - name: Install griffe (for starlight-pydocs)
-        run: pip install griffe
+        run: pip install griffe rst-to-myst
       - name: Install site dependencies
         run: npm ci
         working-directory: docs-site
@@ -35,5 +35,5 @@ jobs:
         run: READTHEDOCS_CANONICAL_URL=https://pysm3.readthedocs.io/en/latest/ npm run build
         working-directory: docs-site
       - name: Verify output
-        run: test -f dist/index.html && test -f dist/notebooks/index.html && test -f dist/api/pysm3/index.html
+        run: test -f dist/index.html && test -f dist/notebooks/index.html && test -f dist/api/pysm3/index.html && test -f dist/guides/installation/index.html && test -f dist/models/index.html
         working-directory: docs-site

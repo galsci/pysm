@@ -1,0 +1,41 @@
+{
+  "description": "PySM 3 generates full-sky simulations of Galactic foregrounds in intensity and polarization relevant for CMB experiments.",
+  "hero": {
+    "tagline": "Full-sky simulations of Galactic foregrounds for CMB experiments",
+    "image": {
+      "alt": "PySM logo",
+      "file": "../../assets/logo.jpg"
+    },
+    "actions": [
+      { "text": "Get started", "link": "guides/installation/", "icon": "right-arrow" },
+      { "text": "Browse models", "link": "models/", "icon": "external" },
+      { "text": "API reference", "link": "api/pysm3/", "icon": "external" }
+    ]
+  },
+  "cards": [
+    {
+      "title": "Installation",
+      "icon": "seti:python",
+      "text": "Install `pysm3` with pip or conda and read about development installs and NERSC.",
+      "link": "guides/installation/"
+    },
+    {
+      "title": "Models",
+      "icon": "puzzle",
+      "text": "A summary of every preset: dust `d0`-`d12`, synchrotron `s0`-`s7`, CMB `c1`-`c4`, AME `a1`-`a2`, free-free `f1` and more.",
+      "link": "models/"
+    },
+    {
+      "title": "Tutorials",
+      "icon": "document",
+      "text": "Jupyter notebooks for every component: from the first map to bandpass integration and MPI.",
+      "link": "notebooks/"
+    },
+    {
+      "title": "API reference",
+      "icon": "seti:python",
+      "text": "The full `pysm3` Python API reference generated from the source code.",
+      "link": "api/pysm3/"
+    }
+  ]
+}

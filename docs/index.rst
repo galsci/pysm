@@ -38,19 +38,6 @@ For example free-free:
   models
   pre_applied_beam
 
-Best practices for model execution
-----------------------------------
-
-PySM 3, in order to have the same behaviour of PySM 2, uses `hp.ud_grade` to change the resolution of the map if the HEALPix $N_{side}$ of the input templates is different from the requested output resolution, specified in the emission class (subclass of :py:class:`~pysm3.Model`) or in the :py:class:`~pysm3.Sky` class.
-
-`hp.ud_grade` generally creates artifacts in the spectra and should be avoided unless the specific application can tolerate that.
-
-Therefore we recommend to execute all PySM 2 derived models (e.g. `d0` to `d8`) at their native $N_{side}$ of 512, and then use the `output_nside` parameter of :py:func:`apply_smoothing_and_coord_transform` to transform to the target resolution, whether higher or lower, in Spherical Harmonics domain.
-
-PySM 3 native models (e.g. `d9` to `d11` and `s4` to `s6`) instead have precomputed templates (generated in Spherical Harmonics domain) from $N_{side}$ 2048 to 8192. Therefore we recommend to execute them at 2048 if the target $N_{side}$ is 1024 or lower and at 2*$N_{side}$ if the target is 2048 or higher, except 8192 which is the highest possible resolution.
-
-There are some exceptions, so always check in the documentation or the `max_nside` parameter of the models, for example the `d12` model, even if native to PySM 3, uses externally provided maps which are only available at $N_{side}$=2048.
-
 Dependencies
 ============
 
@@ -92,88 +79,6 @@ It also has a `mpich` version::
 
     conda install -c conda-forge libsharp=*=*mpich*
 
-
-Installation
-============
-
-The easiest way to install the last release is to use `conda`::
-
-    conda install -c conda-forge pysm3
-
-or `pip`::
-
-    pip install pysm3
-
-See the `changelog on Github <https://github.com/galsci/pysm/blob/main/CHANGES.rst>`_ for details about what is included in each release.
-
-Install at NERSC
-----------------
-
-Optionally replace with a newer anaconda environment::
-
-    module load python/3.7-anaconda-2019.10
-    conda create -c conda-forge -n pysm3 pysm3 python=3.7 ipython
-    conda activate pysm3
-    module unload python
-
-Development install
--------------------
-
-The development version is available in the `main` branch of the `GitHub repository <https://github.com/galsci/pysm>`_,
-you can clone and install it with::
-
-    pip install .
-
-Create a development installation with::
-
-    pip install -e .
-
-Install the requirements for testing with::
-
-    pip install -e .[test]
-
-Execute the unit tests with::
-
-    pytest
-
-Configure verbosity
--------------------
-
-PySM uses the `logging` module to configure its verbosity,
-by default it will only print warnings and errors.
-
-A log of useful information, for example intermediate results and timing can be
-accessed enabling the `INFO` level of logging.
-We provide a simplified function to configure this.
-
-    pysm3.set_verbosity()
-
-By default this sets verbosity to `INFO`, otherwise you can specify a level:
-
-    pysm3.set_verbosity(logging.DEBUG)
-
-To configure logging
-you can access the "pysm3" logger with::
-
-    import logging
-    log = logging.getLogger("pysm3")
-
-configure the logging level::
-
-    log.setLevel(logging.DEBUG)
-
-redirect the logs to the console::
-
-    handler = logging.StreamHandler()
-    log.addHandler(handler)
-
-or customize their format::
-
-    log_format="%(name)s - %(levelname)s - %(message)s"
-    formatter = logging.Formatter(log_format)
-    handler.setFormatter(formatter)
-
-For more details see the `Python documentation <https://docs.python.org/3/library/logging.html>`_.
 
 Tutorials
 =========
