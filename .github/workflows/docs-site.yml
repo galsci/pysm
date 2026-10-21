@@ -27,7 +27,7 @@ jobs:
           cache: npm
           cache-dependency-path: docs-site/package-lock.json
       - name: Install griffe (for starlight-pydocs)
-        run: pip install griffe rst-to-myst
+        run: pip install griffe
       - name: Install site dependencies
         run: npm ci
         working-directory: docs-site

@@ -3,7 +3,7 @@ import { resolve, dirname, basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const docsSourceDir = resolve(scriptDir, '../../docs');
+const docsSourceDir = resolve(scriptDir, '../../notebooks');
 const outDir = resolve(scriptDir, '../src/content/docs/notebooks');
 
 const notebooks = readdirSync(docsSourceDir).filter((f) => f.endsWith('.ipynb'));

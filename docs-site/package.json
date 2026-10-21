@@ -4,10 +4,9 @@
   "version": "0.0.1",
   "scripts": {
     "generate:notebooks": "node ./scripts/generate-notebooks.mjs",
-    "generate:docs": "node ./scripts/generate-docs.mjs",
-    "dev": "npm run generate:docs && npm run generate:notebooks && astro dev",
-    "start": "npm run generate:docs && npm run generate:notebooks && astro dev",
-    "build": "npm run generate:docs && npm run generate:notebooks && astro build",
+    "dev": "npm run generate:notebooks && astro dev",
+    "start": "npm run generate:notebooks && astro dev",
+    "build": "npm run generate:notebooks && astro build",
     "preview": "astro preview",
     "astro": "astro"
   },

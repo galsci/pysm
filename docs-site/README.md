@@ -3,29 +3,25 @@
 Starlight (Astro) documentation site for PySM, built and hosted on
 [Read the Docs](https://pysm3.readthedocs.io/).
 
-**Single source of truth:** all documentation content lives in `../docs/`
-(`docs/*.rst` and `docs/*.ipynb`). This directory contains only the site
-presentation (theme, layout, hero/card configuration) and the build-time
-generators:
+**Source of truth:** this is it. The documentation pages live in
+`src/content/docs/` as plain Markdown/MDX, committed and reviewed like any
+other code. Jupyter tutorials are authored as notebooks in `notebooks/` at the
+repository root (Git LFS) and rendered at build time by
+`scripts/generate-notebooks.mjs` (pages and images extracted); the `pysm3` API
+reference is built at build time by `starlight-pydocs` from `../src` with
+griffe.
 
-- `scripts/generate-docs.mjs` converts `../docs/*.rst` to the Starlight pages
-  in `src/content/docs/` (gitignored, never committed) with `rst-to-myst`,
-- `scripts/generate-notebooks.mjs` renders `../docs/*.ipynb` to the tutorial
-  pages including the tutorials index,
-- `starlight-pydocs` builds the `pysm3` API reference from `../src` with
-  griffe at build time.
-
-There is no committed copy of the documentation Markdown: edit the RST or the
-notebooks and rebuild, the site updates.
+There is no generated copy of the prose documentation: edit the Markdown in
+`src/content/docs/` and rebuild; the notebooks are the only content rendered
+from another format, on purpose.
 
 ## Commands
 
 ```bash
 npm install              # install dependencies
-npm run dev              # generate docs + notebooks, then start the dev server
-npm run build            # generate docs + notebooks, then build to dist/
-npm run generate:docs    # regenerate html pages from ../docs/*.rst
-npm run generate:notebooks   # regenerate notebook pages from ../docs/*.ipynb
+npm run dev              # generate notebooks, then start the dev server
+npm run build            # generate notebooks, then build to dist/
+npm run generate:notebooks   # regenerate notebook pages from ../notebooks/*.ipynb
 ```
 
 ## Read the Docs build
@@ -33,7 +29,7 @@ npm run generate:notebooks   # regenerate notebook pages from ../docs/*.ipynb
 `.readthedocs.yaml` at the repository root drives the build:
 
 1. `post_checkout` downloads the Git LFS binary and pulls the notebook content.
-2. `install` installs griffe and rst-to-myst, then runs `npm ci`.
+2. `install` installs griffe (API reference), then runs `npm ci`.
 3. `build` runs `npm run build` and copies `docs-site/dist/` into
    `$READTHEDOCS_OUTPUT/html`.
 
@@ -43,12 +39,14 @@ Read the Docs sets `READTHEDOCS_CANONICAL_URL` (used for the Astro `site` and
 `base` so assets and links resolve under the version path) and
 `READTHEDOCS_OUTPUT` (where the HTML output is published).
 
-## Site configuration
+## Layout
 
-- `site.config.json` holds the hero (title, tagline, image, actions) and the
-  introduction cards; it is used by `scripts/generate-docs.mjs`.
-- `site-chrome/404.md` is the 404 page template.
-- `src/styles/custom.css` is the theme (colors, card and hero styling).
+- `src/content/docs/` is the committed documentation (Markdown/MDX).
+- `src/content/docs/notebooks/` is generated from `../notebooks/*.ipynb`
+  (Git LFS); gitignored.
+- `src/content/docs/images/` and `src/content/docs/../public/{images,model-data}`
+  hold the images and data files referenced by the pages.
+- `src/styles/custom.css` is the theme.
 - `src/components/Footer.astro` adds the Read the Docs flyout mount point.
 
 ## Notes
@@ -56,5 +54,5 @@ Read the Docs sets `READTHEDOCS_CANONICAL_URL` (used for the Astro `site` and
 - LaTeX math is rendered with KaTeX via a `unified` markdown processor
   (`remark-math` + `rehype-katex`), which requires `@astrojs/markdown-remark`.
 - Read the Docs handles versions: each tag or branch is built from its own
-  commit, so old releases keep their original Sphinx documentation while the
+  commit, so older releases keep their original documentation while the
   current development version uses this site.

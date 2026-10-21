@@ -1,9 +1,7 @@
 # build output
 dist/
-# generated documentation (built from ../docs/*.rst and ../docs/*.ipynb at dev/build time)
-src/content/docs/
-# generated static assets (images/data files copied from ../docs)
-public/generated/
+# generated notebook pages (built from ../notebooks/*.ipynb at dev/build time)
+src/content/docs/notebooks/
 # generated types
 .astro/
 

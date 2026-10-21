@@ -1,7 +1,7 @@
-================================
-PySM Methods Paper Contributions
-================================
-
+---
+title: "PySM Methods Paper Contributions"
+description: "**Julian Borrill**: Coordinated simulation efforts with early versions of the models across multiple collaborations, contributed to the writing of Section 1"
+---
 **Julian Borrill**: Coordinated simulation efforts with early versions of the models across multiple collaborations, contributed to the writing of Section 1
 
 **Susan E. Clark**: Led the collaboration and project, led the writing of Sections 5.4, 6, and 7, contributed to the writing of Sections 1, 3, 5.5, and 8, advised and contributed to the analysis in Section 5.4, led the internal review of Section 5.1
@@ -32,6 +32,6 @@ PySM Methods Paper Contributions
 
 **Ben Thorne**: Contributed to the analysis in Section 5.2, provided guidance on comparisons with earlier PySM models
 
-**Jian Yao**: Led the analysis in Section 5.5, led the writing of Section 5.5 
+**Jian Yao**: Led the analysis in Section 5.5, led the writing of Section 5.5
 
 **Andrea Zonca**: Led the integration of all models into the PySM framework, led the writing of Section 2.1, led the internal review of Section 3

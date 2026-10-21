@@ -22,7 +22,7 @@ build:
       - ./git-lfs checkout
     install:
       # griffe is used by starlight-pydocs to build the API reference.
-      - pip install griffe rst-to-myst
+      - pip install griffe
       - cd docs-site && npm ci
     build:
       html:
