@@ -1,0 +1,13 @@
+# PySM s8 low-frequency synchrotron templates: immutable manifest
+# Data release:   https://portal.nersc.gov/project/cmb/pysm-data/synch_lowfreq/
+# Local folder:   /global/cfs/cdirs/cmb/www/pysm-data/synch_lowfreq/
+# Version stamp:  2026.10.22 (files are immutable; regenerating requires a new stamp)
+# NSIDE: 256, pre-applied beam 1 deg, units uK_RJ for Stokes, dimensionless for beta/cs.
+# The [s8] preset and the s8 notebooks reference these exact filenames.
+#
+# Format:  <sha256>  <size-bytes>  <filename>
+fc31bf46f3a679c34a8a487c270dbbc40d499cdf1ec7da6672c9a93e4cb682f2  6298560  haslam408_1deg_2026.10.22.fits
+9743d00e10f752054d2c5a64a4717ea69d88f809f72ecc94da4cf9b82adcd15e  6298560  wmap23_Q_1deg_2026.10.22.fits
+8197bed8f6b089eb5a698989f0f6a5b4e2798a79ca62730eb0602dd30eb05bd9  6298560  wmap23_U_1deg_2026.10.22.fits
+69b2ee58b101866844560aacd93c1c8f69768fac2e6a8c54fbf7a9421d492e6d  6298560  beta_1deg_2026.10.22.fits
+b3d880164969d9a84e0f4b1b813edb04bd3ffbaec29bffb034b123410277559f  6298560  cs_1deg_2026.10.22.fits
