@@ -93,3 +93,17 @@ by other members of the project’s leadership.
 This Code of Conduct is adapted from the [Contributor
 Covenant](http://contributor-covenant.org), version 1.4, available at
 [http://contributor-covenant.org/version/1/4](http://contributor-covenant.org/version/1/4/)
+
+## Documentation
+
+The documentation lives in the repository:
+
+- `docs-site/src/content/docs/` contains the Markdown/MDX sources of the
+  documentation site, edited and reviewed like any other code.
+- `notebooks/` contains every Jupyter notebook (Git LFS). All of them are
+  rendered to HTML pages at build time, including the
+  [template preprocessing notebooks](../../notebooks/preprocess-templates/).
+- The API reference is generated from `src/` at build time.
+
+When you change the documentation, include the update in the same pull request
+as the code change it documents.

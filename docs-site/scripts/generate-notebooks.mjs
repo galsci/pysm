@@ -1,12 +1,41 @@
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
+// Renders every Jupyter notebook in the repository (notebooks/**/*.ipynb,
+// Git LFS) into Starlight pages, including the preprocessing/template
+// notebooks. Images embedded in outputs are extracted to files, and standalone
+// images next to a notebook are copied alongside it and referenced relative to
+// the page. The tutorials index (notebooks/index.md) lists the main tutorials
+// at the top level.
+//
+// Requirements: node only. The notebook sources are in ../notebooks/ (Git LFS,
+// pulled at build time by the Read the Docs config and the CI workflow).
+
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync, statSync, cpSync } from 'node:fs';
 import { resolve, dirname, basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const docsSourceDir = resolve(scriptDir, '../../notebooks');
+const notebooksSourceDir = resolve(scriptDir, '../../notebooks');
 const outDir = resolve(scriptDir, '../src/content/docs/notebooks');
 
-const notebooks = readdirSync(docsSourceDir).filter((f) => f.endsWith('.ipynb'));
+const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg']);
+
+function collectNotebooks(dir) {
+  const out = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...collectNotebooks(full));
+    else if (entry.name.endsWith('.ipynb')) out.push(full);
+  }
+  return out;
+}
+
+function collectSidecarImages(dir) {
+  const out = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isFile() && IMAGE_EXTS.has(entry.name.slice(entry.name.lastIndexOf('.')))) out.push(full);
+  }
+  return out;
+}
 
 function renderCellRendered(cell, state) {
   const parts = [];
@@ -30,7 +59,7 @@ function renderCellRendered(cell, state) {
           state.imageIndex += 1;
           const filename = `img-${state.imageIndex}.${ext}`;
           writeFileSync(join(state.assetsDir, filename), Buffer.from(b64, 'base64'));
-          parts.push(`![Output](assets/${state.slug}/${filename})`);
+          parts.push(`![Output](${state.assetRefPrefix}/${filename})`);
         }
         if (data['text/html']) {
           const html = Array.isArray(data['text/html']) ? data['text/html'].join('') : data['text/html'];
@@ -49,13 +78,16 @@ function renderCellRendered(cell, state) {
       state.titleStripped = true;
     }
     source = source.replace(/\]\(([^)]*?)\.ipynb\)/g, ']($1/)');
+    // Standalone images next to the notebook: point at the copied assets.
+    for (const asset of state.sidecarImages) {
+      source = source.replace(new RegExp(`\\]\\(${asset.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)`, 'g'), `](${state.assetRefPrefix}/${asset.name})`);
+    }
     parts.push(source);
   }
   return parts.join('\n\n');
 }
 
-function titleFor(notebook) {
-  const nb = JSON.parse(readFileSync(resolve(docsSourceDir, notebook), 'utf8'));
+function titleFor(nb) {
   for (const cell of nb.cells) {
     if (cell.cell_type === 'markdown') {
       const source = Array.isArray(cell.source) ? cell.source.join('') : cell.source;
@@ -64,11 +96,10 @@ function titleFor(notebook) {
     }
     if (cell.cell_type === 'code') break;
   }
-  return basename(notebook, '.ipynb').replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  return '';
 }
 
-function descriptionFor(notebook) {
-  const nb = JSON.parse(readFileSync(resolve(docsSourceDir, notebook), 'utf8'));
+function descriptionFor(nb) {
   for (const cell of nb.cells) {
     if (cell.cell_type !== 'markdown') continue;
     const source = Array.isArray(cell.source) ? cell.source.join('') : cell.source;
@@ -85,30 +116,44 @@ function descriptionFor(notebook) {
       }
     }
   }
-  return `PySM tutorial: ${basename(notebook, '.ipynb').replaceAll('_', ' ')}`;
+  return '';
 }
 
+const notebooks = collectNotebooks(notebooksSourceDir).sort();
+const topLevel = notebooks.filter((f) => !f.includes('/preprocess-templates/'));
+const preprocess = notebooks.filter((f) => f.includes('/preprocess-templates/'));
+
+rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
 
-for (const notebook of [...notebooks].sort()) {
-  const nb = JSON.parse(readFileSync(resolve(docsSourceDir, notebook), 'utf8'));
-  const title = titleFor(notebook);
-  const slug = basename(notebook, '.ipynb').replace(/^_/, '');
-  const assetsDir = join(outDir, 'assets', slug);
+let count = 0;
+for (const notebook of notebooks) {
+  const nb = JSON.parse(readFileSync(notebook, 'utf8'));
+  const rel = notebook.slice(notebooksSourceDir.length + 1).replace(/\.ipynb$/, '');
+  const pageDir = join(outDir, rel);
+  const assetsDir = join(pageDir, 'assets');
   rmSync(assetsDir, { recursive: true, force: true });
   mkdirSync(assetsDir, { recursive: true });
-  const state = { titleStripped: false, assetsDir, slug, imageIndex: 0 };
+
+  const sidecarImages = collectSidecarImages(dirname(notebook)).map((p) => ({ name: basename(p), path: p }));
+  for (const img of sidecarImages) cpSync(img.path, join(assetsDir, img.name));
+
+  const state = { titleStripped: false, assetsDir, imageIndex: 0, sidecarImages, assetRefPrefix: `${basename(rel)}/assets` };
   const body = nb.cells.map((cell) => renderCellRendered(cell, state)).filter(Boolean).join('\n\n');
+  const title = titleFor(nb) || basename(rel);
+  const description = descriptionFor(nb) || `${title} (PySM notebook)`;
   const frontmatter = [
     '---',
     `title: "${title.replaceAll('"', '\\"')}"`,
-    `description: "${descriptionFor(notebook).replaceAll('"', '\\"')}"`,
+    `description: "${description.replaceAll('"', '\\"')}"`,
     '---',
     '',
   ].join('\n');
-  writeFileSync(resolve(outDir, `${slug}.md`), frontmatter + body + '\n');
+  writeFileSync(join(outDir, `${rel}.md`), frontmatter + body + '\n');
+  count += 1;
 }
 
+// Tutorials index: top-level tutorials only.
 const indexLines = [
   '---',
   'title: "Tutorials"',
@@ -117,13 +162,36 @@ const indexLines = [
   '',
   'Practical tutorials for every component, from the first simulated map to bandpass integration and MPI:',
   '',
-  ...[...notebooks].sort().map((notebook) => {
+  ...[...topLevel].map((notebook) => {
+    const nb = JSON.parse(readFileSync(notebook, 'utf8'));
     const slug = basename(notebook, '.ipynb').replace(/^_/, '');
-    const title = titleFor(notebook);
-    return `- [${title}](${slug}/): ${descriptionFor(notebook)}`;
+    const title = titleFor(nb) || slug;
+    const description = descriptionFor(nb);
+    return `- [${title}](${slug}/): ${description}`;
+  }),
+  '',
+  'For the data-processing workflows used to build the high-resolution templates shipped with PySM, see the [template preprocessing notebooks](preprocess-templates/).',
+  '',
+].join('\n');
+writeFileSync(join(outDir, 'index.md'), indexLines);
+
+// Preprocessing index.
+const preIndex = [
+  '---',
+  'title: "Template preprocessing"',
+  'description: "Notebooks documenting the data-processing workflow used to build the high-resolution templates shipped with PySM"',
+  '---',
+  '',
+  'These notebooks document the data-processing workflows used to build the high-resolution templates shipped with PySM; they require the large input datasets:',
+  '',
+  ...[...preprocess].map((notebook) => {
+    const nb = JSON.parse(readFileSync(notebook, 'utf8'));
+    const rel = notebook.slice(notebooksSourceDir.length + 1).replace(/\.ipynb$/, '');
+    const title = titleFor(nb) || basename(rel);
+    return `- [${title}](${rel.replace(/^preprocess-templates\//, '')}/)`;
   }),
   '',
 ].join('\n');
-writeFileSync(resolve(outDir, 'index.md'), indexLines);
+writeFileSync(join(outDir, 'preprocess-templates/index.md'), preIndex);
 
-console.log(`Generated ${notebooks.length} notebook pages in ${outDir}`);
+console.log(`Generated ${count} notebook pages in ${outDir}`);

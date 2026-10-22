@@ -7,6 +7,7 @@ export const startHereItems = [
 
 export const guidesItems = [
   { label: 'Best practices', slug: 'guides/best_practices' },
+  { label: 'Adding a model', slug: 'guides/adding_models' },
   { label: 'Pre-applied beam', slug: 'pre_applied_beam' },
   { label: 'CO line emission', slug: 'co_lines' },
   { label: 'WebSky models', slug: 'websky' },
