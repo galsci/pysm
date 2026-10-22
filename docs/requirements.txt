@@ -1,9 +1,0 @@
-astropy
-toml
-numba
-numpy
-healpy
-ipykernel
-sphinx-astropy
-sphinx-math-dollar
-nbsphinx

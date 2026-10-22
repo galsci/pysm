@@ -1,0 +1,31 @@
+# Configuration for Read the Docs: build the Starlight (Astro) docs site.
+# See https://docs.readthedocs.com/platform/stable/intro/starlight.html
+version: 2
+
+build:
+  os: ubuntu-lts-latest
+  tools:
+    nodejs: "22"
+    python: "3.12"
+  jobs:
+    post_checkout:
+      # Git LFS is not installed on Read the Docs build environments;
+      # download the client and pull the notebook content (docs/*.ipynb).
+      - wget -q https://github.com/git-lfs/git-lfs/releases/download/v3.6.1/git-lfs-linux-amd64-v3.6.1.tar.gz
+      - tar xzf git-lfs-linux-amd64-v3.6.1.tar.gz
+      - mv git-lfs-3.6.1/git-lfs ./git-lfs
+      - git config filter.lfs.process "`pwd`/git-lfs filter-process"
+      - git config filter.lfs.smudge "`pwd`/git-lfs smudge -- %f"
+      - git config filter.lfs.clean "`pwd`/git-lfs clean -- %f"
+      - ./git-lfs install
+      - ./git-lfs fetch
+      - ./git-lfs checkout
+    install:
+      # griffe is used by starlight-pydocs to build the API reference.
+      - pip install griffe
+      - cd docs-site && npm ci
+    build:
+      html:
+        - cd docs-site && npm run build
+        - mkdir -p $READTHEDOCS_OUTPUT/html/
+        - cp -r docs-site/dist/* $READTHEDOCS_OUTPUT/html/

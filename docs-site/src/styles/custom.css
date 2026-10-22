@@ -1,0 +1,61 @@
+:root {
+	--sl-color-accent-low: #dbeaf8;
+	--sl-color-accent: #2687d3;
+	--sl-color-accent-high: #1a66a3;
+	--sl-color-text-accent: var(--sl-color-accent-high);
+}
+
+:root[data-theme='dark'] {
+	--sl-color-accent-low: #10314f;
+	--sl-color-accent: #2687d3;
+	--sl-color-accent-high: #7ab8ea;
+	--sl-color-text-accent: var(--sl-color-accent-high);
+}
+
+.sl-hero {
+	padding-bottom: 0.5rem;
+}
+
+.card,
+.card:nth-child(4n + 1),
+.card:nth-child(4n + 3),
+.card:nth-child(4n + 4),
+.card:nth-child(4n + 5) {
+	--sl-card-border: var(--sl-color-accent);
+	--sl-card-bg: var(--sl-color-accent-low);
+}
+
+a.card-link {
+	display: block;
+	text-decoration: none;
+	color: inherit;
+}
+
+a.card-link:hover .card {
+	border-color: var(--sl-color-accent-high);
+}
+
+/* The Read the Docs flyout (version picker) is fixed in its shadow DOM; give
+   the host its own stacking context above Starlight's table-of-contents
+   sidebar, which otherwise paints over the bottom-right corner and swallows
+   clicks on the flyout. */
+readthedocs-flyout {
+	position: relative;
+	z-index: 3000;
+}
+
+.hero > img {
+	border-radius: 1.5rem;
+	width: min(100%, 12rem);
+	height: auto;
+	border: 1px solid var(--sl-color-gray-5);
+	box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15);
+}
+
+.sl-markdown-content img {
+	border-radius: 0.5rem;
+}
+
+::selection {
+	background-color: var(--sl-color-accent-low);
+}

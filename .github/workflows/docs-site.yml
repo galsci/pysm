@@ -1,0 +1,39 @@
+name: Build Starlight documentation
+
+on:
+  pull_request:
+    paths:
+      - 'docs-site/**'
+      - '.readthedocs.yaml'
+      - '.github/workflows/docs-site.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs-site/**'
+      - '.readthedocs.yaml'
+      - '.github/workflows/docs-site.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+      - name: Install griffe (for starlight-pydocs)
+        run: pip install griffe
+      - name: Install site dependencies
+        run: npm ci
+        working-directory: docs-site
+      - name: Build site
+        run: READTHEDOCS_CANONICAL_URL=https://pysm3.readthedocs.io/en/latest/ npm run build
+        working-directory: docs-site
+      - name: Verify output
+        run: test -f dist/index.html && test -f dist/notebooks/index.html && test -f dist/api/pysm3/index.html && test -f dist/guides/installation/index.html && test -f dist/models/index.html
+        working-directory: docs-site
