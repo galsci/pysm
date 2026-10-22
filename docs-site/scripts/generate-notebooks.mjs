@@ -130,7 +130,8 @@ let count = 0;
 for (const notebook of notebooks) {
   const nb = JSON.parse(readFileSync(notebook, 'utf8'));
   const rel = notebook.slice(notebooksSourceDir.length + 1).replace(/\.ipynb$/, '');
-  const pageDir = join(outDir, rel);
+  const pageRel = rel.toLowerCase(); // Astro routes are case-sensitive; keep slugs lowercase
+  const pageDir = join(outDir, pageRel);
   const assetsDir = join(pageDir, 'assets');
   rmSync(assetsDir, { recursive: true, force: true });
   mkdirSync(assetsDir, { recursive: true });
@@ -138,7 +139,7 @@ for (const notebook of notebooks) {
   const sidecarImages = collectSidecarImages(dirname(notebook)).map((p) => ({ name: basename(p), path: p }));
   for (const img of sidecarImages) cpSync(img.path, join(assetsDir, img.name));
 
-  const state = { titleStripped: false, assetsDir, imageIndex: 0, sidecarImages, assetRefPrefix: `${basename(rel)}/assets` };
+  const state = { titleStripped: false, assetsDir, imageIndex: 0, sidecarImages, assetRefPrefix: `${basename(pageRel)}/assets` };
   const body = nb.cells.map((cell) => renderCellRendered(cell, state)).filter(Boolean).join('\n\n');
   const title = titleFor(nb) || basename(rel);
   const description = descriptionFor(nb) || `${title} (PySM notebook)`;
@@ -149,7 +150,7 @@ for (const notebook of notebooks) {
     '---',
     '',
   ].join('\n');
-  writeFileSync(join(outDir, `${rel}.md`), frontmatter + body + '\n');
+  writeFileSync(join(outDir, `${pageRel}.md`), frontmatter + body + '\n');
   count += 1;
 }
 
@@ -186,7 +187,7 @@ const preIndex = [
   '',
   ...[...preprocess].map((notebook) => {
     const nb = JSON.parse(readFileSync(notebook, 'utf8'));
-    const rel = notebook.slice(notebooksSourceDir.length + 1).replace(/\.ipynb$/, '');
+    const rel = notebook.slice(notebooksSourceDir.length + 1).replace(/\.ipynb$/, '').toLowerCase();
     const title = titleFor(nb) || basename(rel);
     return `- [${title}](${rel.replace(/^preprocess-templates\//, '')}/)`;
   }),
