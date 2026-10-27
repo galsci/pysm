@@ -13,10 +13,10 @@ on:
     branches:
     - main
     paths:
-    - 'docs/preprocess-templates/synch_lowfreq_manifest/**'
+    - 'notebooks/preprocess-templates/synch_lowfreq_manifest/**'
   pull_request:
     paths:
-    - 'docs/preprocess-templates/synch_lowfreq_manifest/**'
+    - 'notebooks/preprocess-templates/synch_lowfreq_manifest/**'
 
 jobs:
   check:
@@ -27,4 +27,4 @@ jobs:
       uses: actions/checkout@v6
     - name: Run the manifest check
       run: |
-        python docs/preprocess-templates/synch_lowfreq_manifest/check_synch_manifest.py
+        python notebooks/preprocess-templates/synch_lowfreq_manifest/check_synch_manifest.py
