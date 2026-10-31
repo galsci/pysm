@@ -74,7 +74,11 @@ test = [
     "netcdf4",
     "pixell == 0.26.0",
     "psutil",
-    "pytest",
+    # Temporary: pytest 9.2 (2026-10-27) added a built-in -R option that
+    # conflicts with pytest-remotedata (pulled in by pytest-astropy), which
+    # now hard-fails at startup instead of silently overriding. Drop the pin
+    # once pytest-remotedata releases a compatible version.
+    "pytest <9.2",
     "nbval",
     "ipykernel",
     "matplotlib",
