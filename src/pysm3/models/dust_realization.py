@@ -25,6 +25,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         galplane_fix_beta_Td=None,
         seeds=None,
         synalm_lmax=None,
+        synalm_lmin=None,
         has_polarization=True,
         map_dist=None,
     ):
@@ -75,6 +76,11 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             Lmax of Synalm for small scales generation, by default it is 3*nside-1,
             with a maximum of 16384.
             In order to reproduce `d10`, you need to set it to 16834.
+        synalm_lmin: int
+            Minimum ell for small-scale generation. Modes below this ell are zeroed
+            in the small-scale alm before converting to a map, so the large-scale
+            template covers those modes exclusively. Default is None (no lower cutoff,
+            matching the original d11 behavior).
         map_dist: Map distribution
             Unsupported, this class doesn't support MPI Parallelization
         """
@@ -127,15 +133,20 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
             self.U_ref,
             self.mbb_index,
             self.mbb_temperature,
-        ) = self.draw_realization(synalm_lmax, seeds)
+        ) = self.draw_realization(synalm_lmax, synalm_lmin=synalm_lmin, seeds=seeds)
 
-    def draw_realization(self, synalm_lmax=None, seeds=None):
+    def draw_realization(self, synalm_lmax=None, synalm_lmin=None, seeds=None):
 
         if seeds is None:
             seeds = (None, None, None)
 
         if synalm_lmax is None:
             synalm_lmax = int(min(16384, 2.5 * self.nside))
+
+        # same length as the original d11 filter, so synalm_lmin=None reproduces d11 exactly
+        filter_ell = np.ones(int(min(synalm_lmax, 2.5 * self.nside)))
+        if synalm_lmin is not None:
+            filter_ell[:synalm_lmin] = 0.0
 
         np.random.seed(seeds[0])
 
@@ -146,7 +157,7 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
         )
 
         alm_small_scale = [
-            hp.almxfl(each, np.ones(int(min(synalm_lmax, 2.5 * self.nside))))
+            hp.almxfl(each, filter_ell)
             for each in alm_small_scale
         ]
         map_small_scale = hp.alm2map(alm_small_scale, nside=self.nside)
@@ -198,9 +209,14 @@ class ModifiedBlackBodyRealization(ModifiedBlackBody):
                 new=True,
             )
 
+            lmax_filter_bd = int(min(synalm_lmax + 1, 2.5 * self.nside + 1))
+            filter_ell = np.ones(lmax_filter_bd)
+            if synalm_lmin is not None:
+                filter_ell[:synalm_lmin] = 0.0
+
             alm_small_scale = hp.almxfl(
                 alm_small_scale,
-                np.ones(int(min(2.5 * self.nside + 1, synalm_lmax + 1))),
+                filter_ell,
             )
             output[key] = hp.alm2map(alm_small_scale, nside=self.nside) * output_unit
             output[key] *= modulate_map_I

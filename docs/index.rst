@@ -205,6 +205,11 @@ high-resolution templates shipped with PySM.
   Small-scale dust generation overview <preprocess-templates/small_scale_dust_pysm3>
   Generate dust small-scale artifacts <preprocess-templates/small_scale_dust_pysm3_generate_artifacts>
   Generate PySM3 dust templates <preprocess-templates/small_scale_dust_pysm3_generate_templates>
+  Generate d13 dust artifacts (PR4) <preprocess-templates/small_scale_dust_pr4_generate_artifacts>
+  Compute d13 PR4 modulation maps <preprocess-templates/compute_pr4_modulation_maps>
+  Determine d13 modulation multipole <preprocess-templates/pr4_dust_lstar_determination>
+  d13 consistency checks in the BICEP/Keck field <d13_check>
+  d13 large-scale template taper test <d13_template_taper_test>
   Synchrotron beta small-scale modelling <preprocess-templates/synchrotron_beta>
   Synchrotron curvature modelling <preprocess-templates/synchrotron_curvature>
   Log-pol-tens formalism notebook <preprocess-templates/synchrotron_template_logpoltens>
@@ -231,6 +236,7 @@ Template utility notebooks
   :maxdepth: 1
 
   GNILC dust spectral index and temperature maps <preprocess-templates/gnilc_dust_spectralindex_Tdust>
+  d13 dust spectral index and temperature maps <preprocess-templates/pr4_dust_spectralindex_Tdust>
   Generate GNILC spectral index and temperature maps <preprocess-templates/utils_gnilc_generate_map_spectralindex_Td>
   Generate synchrotron amplitude map <preprocess-templates/utils_synch_generate_map>
   Compute synchrotron curvature harmonic coefficients <preprocess-templates/utils_synch_generate_map_curvature>

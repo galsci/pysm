@@ -1,5 +1,6 @@
 Unreleased
 ==========
+- Add the `d13` dust model (Planck PR4 polarization, small scales from multipole 30, calibrated to the BK18 dust amplitude in the BICEP/Keck field), the `synalm_lmin` option of `ModifiedBlackBodyRealization`, and the d13 preprocessing notebooks
 
 3.4.4 (2026-04-02)
 ==================
