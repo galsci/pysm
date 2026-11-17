@@ -89,8 +89,10 @@ or a feature, run **only the tests attached to that change** (e.g.
 - MPI tests: `./run_mpi_tests.sh` (requires `mpi4py`)
 
 ## Large Notebook & HPC Validation
-- Run preprocessing and native-resolution notebooks through Slurm on a compute node, including on
-  Popeye; do not run them on a login node
+- NEVER run notebooks or any other non-trivial computation (map processing, smoothing, regressions,
+  reproductions, validation checks) on a login node, not even if it looks small or quick; login
+  nodes are only for editing, data transfers, environment setup, and submitting Slurm jobs. Always
+  run through Slurm on a compute node, including on Popeye
 - Put environments, downloaded inputs, caches, executed notebooks, and logs on a persistent shared
   filesystem rather than node-local `/tmp`
 - Request memory, wall time, and CPUs based on NSIDE and the number of simultaneously resident
