@@ -9,7 +9,7 @@
 // pulled at build time by the Read the Docs config and the CI workflow).
 
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync, statSync, cpSync } from 'node:fs';
-import { resolve, dirname, basename, join } from 'node:path';
+import { resolve, dirname, basename, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -77,7 +77,15 @@ function renderCellRendered(cell, state) {
       source = source.replace(/^#\s+[^\n]+\n?/, '');
       state.titleStripped = true;
     }
-    source = source.replace(/\]\(([^)]*?)\.ipynb\)/g, ']($1/)');
+    source = source.replace(/\]\(([^)]*?\.ipynb)\)/g, (whole, href) => {
+      // Absolute URLs (e.g. a notebook hosted elsewhere) are left untouched.
+      if (/^[a-z]+:\/\//i.test(href)) return whole;
+      const targetAbs = resolve(dirname(state.notebookPath), href.slice(0, -'.ipynb'.length));
+      const targetRel = relative(notebooksSourceDir, targetAbs).toLowerCase();
+      // Only rewrite links to notebooks rendered on this site.
+      if (!notebookPages.has(targetRel)) return whole;
+      return `](${pageLink(state.pageRel, targetRel)})`;
+    });
     // Standalone images next to the notebook: point at the copied assets.
     for (const asset of state.sidecarImages) {
       source = source.replace(new RegExp(`\\]\\(${asset.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)`, 'g'), `](${state.assetRefPrefix}/${asset.name})`);
@@ -123,6 +131,26 @@ const notebooks = collectNotebooks(notebooksSourceDir).sort();
 const topLevel = notebooks.filter((f) => !f.includes('/preprocess-templates/'));
 const preprocess = notebooks.filter((f) => f.includes('/preprocess-templates/'));
 
+// Page slug of every rendered notebook (e.g. "preprocess-templates/foo"),
+// used to rewrite the .ipynb crosslinks into links between the pages.
+const notebookPages = new Set(
+  notebooks.map((f) => f.slice(notebooksSourceDir.length + 1).replace(/\.ipynb$/, '').toLowerCase()),
+);
+
+// Relative link between two rendered notebook pages. Pages live at
+// `notebooks/<slug>/`, so from a page every other page is one or more
+// levels up: a bare sibling name would resolve one level too deep
+// (e.g. `.../synchrotron_low_freq_s8/validate_synch_low_freq_s8/`).
+function pageLink(fromRel, toRel) {
+  const from = fromRel.split('/');
+  const to = toRel.split('/');
+  let common = 0;
+  while (common < from.length && common < to.length && from[common] === to[common]) common += 1;
+  const down = to.slice(common).join('/');
+  if (!down) return './';
+  return `${'../'.repeat(from.length - common)}${down}/`;
+}
+
 rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
 
@@ -139,7 +167,15 @@ for (const notebook of notebooks) {
   const sidecarImages = collectSidecarImages(dirname(notebook)).map((p) => ({ name: basename(p), path: p }));
   for (const img of sidecarImages) cpSync(img.path, join(assetsDir, img.name));
 
-  const state = { titleStripped: false, assetsDir, imageIndex: 0, sidecarImages, assetRefPrefix: `${basename(pageRel)}/assets` };
+  const state = {
+    titleStripped: false,
+    assetsDir,
+    imageIndex: 0,
+    sidecarImages,
+    assetRefPrefix: `${basename(pageRel)}/assets`,
+    notebookPath: notebook,
+    pageRel,
+  };
   const body = nb.cells.map((cell) => renderCellRendered(cell, state)).filter(Boolean).join('\n\n');
   const title = titleFor(nb) || basename(rel);
   const description = descriptionFor(nb) || `${title} (PySM notebook)`;

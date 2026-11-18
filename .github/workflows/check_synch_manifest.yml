@@ -1,0 +1,30 @@
+# Weekly integrity check of the published PySM data release:
+# verifies that the s8 low-frequency synchrotron templates available at the
+# public data URL still match the immutable manifest (SHA-256 and size),
+# so the data the future ``[s8]`` preset relies on has not changed.
+
+name: s8 templates manifest check
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'  # Mondays at 06:00 UTC
+  push:
+    branches:
+    - main
+    paths:
+    - 'notebooks/preprocess-templates/synch_lowfreq_manifest/**'
+  pull_request:
+    paths:
+    - 'notebooks/preprocess-templates/synch_lowfreq_manifest/**'
+
+jobs:
+  check:
+    name: Verify published s8 templates against the manifest
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+    - name: Run the manifest check
+      run: |
+        python notebooks/preprocess-templates/synch_lowfreq_manifest/check_synch_manifest.py
